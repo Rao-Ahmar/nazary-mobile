@@ -1,0 +1,1 @@
+export { TripDetailsScreen } from '../TripDetailsScreen';
