@@ -1,4 +1,4 @@
-export const colors = {
+export const lightColors = {
   // Primary
   primary: '#0058bc',
   primaryContainer: '#0070eb',
@@ -55,7 +55,198 @@ export const colors = {
   // Glassmorphism
   glass: 'rgba(249, 249, 251, 0.80)',
   glassDark: 'rgba(26, 28, 29, 0.04)',
+
+  // Tints (used inline in various screens)
+  primaryTint: 'rgba(0,88,188,0.06)',
+  surfaceFade: 'rgba(249,249,251,0.95)',
+
+  // Rating / Star
+  star: '#F59E0B',
+  starTint: 'rgba(245,158,11,0.1)',
+  ratingText: '#92700c',
+
+  // Primary gradient
+  gradientStart: '#0058bc',
+  gradientEnd: '#0070eb',
+
+  // On-image text (overlaid on dark gradients/images — always light)
+  onImage: '#ffffff',
+  onImageMuted: 'rgba(255,255,255,0.75)',
+  imageOverlay: 'rgba(0,0,0,0.55)',
+  imageOverlayStrong: 'rgba(0,0,0,0.6)',
+  imageOverlayHeavy: 'rgba(0,0,0,0.7)',
+
+  // Tags / chips
+  tagBg: 'rgba(238,238,240,0.7)',
+
+  // Scrim (modal overlays)
+  scrim: 'rgba(0,0,0,0.5)',
+  scrimLight: 'rgba(0,0,0,0.3)',
+  scrimHeavy: 'rgba(0,0,0,0.6)',
+
+  // Category trip-type colors
+  casualColor: '#3B82F6',
+  casualBg: 'rgba(59,130,246,0.1)',
+  familyColor: '#22C55E',
+  familyBg: 'rgba(34,197,94,0.1)',
+  bikeColor: '#F97316',
+  bikeBg: 'rgba(249,115,22,0.1)',
+  coupleColor: '#EC4899',
+  coupleBg: 'rgba(236,72,153,0.1)',
+
+  // Accent — couple / heart
+  heart: '#E91E63',
+  heartTint: 'rgba(233,30,99,0.06)',
+
+  // Error tint
+  errorTint: 'rgba(220,38,38,0.08)',
+
+  // Warning gradient (arrange-a-trip premium badge)
+  warningGradientStart: '#f59e0b',
+  warningGradientEnd: '#d97706',
+
+  // Subtle border
+  borderSubtle: 'rgba(193,198,215,0.2)',
+
+  // Rerun/Loop status
+  loopColor: '#F97316',
+  loopBg: 'rgba(249,115,22,0.12)',
+  rerunColor: '#3B82F6',
+  rerunBg: 'rgba(59,130,246,0.1)',
+
+  // Onboarding gradient stop
+  onboardingFade: 'rgba(249,249,251,0.4)',
+
+  // Badge on image
+  imageBadgeBg: 'rgba(255,255,255,0.2)',
+  imageBadgeBgDark: 'rgba(255,255,255,0.15)',
 };
+
+export const darkColors: Colors = {
+  // Primary — lighter blue for dark mode contrast
+  primary: '#6B9FFF',
+  primaryContainer: '#4A7FE0',
+  onPrimary: '#ffffff',
+  onPrimaryContainer: '#fefcff',
+
+  // Surface hierarchy — dark with visible card separation
+  background: '#101014',
+  surface: '#101014',
+  surfaceBright: '#2A2A35',
+  surfaceContainer: '#1E1E28',
+  surfaceContainerHigh: '#282833',
+  surfaceContainerHighest: '#32323E',
+  surfaceContainerLow: '#1A1A24',
+  surfaceContainerLowest: '#161620',
+  surfaceDim: '#101014',
+
+  // Text — cloudy white, soft premium feel
+  onSurface: '#E8E6F0',
+  onSurfaceVariant: '#9B99A8',
+  onBackground: '#E8E6F0',
+
+  // Secondary
+  secondary: '#9B99A8',
+  secondaryContainer: '#252530',
+  onSecondary: '#E8E6F0',
+  onSecondaryContainer: '#9B99A8',
+
+  // Tertiary
+  tertiary: '#FF8C42',
+  tertiaryContainer: '#E06B1F',
+  onTertiary: '#ffffff',
+
+  // Outline — subtle dark borders
+  outline: '#9B99A8',
+  outlineVariant: '#383844',
+
+  // Error
+  error: '#FF6B6B',
+  errorContainer: '#3D1E1E',
+  onError: '#ffffff',
+
+  // Inverse
+  inverseSurface: '#E8E6F0',
+  inverseOnSurface: '#1a1c1d',
+  inversePrimary: '#0058bc',
+
+  // Semantic
+  success: '#4ADE80',
+  successLight: '#1A2E1F',
+  warning: '#FBBF24',
+  warningLight: '#2E2714',
+
+  // Glassmorphism
+  glass: 'rgba(22, 22, 32, 0.80)',
+  glassDark: 'rgba(232, 230, 240, 0.06)',
+
+  // Tints
+  primaryTint: 'rgba(107,159,255,0.10)',
+  surfaceFade: 'rgba(16,16,20,0.95)',
+
+  // Rating / Star
+  star: '#FBBF24',
+  starTint: 'rgba(251,191,36,0.12)',
+  ratingText: '#FBBF24',
+
+  // Primary gradient
+  gradientStart: '#4A7FE0',
+  gradientEnd: '#6B9FFF',
+
+  // On-image text (overlaid on dark gradients/images — always light)
+  onImage: '#ffffff',
+  onImageMuted: 'rgba(255,255,255,0.75)',
+  imageOverlay: 'rgba(0,0,0,0.55)',
+  imageOverlayStrong: 'rgba(0,0,0,0.6)',
+  imageOverlayHeavy: 'rgba(0,0,0,0.7)',
+
+  // Tags / chips
+  tagBg: 'rgba(37,37,48,0.7)',
+
+  // Scrim (modal overlays)
+  scrim: 'rgba(0,0,0,0.7)',
+  scrimLight: 'rgba(0,0,0,0.5)',
+  scrimHeavy: 'rgba(0,0,0,0.8)',
+
+  // Category trip-type colors
+  casualColor: '#60A5FA',
+  casualBg: 'rgba(96,165,250,0.12)',
+  familyColor: '#4ADE80',
+  familyBg: 'rgba(74,222,128,0.12)',
+  bikeColor: '#FB923C',
+  bikeBg: 'rgba(251,146,60,0.12)',
+  coupleColor: '#F472B6',
+  coupleBg: 'rgba(244,114,182,0.12)',
+
+  // Accent — couple / heart
+  heart: '#F472B6',
+  heartTint: 'rgba(244,114,182,0.10)',
+
+  // Error tint
+  errorTint: 'rgba(255,107,107,0.10)',
+
+  // Warning gradient (arrange-a-trip premium badge)
+  warningGradientStart: '#FBBF24',
+  warningGradientEnd: '#F59E0B',
+
+  // Subtle border
+  borderSubtle: 'rgba(56,56,68,0.4)',
+
+  // Rerun/Loop status
+  loopColor: '#FB923C',
+  loopBg: 'rgba(251,146,60,0.14)',
+  rerunColor: '#60A5FA',
+  rerunBg: 'rgba(96,165,250,0.12)',
+
+  // Onboarding gradient stop
+  onboardingFade: 'rgba(16,16,20,0.4)',
+
+  // Badge on image
+  imageBadgeBg: 'rgba(255,255,255,0.2)',
+  imageBadgeBgDark: 'rgba(255,255,255,0.15)',
+};
+
+export type Colors = typeof lightColors;
 
 export const typography = {
   // Display - Manrope (editorial voices)
@@ -178,7 +369,7 @@ export const radii = {
   full: 999,
 };
 
-export const shadows = {
+export const lightShadows = {
   ambient: {
     shadowColor: '#1a1c1d',
     shadowOffset: { width: 0, height: 12 },
@@ -201,3 +392,29 @@ export const shadows = {
     elevation: 3,
   },
 };
+
+export const darkShadows: Shadows = {
+  ambient: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.3,
+    shadowRadius: 32,
+    elevation: 4,
+  },
+  soft: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 2,
+  },
+  card: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.28,
+    shadowRadius: 24,
+    elevation: 3,
+  },
+};
+
+export type Shadows = typeof lightShadows;

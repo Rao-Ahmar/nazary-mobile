@@ -1,15 +1,18 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable, ImageBackground, Animated, Easing } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, typography, spacing, radii, shadows } from '../../theme';
+import { useTheme, type Colors, type Shadows } from '../../theme';
+import { typography, spacing, radii } from '../../theme';
 import { EmptyState } from '../../components/EmptyState';
 import { useBikeStore } from '../../store/bikeStore';
 
 export function BikeTripsScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
   const { bikeTrips, isPremiumUnlocked } = useBikeStore();
+  const { colors, shadows } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const anims = useRef(bikeTrips.map(() => new Animated.Value(0))).current;
   useEffect(() => {
@@ -68,7 +71,7 @@ export function BikeTripsScreen({ navigation }: any) {
                           <Text style={styles.metaText}>{trip.seatsLeft} seats left</Text>
                         </View>
                         <View style={styles.metaItem}>
-                          <Ionicons name="star" size={14} color="#F59E0B" />
+                          <Ionicons name="star" size={14} color={colors.star} />
                           <Text style={styles.metaText}>{trip.rating}</Text>
                         </View>
                       </View>
@@ -92,7 +95,7 @@ export function BikeTripsScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.xl, paddingVertical: spacing.md },
   backButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.surfaceContainerLow, alignItems: 'center', justifyContent: 'center' },
@@ -110,6 +113,6 @@ const styles = StyleSheet.create({
   metaItem: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   metaText: { fontFamily: 'Inter_400Regular', fontSize: 11, color: colors.onSurfaceVariant },
   tagRow: { flexDirection: 'row', gap: spacing.sm },
-  tag: { backgroundColor: 'rgba(238,238,240,0.7)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: radii.full },
+  tag: { backgroundColor: colors.tagBg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: radii.full },
   tagText: { fontFamily: 'Inter_400Regular', fontSize: 10, color: colors.onSurfaceVariant, letterSpacing: 0.3 },
 });

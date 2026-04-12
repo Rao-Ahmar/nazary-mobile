@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, Image, StyleSheet, type ViewStyle } from 'react-native';
-import { colors, typography, spacing, radii, shadows } from '../theme';
+import { typography, spacing, radii, useTheme, type Colors, type Shadows } from '../theme';
 import { StarRating } from './StarRating';
 
 interface ReviewCardProps {
@@ -13,6 +13,9 @@ interface ReviewCardProps {
 }
 
 export function ReviewCard({ name, avatar, rating, text, date, style }: ReviewCardProps) {
+  const { colors, shadows } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   return (
     <View style={[styles.card, shadows.soft, style]}>
       <View style={styles.header}>
@@ -31,7 +34,7 @@ export function ReviewCard({ name, avatar, rating, text, date, style }: ReviewCa
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   card: { backgroundColor: colors.surfaceContainerLowest, borderRadius: radii.xl, padding: spacing.lg, marginBottom: spacing.md },
   header: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.md },
   avatar: { width: 36, height: 36, borderRadius: 18 },

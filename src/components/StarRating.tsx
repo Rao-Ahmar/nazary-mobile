@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Pressable, StyleSheet, type ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { spacing } from '../theme';
+import { spacing, useTheme } from '../theme';
 
 interface StarRatingProps {
   rating: number;
@@ -12,6 +12,7 @@ interface StarRatingProps {
 }
 
 export function StarRating({ rating, size = 18, interactive = false, onRate, style }: StarRatingProps) {
+  const { colors } = useTheme();
   const stars = [1, 2, 3, 4, 5];
 
   return (
@@ -28,7 +29,7 @@ export function StarRating({ rating, size = 18, interactive = false, onRate, sty
             <Ionicons
               name={filled ? 'star' : 'star-outline'}
               size={size}
-              color={filled ? '#F59E0B' : '#C1C6D7'}
+              color={filled ? colors.star : colors.outlineVariant}
             />
           </StarWrapper>
         );

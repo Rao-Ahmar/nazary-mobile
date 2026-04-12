@@ -1,9 +1,10 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable, Image, Animated, Easing, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, typography, spacing, radii, shadows } from '../../theme';
+import { useTheme, typography, spacing, radii } from '../../theme';
+import type { Colors } from '../../theme';
 import { StarRating } from '../../components/StarRating';
 import { ReviewCard } from '../../components/ReviewCard';
 
@@ -26,6 +27,8 @@ const mockReviews = [
 
 export function PlaceDetailScreen({ navigation, route }: any) {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const place = mockPlaceDetail;
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -38,12 +41,12 @@ export function PlaceDetailScreen({ navigation, route }: any) {
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.heroContainer}>
           <Image source={{ uri: place.coverImage }} style={styles.heroImage} />
-          <LinearGradient colors={['transparent', 'rgba(0,0,0,0.6)']} style={styles.heroGradient}>
+          <LinearGradient colors={['transparent', colors.imageOverlayStrong]} style={styles.heroGradient}>
             <Text style={styles.heroName}>{place.name}</Text>
             <Text style={styles.heroRegion}>{place.region}</Text>
           </LinearGradient>
           <Pressable onPress={() => navigation.goBack()} style={[styles.backButton, { top: insets.top + spacing.sm }]}>
-            <Ionicons name="arrow-back" size={22} color="#fff" />
+            <Ionicons name="arrow-back" size={22} color={colors.onImage} />
           </Pressable>
         </View>
 
@@ -72,14 +75,14 @@ export function PlaceDetailScreen({ navigation, route }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   heroContainer: { position: 'relative' },
   heroImage: { width, height: width * 0.7 },
   heroGradient: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: spacing.xl, paddingTop: spacing['3xl'] },
-  heroName: { fontFamily: 'Manrope_300Light', fontSize: 32, color: '#fff', letterSpacing: -0.5 },
-  heroRegion: { fontFamily: 'Inter_300Light', fontSize: 14, color: 'rgba(255,255,255,0.8)', marginTop: 4 },
-  backButton: { position: 'absolute', left: spacing.xl, width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.3)', alignItems: 'center', justifyContent: 'center' },
+  heroName: { fontFamily: 'Manrope_300Light', fontSize: 32, color: colors.onImage, letterSpacing: -0.5 },
+  heroRegion: { fontFamily: 'Inter_300Light', fontSize: 14, color: colors.onImageMuted, marginTop: 4 },
+  backButton: { position: 'absolute', left: spacing.xl, width: 44, height: 44, borderRadius: 22, backgroundColor: colors.scrimLight, alignItems: 'center', justifyContent: 'center' },
   content: { paddingHorizontal: spacing.xl, paddingTop: spacing.xl },
   ratingRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.xl },
   ratingText: { ...typography.bodyMd, color: colors.onSurfaceVariant },

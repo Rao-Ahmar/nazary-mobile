@@ -5,7 +5,7 @@ import { StyleSheet, Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors } from '../theme';
+import { useTheme } from '../theme';
 import { TabBarIcon } from '../components/TabBarIcon';
 import { DashboardScreen } from '../screens/planner/DashboardScreen';
 import { ManageTripsScreen } from '../screens/planner/ManageTripsScreen';
@@ -17,6 +17,7 @@ const Tab = createBottomTabNavigator<PlannerTabParamList>();
 
 export function PlannerTabs() {
   const insets = useSafeAreaInsets();
+  const { colors, isDark } = useTheme();
 
   return (
     <Tab.Navigator
@@ -40,16 +41,16 @@ export function PlannerTabs() {
           paddingTop: 8,
           ...Platform.select({
             ios: {
-              shadowColor: '#1a1c1d',
+              shadowColor: isDark ? '#000000' : '#1a1c1d',
               shadowOffset: { width: 0, height: -8 },
-              shadowOpacity: 0.03,
+              shadowOpacity: isDark ? 0.2 : 0.03,
               shadowRadius: 16,
             },
           }),
         },
         tabBarBackground: () =>
           Platform.OS === 'ios' ? (
-            <BlurView intensity={60} tint="light" style={StyleSheet.absoluteFill} />
+            <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
           ) : null,
       }}
     >

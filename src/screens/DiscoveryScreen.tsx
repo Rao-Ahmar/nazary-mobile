@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -17,7 +17,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, typography, spacing, radii, shadows } from '../theme';
+import { useTheme, typography, spacing, radii, type Colors } from '../theme';
 import { featuredTrips, categories, curatedCollections } from '../data/mockData';
 
 const { width } = Dimensions.get('window');
@@ -105,6 +105,9 @@ function fadeInRightStyle(anim: Animated.Value) {
 
 export function DiscoveryScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
+  const { colors, shadows } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const [selectedCategory, setSelectedCategory] = React.useState('1');
 
   // Single-element fade-in-down animations
@@ -171,7 +174,7 @@ export function DiscoveryScreen({ navigation }: any) {
                   </Text>
                 </View>
                 <View style={styles.ratingBadge}>
-                  <Ionicons name="star" size={12} color="#F59E0B" />
+                  <Ionicons name="star" size={12} color={colors.star} />
                   <Text style={styles.ratingText}>{trip.rating}</Text>
                 </View>
               </View>
@@ -218,7 +221,7 @@ export function DiscoveryScreen({ navigation }: any) {
           resizeMode="cover"
         >
           <LinearGradient
-            colors={['transparent', 'rgba(0,0,0,0.55)']}
+            colors={['transparent', colors.imageOverlay]}
             style={styles.collectionGradient}
           >
             <Text style={styles.collectionTitle}>{collection.title}</Text>
@@ -311,7 +314,7 @@ export function DiscoveryScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.surface,
@@ -482,7 +485,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: 'rgba(245,158,11,0.1)',
+    backgroundColor: colors.starTint,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: radii.full,
@@ -490,7 +493,7 @@ const styles = StyleSheet.create({
   ratingText: {
     fontFamily: 'Inter_400Regular',
     fontSize: 12,
-    color: '#92700c',
+    color: colors.ratingText,
   },
   featuredBottom: {
     flexDirection: 'row',
@@ -537,7 +540,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   tag: {
-    backgroundColor: 'rgba(238,238,240,0.7)',
+    backgroundColor: colors.tagBg,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: radii.full,
@@ -581,12 +584,12 @@ const styles = StyleSheet.create({
   collectionTitle: {
     fontFamily: 'Manrope_400Regular',
     fontSize: 16,
-    color: '#ffffff',
+    color: colors.onImage,
     marginBottom: 2,
   },
   collectionSubtitle: {
     fontFamily: 'Inter_300Light',
     fontSize: 11,
-    color: 'rgba(255,255,255,0.75)',
+    color: colors.onImageMuted,
   },
 });

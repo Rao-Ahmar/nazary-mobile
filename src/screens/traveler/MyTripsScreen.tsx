@@ -1,14 +1,28 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import React, { useEffect, useMemo } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, typography, spacing, radii, shadows } from '../../theme';
+import { useTheme, typography, spacing, radii } from '../../theme';
+import { type Colors } from '../../theme';
 import { useTripRequestStore } from '../../store/tripRequestStore';
 import { StatusBadge } from '../../components/StatusBadge';
 
 export function MyTripsScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
-  const myRequests = useTripRequestStore((s) => s.myRequests);
+  const { myRequests, isLoading, fetchMyRequests } = useTripRequestStore();
+  const { colors, shadows } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  useEffect(() => {
+    fetchMyRequests();
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchMyRequests();
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -64,7 +78,7 @@ export function MyTripsScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   title: { fontFamily: 'Manrope_300Light', fontSize: 32, color: colors.onSurface, letterSpacing: -0.5, paddingHorizontal: spacing.xl, paddingTop: spacing.lg, marginBottom: spacing.xl },
   scrollContent: { paddingHorizontal: spacing.xl },

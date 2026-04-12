@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,8 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, typography, spacing, radii } from '../theme';
+import { useTheme, typography, spacing, radii } from '../theme';
+import type { Colors } from '../theme';
 
 const { width, height } = Dimensions.get('window');
 
@@ -34,6 +35,7 @@ const slides = [
 ];
 
 function PageDot({ index, active }: { index: number; active: boolean }) {
+  const { colors } = useTheme();
   const widthAnim = useRef(new Animated.Value(active ? 24 : 6)).current;
   const opacityAnim = useRef(new Animated.Value(active ? 1 : 0.3)).current;
 
@@ -58,7 +60,7 @@ function PageDot({ index, active }: { index: number; active: boolean }) {
     <Animated.View
       style={[
         dotStyles.dot,
-        { width: widthAnim, opacity: opacityAnim },
+        { width: widthAnim, opacity: opacityAnim, backgroundColor: colors.gradientStart },
       ]}
     />
   );
@@ -68,12 +70,13 @@ const dotStyles = StyleSheet.create({
   dot: {
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#0058bc',
   },
 });
 
 export function OnboardingScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [activeSlide, setActiveSlide] = useState(0);
   const [email, setEmail] = useState('');
   const flatListRef = useRef<FlatList>(null);
@@ -160,7 +163,7 @@ export function OnboardingScreen({ navigation }: any) {
 
   const renderSlide = ({ item, index }: any) => (
     <ImageBackground
-      source={{ uri: item.image }}
+      source={typeof item.image === 'string' ? { uri: item.image } : item.image}
       style={[styles.slideImage]}
       resizeMode="cover"
     />
@@ -183,7 +186,7 @@ export function OnboardingScreen({ navigation }: any) {
           scrollEventThrottle={16}
         />
         <LinearGradient
-          colors={['transparent', 'rgba(249,249,251,0.4)', 'rgba(249,249,251,0.95)', colors.surface]}
+          colors={['transparent', colors.onboardingFade, colors.surfaceFade, colors.surface]}
           style={styles.gradient}
           locations={[0, 0.35, 0.65, 1]}
         />
@@ -279,7 +282,7 @@ export function OnboardingScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.surface,

@@ -1,22 +1,25 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import { View, Text, Pressable, StyleSheet, FlatList, Animated, Easing } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { colors, typography, spacing, radii, shadows } from '../../theme';
+import { useTheme, typography, spacing, radii } from '../../theme';
+import type { Colors } from '../../theme';
 import { useArrangementStore } from '../../store/arrangementStore';
-
-const STATUS_CONFIG: Record<string, { color: string; bg: string; icon: string; label: string }> = {
-  pending: { color: '#f59e0b', bg: '#fffbeb', icon: 'time-outline', label: 'Pending' },
-  in_review: { color: colors.primary, bg: 'rgba(0,88,188,0.06)', icon: 'eye-outline', label: 'In Review' },
-  arranged: { color: colors.success, bg: colors.successLight, icon: 'checkmark-circle-outline', label: 'Trip Ready' },
-  rejected: { color: colors.error, bg: colors.errorContainer, icon: 'close-circle-outline', label: 'Rejected' },
-};
 
 export function MyArrangementsScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
+  const { colors, shadows } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const { arrangements, fetchArrangements, isLoading } = useArrangementStore();
+
+  const STATUS_CONFIG: Record<string, { color: string; bg: string; icon: string; label: string }> = useMemo(() => ({
+    pending: { color: colors.warning, bg: colors.warningLight, icon: 'time-outline', label: 'Pending' },
+    in_review: { color: colors.primary, bg: colors.primaryTint, icon: 'eye-outline', label: 'In Review' },
+    arranged: { color: colors.success, bg: colors.successLight, icon: 'checkmark-circle-outline', label: 'Trip Ready' },
+    rejected: { color: colors.error, bg: colors.errorContainer, icon: 'close-circle-outline', label: 'Rejected' },
+  }), [colors]);
 
   const fadeIn = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -91,7 +94,7 @@ export function MyArrangementsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.xl, paddingVertical: spacing.md },
   headerTitle: { fontFamily: 'Manrope_400Regular', fontSize: 18, color: colors.onSurface },
@@ -103,7 +106,7 @@ const styles = StyleSheet.create({
   dateText: { ...typography.bodySm, color: colors.outline },
   cardRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.xs },
   cardValue: { ...typography.bodyMd, color: colors.onSurface },
-  viewTripButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.xs, marginTop: spacing.md, height: 44, borderRadius: radii.md, backgroundColor: 'rgba(0,88,188,0.06)' },
+  viewTripButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.xs, marginTop: spacing.md, height: 44, borderRadius: radii.md, backgroundColor: colors.primaryTint },
   viewTripText: { fontFamily: 'Inter_400Regular', fontSize: 14, color: colors.primary },
   emptyState: { alignItems: 'center', paddingTop: spacing['4xl'] },
   emptyTitle: { fontFamily: 'Manrope_400Regular', fontSize: 18, color: colors.onSurface, marginTop: spacing.lg },

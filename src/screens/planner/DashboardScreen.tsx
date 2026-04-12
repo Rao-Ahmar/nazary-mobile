@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,24 +8,48 @@ import {
   Image,
   Animated,
   Easing,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, typography, spacing, radii, shadows } from '../../theme';
-import { agencyStats, agencyTrips, recentBookings } from '../../data/mockData';
+import { useFocusEffect } from '@react-navigation/native';
+import { useTheme, typography, spacing, radii } from '../../theme';
+import { type Colors } from '../../theme';
 import { NotificationBell } from '../../components/NotificationBell';
+import { apiClient } from '../../api/client';
+import { tripsApi } from '../../api/trips';
 
-function useStaggeredFadeIn(count: number, baseDelay = 200, stagger = 70) {
-  const anims = useRef(Array.from({ length: count }, () => new Animated.Value(0))).current;
-  useEffect(() => {
-    const timers = anims.map((anim, i) =>
-      setTimeout(() => {
-        Animated.timing(anim, { toValue: 1, duration: 500, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
-      }, baseDelay + i * stagger),
-    );
-    return () => timers.forEach(clearTimeout);
-  }, []);
-  return anims;
+interface Stats {
+  totalRevenue: number;
+  activeTrips: number;
+  totalBookings: number;
+  avgRating: number;
+  monthlyGrowth: number;
+}
+
+interface DashboardTrip {
+  id: string;
+  title: string;
+  status: string;
+  startDate?: string;
+  start_date?: string;
+  price: number;
+  totalSeats?: number;
+  total_seats?: number;
+  seatsLeft?: number;
+  seats_left?: number;
+}
+
+interface DashboardBooking {
+  id: string;
+  travelerName?: string;
+  traveler_name?: string;
+  travelerAvatar?: string;
+  traveler_avatar?: string;
+  tripTitle?: string;
+  trip_title?: string;
+  amount: number;
+  status: string;
 }
 
 function useFadeIn(delay: number, duration = 500) {
@@ -39,14 +63,22 @@ function useFadeIn(delay: number, duration = 500) {
   return anim;
 }
 
-const statusColors: Record<string, { bg: string; text: string }> = {
-  active: { bg: colors.successLight, text: colors.success },
-  draft: { bg: colors.surfaceContainer, text: colors.onSurfaceVariant },
-  completed: { bg: 'rgba(0,88,188,0.08)', text: colors.primary },
-};
-
-export function DashboardScreen() {
+export function DashboardScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
+  const { colors, shadows } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  const statusColors: Record<string, { bg: string; text: string }> = {
+    active: { bg: colors.successLight, text: colors.success },
+    draft: { bg: colors.surfaceContainer, text: colors.onSurfaceVariant },
+    completed: { bg: colors.primaryTint, text: colors.primary },
+    cancelled: { bg: colors.errorContainer, text: colors.error },
+  };
+
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [trips, setTrips] = useState<DashboardTrip[]>([]);
+  const [bookings, setBookings] = useState<DashboardBooking[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const headerAnim = useFadeIn(50);
   const stat1Anim = useFadeIn(100);
@@ -54,14 +86,55 @@ export function DashboardScreen() {
   const stat3Anim = useFadeIn(200);
   const stat4Anim = useFadeIn(250);
   const tripsSectionAnim = useFadeIn(300);
-  const tripAnims = useStaggeredFadeIn(agencyTrips.length, 350, 60);
-  const bookingsSectionAnim = useFadeIn(550);
-  const bookingAnims = useStaggeredFadeIn(recentBookings.length, 600, 60);
+  const bookingsSectionAnim = useFadeIn(500);
+
+  const loadData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const [statsRes, tripsRes, bookingsRes] = await Promise.all([
+        apiClient.get('/planner/stats'),
+        tripsApi.getMyTrips({ page: 1 }),
+        apiClient.get('/planner/bookings', { params: { per_page: 5 } }),
+      ]);
+
+      // Stats
+      const s = (statsRes.data as any)?.data ?? statsRes.data;
+      setStats(s);
+
+      // Trips (take first 5)
+      const tripsData = Array.isArray(tripsRes.data) ? tripsRes.data : (tripsRes.data as any)?.data ?? [];
+      setTrips((tripsData as DashboardTrip[]).slice(0, 5));
+
+      // Bookings
+      const bookingsData = Array.isArray(bookingsRes.data) ? bookingsRes.data : (bookingsRes.data as any)?.data ?? [];
+      setBookings((bookingsData as DashboardBooking[]).slice(0, 5));
+    } catch {
+      // leave defaults
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
 
   const fadeStyle = (anim: Animated.Value, translateDistance = 20) => ({
     opacity: anim,
     transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [translateDistance, 0] }) }],
   });
+
+  const formatRevenue = (val: number) => {
+    if (val >= 1000000) return `${(val / 1000000).toFixed(1)}M`;
+    if (val >= 1000) return `${(val / 1000).toFixed(1)}k`;
+    return String(val);
+  };
+
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { paddingTop: insets.top, justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -74,101 +147,163 @@ export function DashboardScreen() {
           <NotificationBell />
         </Animated.View>
 
+        {/* Stats Grid */}
         <View style={styles.statsGrid}>
           <Animated.View style={[styles.statCard, shadows.soft, fadeStyle(stat1Anim)]}>
-            <View style={[styles.statIcon, { backgroundColor: 'rgba(0,88,188,0.08)' }]}>
+            <View style={[styles.statIcon, { backgroundColor: colors.primaryTint }]}>
               <Ionicons name="trending-up" size={20} color={colors.primary} />
             </View>
-            <Text style={styles.statValue}>${(agencyStats.totalRevenue / 1000).toFixed(1)}k</Text>
+            <Text style={styles.statValue}>PKR {formatRevenue(stats?.totalRevenue ?? 0)}</Text>
             <Text style={styles.statLabel}>Revenue</Text>
-            <View style={styles.growthBadge}>
-              <Ionicons name="arrow-up" size={10} color={colors.success} />
-              <Text style={styles.growthText}>{agencyStats.monthlyGrowth}%</Text>
-            </View>
+            {(stats?.monthlyGrowth ?? 0) !== 0 && (
+              <View style={styles.growthBadge}>
+                <Ionicons
+                  name={stats!.monthlyGrowth > 0 ? 'arrow-up' : 'arrow-down'}
+                  size={10}
+                  color={stats!.monthlyGrowth > 0 ? colors.success : colors.error}
+                />
+                <Text style={[styles.growthText, stats!.monthlyGrowth < 0 && { color: colors.error }]}>
+                  {Math.abs(stats!.monthlyGrowth)}%
+                </Text>
+              </View>
+            )}
           </Animated.View>
           <Animated.View style={[styles.statCard, shadows.soft, fadeStyle(stat2Anim)]}>
             <View style={[styles.statIcon, { backgroundColor: colors.successLight }]}>
               <Ionicons name="compass-outline" size={20} color={colors.success} />
             </View>
-            <Text style={styles.statValue}>{agencyStats.activeTrips}</Text>
+            <Text style={styles.statValue}>{stats?.activeTrips ?? 0}</Text>
             <Text style={styles.statLabel}>Active Trips</Text>
           </Animated.View>
           <Animated.View style={[styles.statCard, shadows.soft, fadeStyle(stat3Anim)]}>
             <View style={[styles.statIcon, { backgroundColor: colors.warningLight }]}>
               <Ionicons name="people-outline" size={20} color={colors.warning} />
             </View>
-            <Text style={styles.statValue}>{agencyStats.totalBookings}</Text>
+            <Text style={styles.statValue}>{stats?.totalBookings ?? 0}</Text>
             <Text style={styles.statLabel}>Bookings</Text>
           </Animated.View>
           <Animated.View style={[styles.statCard, shadows.soft, fadeStyle(stat4Anim)]}>
-            <View style={[styles.statIcon, { backgroundColor: 'rgba(245,158,11,0.08)' }]}>
-              <Ionicons name="star-outline" size={20} color="#F59E0B" />
+            <View style={[styles.statIcon, { backgroundColor: colors.starTint }]}>
+              <Ionicons name="star-outline" size={20} color={colors.star} />
             </View>
-            <Text style={styles.statValue}>{agencyStats.avgRating}</Text>
+            <Text style={styles.statValue}>{stats?.avgRating ?? 0}</Text>
             <Text style={styles.statLabel}>Avg Rating</Text>
           </Animated.View>
         </View>
 
+        {/* Your Trips */}
         <Animated.View style={[styles.section, fadeStyle(tripsSectionAnim)]}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Your Trips</Text>
-            <Pressable><Ionicons name="add-circle-outline" size={22} color={colors.primary} /></Pressable>
+            <Pressable onPress={() => navigation?.navigate?.('ManageTrips')}>
+              <Text style={styles.seeAll}>SEE ALL</Text>
+            </Pressable>
           </View>
-          {agencyTrips.map((trip, index) => {
-            const statusStyle = statusColors[trip.status] ?? statusColors.draft;
-            const fillPercentage = trip.capacity > 0 ? (trip.bookings / trip.capacity) * 100 : 0;
-            return (
-              <Animated.View key={trip.id} style={[styles.tripCard, shadows.soft, fadeStyle(tripAnims[index])]}>
-                <View style={styles.tripTop}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.tripTitle}>{trip.title}</Text>
-                    <Text style={styles.tripDate}><Ionicons name="calendar-outline" size={11} color={colors.onSurfaceVariant} /> Starts {trip.startDate}</Text>
-                  </View>
-                  <View style={[styles.statusBadge, { backgroundColor: statusStyle.bg }]}>
-                    <Text style={[styles.statusText, { color: statusStyle.text }]}>{trip.status.charAt(0).toUpperCase() + trip.status.slice(1)}</Text>
-                  </View>
-                </View>
-                <View style={styles.tripBottom}>
-                  <View style={styles.tripStat}>
-                    <Text style={styles.tripStatValue}>{trip.bookings}/{trip.capacity}</Text>
-                    <Text style={styles.tripStatLabel}>Booked</Text>
-                  </View>
-                  <View style={styles.tripStat}>
-                    <Text style={styles.tripStatValue}>${(trip.revenue / 1000).toFixed(1)}k</Text>
-                    <Text style={styles.tripStatLabel}>Revenue</Text>
-                  </View>
-                  <View style={[styles.progressBarContainer, { flex: 1 }]}>
-                    <View style={styles.progressBar}>
-                      <View style={[styles.progressFill, { width: `${fillPercentage}%`, backgroundColor: fillPercentage >= 100 ? colors.success : colors.primary }]} />
+          {trips.length === 0 ? (
+            <View style={styles.emptyCard}>
+              <Ionicons name="map-outline" size={32} color={colors.outlineVariant} />
+              <Text style={styles.emptyText}>No trips yet</Text>
+            </View>
+          ) : (
+            trips.map((trip) => {
+              const statusStyle = statusColors[trip.status] ?? statusColors.draft;
+              const total = trip.totalSeats ?? trip.total_seats ?? 0;
+              const left = trip.seatsLeft ?? trip.seats_left ?? 0;
+              const booked = total - left;
+              const fillPercentage = total > 0 ? (booked / total) * 100 : 0;
+              const estRevenue = booked * (trip.price ?? 0);
+              const sd = trip.startDate ?? trip.start_date ?? '';
+              const dateLabel = sd ? new Date(sd).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+
+              return (
+                <Pressable
+                  key={trip.id}
+                  onPress={() => navigation?.navigate?.('TripDetails', { tripId: trip.id })}
+                >
+                  <Animated.View style={[styles.tripCard, shadows.soft]}>
+                    <View style={styles.tripTop}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.tripTitle}>{trip.title}</Text>
+                        {dateLabel ? (
+                          <Text style={styles.tripDate}>
+                            <Ionicons name="calendar-outline" size={11} color={colors.onSurfaceVariant} /> Starts {dateLabel}
+                          </Text>
+                        ) : null}
+                      </View>
+                      <View style={[styles.statusBadge, { backgroundColor: statusStyle.bg }]}>
+                        <Text style={[styles.statusText, { color: statusStyle.text }]}>
+                          {trip.status.charAt(0).toUpperCase() + trip.status.slice(1)}
+                        </Text>
+                      </View>
                     </View>
-                    <Text style={styles.progressText}>{Math.round(fillPercentage)}% filled</Text>
-                  </View>
-                </View>
-              </Animated.View>
-            );
-          })}
+                    <View style={styles.tripBottom}>
+                      <View style={styles.tripStat}>
+                        <Text style={styles.tripStatValue}>{booked}/{total}</Text>
+                        <Text style={styles.tripStatLabel}>Booked</Text>
+                      </View>
+                      <View style={styles.tripStat}>
+                        <Text style={styles.tripStatValue}>PKR {formatRevenue(estRevenue)}</Text>
+                        <Text style={styles.tripStatLabel}>Revenue</Text>
+                      </View>
+                      <View style={[styles.progressBarContainer, { flex: 1 }]}>
+                        <View style={styles.progressBar}>
+                          <View style={[styles.progressFill, { width: `${Math.min(fillPercentage, 100)}%`, backgroundColor: fillPercentage >= 100 ? colors.success : colors.primary }]} />
+                        </View>
+                        <Text style={styles.progressText}>{Math.round(fillPercentage)}% filled</Text>
+                      </View>
+                    </View>
+                  </Animated.View>
+                </Pressable>
+              );
+            })
+          )}
         </Animated.View>
 
+        {/* Recent Bookings */}
         <Animated.View style={[styles.section, fadeStyle(bookingsSectionAnim)]}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Recent Bookings</Text>
-            <Pressable><Text style={styles.seeAll}>SEE ALL</Text></Pressable>
+            <Pressable onPress={() => navigation?.navigate?.('Requests')}>
+              <Text style={styles.seeAll}>SEE ALL</Text>
+            </Pressable>
           </View>
-          {recentBookings.map((booking, index) => (
-            <Animated.View key={booking.id} style={[styles.bookingCard, shadows.soft, fadeStyle(bookingAnims[index])]}>
-              <Image source={{ uri: booking.avatar }} style={styles.bookingAvatar} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.bookingName}>{booking.guestName}</Text>
-                <Text style={styles.bookingTrip}>{booking.trip}</Text>
-              </View>
-              <View style={styles.bookingRight}>
-                <Text style={styles.bookingAmount}>${booking.amount.toLocaleString()}</Text>
-                <View style={[styles.bookingStatus, { backgroundColor: booking.status === 'confirmed' ? colors.successLight : colors.warningLight }]}>
-                  <Text style={[styles.bookingStatusText, { color: booking.status === 'confirmed' ? colors.success : colors.warning }]}>{booking.status}</Text>
-                </View>
-              </View>
-            </Animated.View>
-          ))}
+          {bookings.length === 0 ? (
+            <View style={styles.emptyCard}>
+              <Ionicons name="people-outline" size={32} color={colors.outlineVariant} />
+              <Text style={styles.emptyText}>No bookings yet</Text>
+            </View>
+          ) : (
+            bookings.map((booking) => {
+              const name = booking.travelerName ?? booking.traveler_name ?? 'Traveler';
+              const avatar = booking.travelerAvatar ?? booking.traveler_avatar;
+              const tripName = booking.tripTitle ?? booking.trip_title ?? '';
+              const isConfirmed = booking.status === 'confirmed';
+
+              return (
+                <Animated.View key={booking.id} style={[styles.bookingCard, shadows.soft]}>
+                  {avatar ? (
+                    <Image source={{ uri: avatar }} style={styles.bookingAvatar} />
+                  ) : (
+                    <View style={[styles.bookingAvatar, { backgroundColor: colors.surfaceContainerHigh, alignItems: 'center', justifyContent: 'center' }]}>
+                      <Ionicons name="person" size={18} color={colors.outlineVariant} />
+                    </View>
+                  )}
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.bookingName}>{name}</Text>
+                    {tripName ? <Text style={styles.bookingTrip}>{tripName}</Text> : null}
+                  </View>
+                  <View style={styles.bookingRight}>
+                    <Text style={styles.bookingAmount}>PKR {booking.amount.toLocaleString()}</Text>
+                    <View style={[styles.bookingStatus, { backgroundColor: isConfirmed ? colors.successLight : colors.warningLight }]}>
+                      <Text style={[styles.bookingStatusText, { color: isConfirmed ? colors.success : colors.warning }]}>
+                        {booking.status}
+                      </Text>
+                    </View>
+                  </View>
+                </Animated.View>
+              );
+            })
+          )}
         </Animated.View>
 
         <View style={{ height: 100 }} />
@@ -177,17 +312,16 @@ export function DashboardScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   scrollContent: { paddingTop: spacing.lg },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: spacing.xl, marginBottom: spacing.xl },
   headerTitle: { fontFamily: 'Manrope_300Light', fontSize: 32, color: colors.onSurface, letterSpacing: -0.5 },
   headerSubtitle: { ...typography.bodyMd, color: colors.onSurfaceVariant, marginTop: 4 },
-  settingsButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.surfaceContainerLow, alignItems: 'center', justifyContent: 'center' },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: spacing.xl, gap: spacing.md, marginBottom: spacing['2xl'] },
   statCard: { width: '47.5%', backgroundColor: colors.surfaceContainerLowest, borderRadius: radii.xl, padding: spacing.lg },
   statIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.md },
-  statValue: { fontFamily: 'Manrope_400Regular', fontSize: 24, color: colors.onSurface, marginBottom: 2 },
+  statValue: { fontFamily: 'Manrope_400Regular', fontSize: 22, color: colors.onSurface, marginBottom: 2 },
   statLabel: { fontFamily: 'Inter_300Light', fontSize: 11, color: colors.onSurfaceVariant, letterSpacing: 0.3 },
   growthBadge: { flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: spacing.sm },
   growthText: { fontFamily: 'Inter_400Regular', fontSize: 11, color: colors.success },
@@ -217,4 +351,6 @@ const styles = StyleSheet.create({
   bookingAmount: { fontFamily: 'Manrope_400Regular', fontSize: 15, color: colors.onSurface, marginBottom: 4 },
   bookingStatus: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: radii.full },
   bookingStatusText: { fontFamily: 'Inter_400Regular', fontSize: 9, letterSpacing: 0.3, textTransform: 'capitalize' },
+  emptyCard: { alignItems: 'center', paddingVertical: spacing['2xl'], marginHorizontal: spacing.xl, backgroundColor: colors.surfaceContainerLowest, borderRadius: radii.xl, gap: spacing.sm },
+  emptyText: { ...typography.bodyMd, color: colors.onSurfaceVariant },
 });

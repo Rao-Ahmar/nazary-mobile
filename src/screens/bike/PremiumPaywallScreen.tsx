@@ -1,14 +1,17 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable, Animated, Easing } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, typography, spacing, radii } from '../../theme';
+import { useTheme, type Colors } from '../../theme';
+import { typography, spacing, radii } from '../../theme';
 import { useBikeStore } from '../../store/bikeStore';
 
 export function PremiumPaywallScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
   const { setPremium } = useBikeStore();
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -28,8 +31,8 @@ export function PremiumPaywallScreen({ navigation }: any) {
 
       <Animated.View style={[styles.content, { opacity: fadeAnim, transform: [{ translateY: fadeAnim.interpolate({ inputRange: [0, 1], outputRange: [30, 0] }) }] }]}>
         <View style={styles.iconContainer}>
-          <LinearGradient colors={['#0058bc', '#0070eb']} style={styles.iconGradient}>
-            <Ionicons name="bicycle" size={48} color="#fff" />
+          <LinearGradient colors={[colors.gradientStart, colors.gradientEnd]} style={styles.iconGradient}>
+            <Ionicons name="bicycle" size={48} color={colors.onPrimary} />
           </LinearGradient>
         </View>
 
@@ -58,7 +61,7 @@ export function PremiumPaywallScreen({ navigation }: any) {
         </View>
 
         <Pressable onPress={handleDevBypass} style={styles.devButton}>
-          <LinearGradient colors={['#0058bc', '#0070eb']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.devGradient}>
+          <LinearGradient colors={[colors.gradientStart, colors.gradientEnd]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.devGradient}>
             <Text style={styles.devText}>Dev Bypass - Unlock Premium</Text>
           </LinearGradient>
         </Pressable>
@@ -67,7 +70,7 @@ export function PremiumPaywallScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   closeButton: { position: 'absolute', right: spacing.xl, zIndex: 10, width: 44, height: 44, borderRadius: 22, backgroundColor: colors.surfaceContainerLow, alignItems: 'center', justifyContent: 'center' },
   content: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing['2xl'] },
@@ -77,11 +80,11 @@ const styles = StyleSheet.create({
   subtitle: { ...typography.bodyMd, color: colors.onSurfaceVariant, textAlign: 'center', marginBottom: spacing['2xl'] },
   features: { alignSelf: 'stretch', marginBottom: spacing['2xl'] },
   featureRow: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.lg },
-  featureIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,88,188,0.06)', alignItems: 'center', justifyContent: 'center', marginRight: spacing.md },
+  featureIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primaryTint, alignItems: 'center', justifyContent: 'center', marginRight: spacing.md },
   featureText: { ...typography.bodyMd, color: colors.onSurface, flex: 1 },
   comingSoon: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.warningLight, paddingHorizontal: spacing.lg, paddingVertical: spacing.md, borderRadius: radii.xl, marginBottom: spacing.xl },
   comingSoonText: { fontFamily: 'Inter_400Regular', fontSize: 13, color: colors.warning },
   devButton: { alignSelf: 'stretch' },
   devGradient: { height: 56, borderRadius: radii.xl, alignItems: 'center', justifyContent: 'center' },
-  devText: { fontFamily: 'Inter_400Regular', fontSize: 15, color: '#fff' },
+  devText: { fontFamily: 'Inter_400Regular', fontSize: 15, color: colors.onPrimary },
 });

@@ -1,15 +1,30 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable, Image, Animated, Easing, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, typography, spacing, radii, shadows } from '../../theme';
+import { useTheme, typography, spacing, radii } from '../../theme';
+import { type Colors } from '../../theme';
 import { StatusBadge } from '../../components/StatusBadge';
 import { EmptyState } from '../../components/EmptyState';
 import { useTripRequestStore } from '../../store/tripRequestStore';
 
 export function IncomingRequestsScreen({ navigation }: any) {
+  const { colors, shadows } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const insets = useSafeAreaInsets();
-  const { incomingRequests, acceptRequest, rejectRequest } = useTripRequestStore();
+  const { incomingRequests, fetchIncoming, acceptRequest, rejectRequest } = useTripRequestStore();
+
+  useEffect(() => {
+    fetchIncoming();
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchIncoming();
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   const anims = useRef(incomingRequests.map(() => new Animated.Value(0))).current;
   useEffect(() => {
@@ -18,7 +33,7 @@ export function IncomingRequestsScreen({ navigation }: any) {
         Animated.timing(anim, { toValue: 1, duration: 500, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
       }, 200 + i * 80);
     });
-  }, []);
+  }, [incomingRequests.length]);
 
   const fadeStyle = (anim: Animated.Value) => ({
     opacity: anim,
@@ -87,7 +102,7 @@ export function IncomingRequestsScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   title: { fontFamily: 'Manrope_300Light', fontSize: 32, color: colors.onSurface, letterSpacing: -0.5, paddingHorizontal: spacing.xl, paddingTop: spacing.lg, marginBottom: spacing.xl },
   scrollContent: { paddingHorizontal: spacing.xl },

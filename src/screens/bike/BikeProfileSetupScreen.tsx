@@ -1,9 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable, Animated, Easing, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { colors, typography, spacing, radii } from '../../theme';
+import { useTheme, type Colors } from '../../theme';
+import { typography, spacing, radii } from '../../theme';
 import { FormInput } from '../../components/FormInput';
 import { CategoryChip } from '../../components/CategoryChip';
 import { useBikeStore } from '../../store/bikeStore';
@@ -17,6 +18,8 @@ export function BikeProfileSetupScreen({ navigation }: any) {
   const [bikeCc, setBikeCc] = useState(bikeProfile?.bikeCc?.toString() || '');
   const [experienceLevel, setExperienceLevel] = useState(bikeProfile?.experienceLevel || 'beginner');
   const [bio, setBio] = useState(bikeProfile?.bio || '');
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -79,7 +82,7 @@ export function BikeProfileSetupScreen({ navigation }: any) {
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.lg }]}>
         <Pressable onPress={handleSave} disabled={!canSubmit} style={styles.saveButton}>
           <LinearGradient
-            colors={['#0058bc', '#0070eb']}
+            colors={[colors.gradientStart, colors.gradientEnd]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={[styles.gradient, !canSubmit && { opacity: 0.5 }]}
@@ -92,7 +95,7 @@ export function BikeProfileSetupScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.xl, paddingVertical: spacing.md },
   backButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.surfaceContainerLow, alignItems: 'center', justifyContent: 'center' },
@@ -104,5 +107,5 @@ const styles = StyleSheet.create({
   footer: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg },
   saveButton: { width: '100%' },
   gradient: { height: 56, borderRadius: radii.xl, alignItems: 'center', justifyContent: 'center' },
-  saveText: { fontFamily: 'Inter_400Regular', fontSize: 15, color: '#fff' },
+  saveText: { fontFamily: 'Inter_400Regular', fontSize: 15, color: colors.onPrimary },
 });

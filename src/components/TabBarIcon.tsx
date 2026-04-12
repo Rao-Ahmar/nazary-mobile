@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../theme';
+import { useTheme, type Colors } from '../theme';
 
 interface TabBarIconProps {
   name: keyof typeof Ionicons.glyphMap;
@@ -10,6 +10,9 @@ interface TabBarIconProps {
 }
 
 export function TabBarIcon({ name, focused, badge }: TabBarIconProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   return (
     <View style={styles.iconContainer}>
       <Ionicons
@@ -27,7 +30,7 @@ export function TabBarIcon({ name, focused, badge }: TabBarIconProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   iconContainer: {
     alignItems: 'center',
     justifyContent: 'center',

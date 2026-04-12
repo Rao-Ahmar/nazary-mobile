@@ -1,8 +1,9 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable, Image, Animated, Easing } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, typography, spacing, radii, shadows } from '../../theme';
+import { useTheme, typography, spacing, radii } from '../../theme';
+import type { Colors } from '../../theme';
 import { StarRating } from '../../components/StarRating';
 import { ReviewCard } from '../../components/ReviewCard';
 
@@ -28,6 +29,8 @@ const mockReviews = [
 
 export function PlannerPublicProfileScreen({ navigation, route }: any) {
   const insets = useSafeAreaInsets();
+  const { colors, shadows } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const planner = mockPlanner;
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -96,7 +99,7 @@ export function PlannerPublicProfileScreen({ navigation, route }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.xl, paddingVertical: spacing.md },
   backButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.surfaceContainerLow, alignItems: 'center', justifyContent: 'center' },

@@ -1,16 +1,20 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable, Image, Animated, Easing, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, typography, spacing, radii, shadows } from '../../theme';
+import { useTheme, typography, spacing, radii } from '../../theme';
+import { type Colors } from '../../theme';
 import { StatusBadge } from '../../components/StatusBadge';
 import { useTripRequestStore } from '../../store/tripRequestStore';
 import { useAuthStore } from '../../store';
 
 export function TripRequestDetailScreen({ navigation, route }: any) {
+  const { colors, shadows } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const insets = useSafeAreaInsets();
   const { requestId } = route.params;
-  const role = useAuthStore((s) => s.role);
+  const user = useAuthStore((s) => s.user);
   const { myRequests, incomingRequests, cancelRequest, acceptRequest, rejectRequest } = useTripRequestStore();
 
   const request = [...myRequests, ...incomingRequests].find((r) => r.id === requestId);
@@ -28,7 +32,7 @@ export function TripRequestDetailScreen({ navigation, route }: any) {
     );
   }
 
-  const isMyRequest = request.travelerId.includes('dev');
+  const isMyRequest = String(request.travelerId) === String(user?.id);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -110,7 +114,7 @@ export function TripRequestDetailScreen({ navigation, route }: any) {
             <Pressable
               onPress={() => Alert.alert('Cancel Request', 'Are you sure?', [
                 { text: 'No', style: 'cancel' },
-                { text: 'Cancel Request', style: 'destructive', onPress: () => { cancelRequest(request.id); navigation.goBack(); } },
+                { text: 'Cancel Request', style: 'destructive', onPress: async () => { await cancelRequest(request.id); navigation.goBack(); } },
               ])}
               style={styles.cancelButton}
             >
@@ -118,12 +122,12 @@ export function TripRequestDetailScreen({ navigation, route }: any) {
             </Pressable>
           ) : (
             <View style={styles.actionRow}>
-              <Pressable onPress={() => { acceptRequest(request.id); navigation.goBack(); }} style={[styles.actionBtn, styles.acceptBtn]}>
-                <Ionicons name="checkmark" size={18} color="#fff" />
+              <Pressable onPress={async () => { await acceptRequest(request.id); navigation.goBack(); }} style={[styles.actionBtn, styles.acceptBtn]}>
+                <Ionicons name="checkmark" size={18} color={colors.onPrimary} />
                 <Text style={styles.actionBtnText}>Accept</Text>
               </Pressable>
-              <Pressable onPress={() => { rejectRequest(request.id); navigation.goBack(); }} style={[styles.actionBtn, styles.rejectBtn]}>
-                <Ionicons name="close" size={18} color="#fff" />
+              <Pressable onPress={async () => { await rejectRequest(request.id); navigation.goBack(); }} style={[styles.actionBtn, styles.rejectBtn]}>
+                <Ionicons name="close" size={18} color={colors.onPrimary} />
                 <Text style={styles.actionBtnText}>Reject</Text>
               </Pressable>
             </View>
@@ -134,7 +138,7 @@ export function TripRequestDetailScreen({ navigation, route }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.xl, paddingVertical: spacing.md },
   backButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.surfaceContainerLow, alignItems: 'center', justifyContent: 'center' },
@@ -151,12 +155,12 @@ const styles = StyleSheet.create({
   personAvatar: { width: 48, height: 48, borderRadius: 24, marginRight: spacing.md },
   personLabel: { fontFamily: 'Inter_300Light', fontSize: 11, color: colors.onSurfaceVariant },
   personName: { fontFamily: 'Manrope_400Regular', fontSize: 16, color: colors.onSurface, marginTop: 2 },
-  phoneContainer: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, backgroundColor: 'rgba(0,88,188,0.06)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: radii.full },
+  phoneContainer: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, backgroundColor: colors.primaryTint, paddingHorizontal: 12, paddingVertical: 6, borderRadius: radii.full },
   phoneText: { fontFamily: 'Inter_400Regular', fontSize: 12, color: colors.primary },
   noteCard: { backgroundColor: colors.surfaceContainerLowest, borderRadius: radii.xl, padding: spacing.lg, marginBottom: spacing.lg },
   noteLabel: { fontFamily: 'Inter_400Regular', fontSize: 12, color: colors.onSurfaceVariant, marginBottom: spacing.sm },
   noteText: { ...typography.bodyMd, color: colors.onSurface },
-  contactInfo: { flexDirection: 'row', gap: spacing.md, backgroundColor: 'rgba(0,88,188,0.04)', borderRadius: radii.xl, padding: spacing.lg },
+  contactInfo: { flexDirection: 'row', gap: spacing.md, backgroundColor: colors.primaryTint, borderRadius: radii.xl, padding: spacing.lg },
   contactText: { ...typography.bodySm, color: colors.onSurfaceVariant, flex: 1 },
   footer: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg },
   cancelButton: { height: 56, borderRadius: radii.xl, backgroundColor: colors.errorContainer, alignItems: 'center', justifyContent: 'center' },
@@ -165,5 +169,5 @@ const styles = StyleSheet.create({
   actionBtn: { flex: 1, height: 56, borderRadius: radii.xl, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
   acceptBtn: { backgroundColor: colors.success },
   rejectBtn: { backgroundColor: colors.error },
-  actionBtnText: { fontFamily: 'Inter_400Regular', fontSize: 15, color: '#fff' },
+  actionBtnText: { fontFamily: 'Inter_400Regular', fontSize: 15, color: colors.onPrimary },
 });

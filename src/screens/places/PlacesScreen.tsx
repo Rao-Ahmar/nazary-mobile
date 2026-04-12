@@ -1,8 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable, Image, TextInput, Dimensions, Animated, Easing } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, typography, spacing, radii, shadows } from '../../theme';
+import { useTheme, typography, spacing, radii } from '../../theme';
+import type { Colors } from '../../theme';
 import { CategoryChip } from '../../components/CategoryChip';
 
 const { width } = Dimensions.get('window');
@@ -23,6 +24,8 @@ const regions = ['All', 'Gilgit-Baltistan', 'Khyber Pakhtunkhwa', 'Azad Kashmir'
 
 export function PlacesScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
+  const { colors, shadows } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [selectedRegion, setSelectedRegion] = useState('All');
   const [search, setSearch] = useState('');
 
@@ -72,7 +75,7 @@ export function PlacesScreen({ navigation }: any) {
                 <Text style={styles.placeRegion}>{place.region}</Text>
                 {place.rating > 0 && (
                   <View style={styles.ratingRow}>
-                    <Ionicons name="star" size={12} color="#F59E0B" />
+                    <Ionicons name="star" size={12} color={colors.star} />
                     <Text style={styles.ratingText}>{place.rating} ({place.reviewCount})</Text>
                   </View>
                 )}
@@ -86,7 +89,7 @@ export function PlacesScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.xl, paddingVertical: spacing.md },
   backButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.surfaceContainerLow, alignItems: 'center', justifyContent: 'center' },

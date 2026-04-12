@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -13,12 +13,15 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, typography, spacing, radii, shadows } from '../../theme';
+import { useTheme, typography, spacing, radii, type Colors } from '../../theme';
 import { plannersApi } from '../../api/planners';
 import type { Agency } from '../../types';
 
 export function AgenciesListScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
+  const { colors, shadows } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const [agencies, setAgencies] = useState<Agency[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [page, setPage] = useState(1);
@@ -132,35 +135,36 @@ export function AgenciesListScreen({ navigation }: any) {
         >
           <Image
             source={{
-              uri: item.agency_logo || item.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
+              uri: item.agencyLogo || item.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
             }}
             style={styles.avatar}
           />
           <View style={styles.cardContent}>
             <View style={styles.nameRow}>
               <Text style={styles.agencyName} numberOfLines={1}>
-                {item.agency_name || item.name}
+                {item.agencyName || item.name}
               </Text>
+              {/* TODO: Re-enable verified badge when admin verification is in place
               {item.verified && (
                 <Ionicons name="checkmark-circle" size={16} color={colors.primary} style={{ marginLeft: 4 }} />
-              )}
+              )} */}
             </View>
-            {item.agency_tagline ? (
+            {item.agencyTagline ? (
               <Text style={styles.tagline} numberOfLines={1}>
-                {item.agency_tagline}
+                {item.agencyTagline}
               </Text>
             ) : null}
             <View style={styles.metaRow}>
-              {item.average_rating > 0 && (
+              {Number(item.averageRating) > 0 && (
                 <View style={styles.metaItem}>
-                  <Ionicons name="star" size={12} color="#F59E0B" />
-                  <Text style={styles.metaText}>{item.average_rating.toFixed(1)}</Text>
+                  <Ionicons name="star" size={12} color={colors.star} />
+                  <Text style={styles.metaText}>{Number(item.averageRating).toFixed(1)}</Text>
                 </View>
               )}
               <View style={styles.metaItem}>
                 <Ionicons name="bus-outline" size={12} color={colors.outline} />
                 <Text style={styles.metaText}>
-                  {item.total_trips} {item.total_trips === 1 ? 'trip' : 'trips'}
+                  {item.totalTrips ?? 0} {(item.totalTrips ?? 0) === 1 ? 'trip' : 'trips'}
                 </Text>
               </View>
               {item.city ? (
@@ -224,7 +228,7 @@ export function AgenciesListScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   header: {
     paddingHorizontal: spacing.xl,

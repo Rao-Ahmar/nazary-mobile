@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { colors, typography, spacing, radii } from '../../theme';
+import { useTheme, typography, spacing, radii, type Colors } from '../../theme';
 import { otpApi } from '../../api/otp';
 import type { ProfileSetupStackParamList } from '../../types';
 
@@ -28,6 +28,8 @@ export function OtpVerificationScreen() {
   const navigation = useNavigation<OtpVerificationNavProp>();
   const route = useRoute<OtpVerificationRouteProp>();
   const { phoneNumber } = route.params;
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const [digits, setDigits] = useState<string[]>(Array(CODE_LENGTH).fill(''));
   const [isVerifying, setIsVerifying] = useState(false);
@@ -272,7 +274,7 @@ export function OtpVerificationScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.surface,
@@ -304,7 +306,7 @@ const styles = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: radii.full,
-    backgroundColor: 'rgba(0,88,188,0.06)',
+    backgroundColor: colors.primaryTint,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -415,7 +417,7 @@ const styles = StyleSheet.create({
   infoCard: {
     flexDirection: 'row',
     gap: spacing.md,
-    backgroundColor: 'rgba(0,88,188,0.04)',
+    backgroundColor: colors.primaryTint,
     borderRadius: radii.xl,
     padding: spacing.lg,
   },

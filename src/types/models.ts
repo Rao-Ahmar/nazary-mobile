@@ -23,6 +23,12 @@ export interface TripPlanner extends User {
   yearsExperience?: number;
   agencyLogo?: string;
   plannerRating: number;
+  youtubeUrl?: string;
+  instagramUrl?: string;
+  tiktokUrl?: string;
+  twitterUrl?: string;
+  websiteUrl?: string;
+  coverPhoto?: string;
 }
 
 export interface PlannerProfile {
@@ -81,6 +87,9 @@ export interface Trip {
   createdAt: string;
   contentUpdatedAt?: string;
   isUpdated?: boolean;
+  sourceTripId?: string;
+  recurringEnabled?: boolean;
+  recurringRule?: { day_of_week: number; hour: number };
 }
 
 export interface CoupleRequest {
@@ -228,25 +237,33 @@ export interface BikeProfile {
 
 export interface Agency {
   id: string;
-  agency_name: string;
+  agencyName: string;
   name: string;
   bio?: string;
-  agency_tagline?: string;
+  agencyTagline?: string;
   city?: string;
   phone?: string;
   verified: boolean;
-  average_rating: number;
-  total_trips: number;
+  averageRating: number;
+  totalTrips: number;
   avatar?: string;
-  agency_logo?: string;
-  years_experience?: number;
-  created_at: string;
-  youtube_url?: string;
-  instagram_url?: string;
-  tiktok_url?: string;
-  twitter_url?: string;
-  website_url?: string;
-  cover_photo?: string;
+  agencyLogo?: string;
+  yearsExperience?: number;
+  createdAt: string;
+  youtubeUrl?: string;
+  instagramUrl?: string;
+  tiktokUrl?: string;
+  twitterUrl?: string;
+  websiteUrl?: string;
+  coverPhoto?: string;
+}
+
+export interface ItineraryPreset {
+  id: string;
+  name: string;
+  days: { day: number; title: string; desc: string }[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export type BikeTrip = Trip; // Bike trips are regular trips tagged with "Bike"

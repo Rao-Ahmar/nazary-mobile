@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, typography, spacing, radii, shadows } from '../../theme';
+import { useTheme, typography, spacing, radii } from '../../theme';
+import { type Colors } from '../../theme';
 import { featuredTrips as mockFeaturedTrips, categories, curatedCollections } from '../../data/mockData';
 import { useAuthStore } from '../../store';
 import { NotificationBell } from '../../components/NotificationBell';
@@ -29,7 +30,7 @@ type FeaturedTrip = {
   id: string;
   title: string;
   location: string;
-  image: string;
+  image: any;
   price: number;
   currency: string;
   duration: string;
@@ -83,6 +84,8 @@ export function HomeScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
   const [selectedCategory, setSelectedCategory] = React.useState('1');
   const user = useAuthStore((s) => s.user);
+  const { colors, shadows } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const [featuredTripsData, setFeaturedTripsData] = useState<FeaturedTrip[]>(mockFeaturedTrips);
 
@@ -140,7 +143,7 @@ export function HomeScreen({ navigation }: any) {
   const renderFeaturedCard = (trip: FeaturedTrip, index: number) => (
     <Animated.View key={trip.id} style={[styles.featuredCard, shadows.card, fadeInDownStyle(featuredAnims[index] || new Animated.Value(1))]}>
       <Pressable onPress={() => navigation.navigate('TripDetails', { tripId: trip.id })}>
-        <ImageBackground source={{ uri: trip.image }} style={styles.featuredImage} imageStyle={{ borderRadius: radii.xl }} resizeMode="cover">
+        <ImageBackground source={typeof trip.image === 'string' ? { uri: trip.image } : trip.image} style={styles.featuredImage} imageStyle={{ borderRadius: radii.xl }} resizeMode="cover">
           <View style={styles.featuredBadges}>
             <View style={styles.seatsBadge}>
               <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFill} />
@@ -158,7 +161,7 @@ export function HomeScreen({ navigation }: any) {
                   </Text>
                 </View>
                 <View style={styles.ratingBadge}>
-                  <Ionicons name="star" size={12} color="#F59E0B" />
+                  <Ionicons name="star" size={12} color={colors.star} />
                   <Text style={styles.ratingText}>{trip.rating}</Text>
                 </View>
               </View>
@@ -193,8 +196,8 @@ export function HomeScreen({ navigation }: any) {
   const renderCollectionCard = (collection: typeof curatedCollections[0], index: number) => (
     <Animated.View key={collection.id} style={fadeInRightStyle(collectionAnims[index])}>
       <Pressable style={styles.collectionCard}>
-        <ImageBackground source={{ uri: collection.image }} style={styles.collectionImage} imageStyle={{ borderRadius: radii.lg }} resizeMode="cover">
-          <LinearGradient colors={['transparent', 'rgba(0,0,0,0.55)']} style={styles.collectionGradient}>
+        <ImageBackground source={typeof collection.image === 'string' ? { uri: collection.image } : collection.image} style={styles.collectionImage} imageStyle={{ borderRadius: radii.lg }} resizeMode="cover">
+          <LinearGradient colors={['transparent', colors.imageOverlay]} style={styles.collectionGradient}>
             <Text style={styles.collectionTitle}>{collection.title}</Text>
             <Text style={styles.collectionSubtitle}>{collection.subtitle}</Text>
           </LinearGradient>
@@ -227,7 +230,7 @@ export function HomeScreen({ navigation }: any) {
         {/* Action Cards: Custom Trip + Places + Bike Trips */}
         <Animated.View style={[styles.actionCardsRow, fadeInDownStyle(actionCardsAnim)]}>
           <Pressable onPress={() => navigation.navigate('CreateTripRequest', {})} style={[styles.actionCard, shadows.soft]}>
-            <View style={[styles.actionIcon, { backgroundColor: 'rgba(0,88,188,0.08)' }]}>
+            <View style={[styles.actionIcon, { backgroundColor: colors.primaryTint }]}>
               <Ionicons name="document-text-outline" size={20} color={colors.primary} />
             </View>
             <Text style={styles.actionCardTitle}>Custom Trip</Text>
@@ -252,17 +255,17 @@ export function HomeScreen({ navigation }: any) {
         {/* Arrange a Trip for Me -- Premium Feature */}
         <Animated.View style={[{ paddingHorizontal: spacing.xl, marginBottom: spacing.xl }, fadeInDownStyle(actionCardsAnim)]}>
           <Pressable onPress={() => navigation.navigate('ArrangeATrip')} style={[styles.arrangeCard, shadows.card]}>
-            <LinearGradient colors={['#0058bc', '#0070eb']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.arrangeGradient}>
+            <LinearGradient colors={[colors.gradientStart, colors.gradientEnd]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.arrangeGradient}>
               <View style={styles.arrangeContent}>
                 <View style={{ flex: 1 }}>
                   <View style={styles.arrangeBadge}>
-                    <Ionicons name="star" size={12} color="#F59E0B" />
+                    <Ionicons name="star" size={12} color={colors.star} />
                     <Text style={styles.arrangeBadgeText}>Premium</Text>
                   </View>
                   <Text style={styles.arrangeTitle}>Arrange a Trip for Me</Text>
                   <Text style={styles.arrangeSub}>Let our team curate the perfect trip based on your preferences</Text>
                 </View>
-                <Ionicons name="arrow-forward-circle" size={36} color="rgba(255,255,255,0.8)" />
+                <Ionicons name="arrow-forward-circle" size={36} color={colors.onImageMuted} />
               </View>
             </LinearGradient>
           </Pressable>
@@ -296,7 +299,7 @@ export function HomeScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   scrollContent: { paddingTop: spacing.lg },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: spacing.xl, marginBottom: spacing.xl },
@@ -331,8 +334,8 @@ const styles = StyleSheet.create({
   featuredTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: spacing.md },
   featuredTitle: { fontFamily: 'Manrope_400Regular', fontSize: 20, color: colors.onSurface, marginBottom: 4 },
   featuredLocation: { ...typography.bodySm, color: colors.onSurfaceVariant },
-  ratingBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(245,158,11,0.1)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: radii.full },
-  ratingText: { fontFamily: 'Inter_400Regular', fontSize: 12, color: '#92700c' },
+  ratingBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.starTint, paddingHorizontal: 10, paddingVertical: 4, borderRadius: radii.full },
+  ratingText: { fontFamily: 'Inter_400Regular', fontSize: 12, color: colors.ratingText },
   featuredBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md },
   hostInfo: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   hostAvatar: { width: 32, height: 32, borderRadius: 16 },
@@ -342,20 +345,20 @@ const styles = StyleSheet.create({
   priceAmount: { fontFamily: 'Manrope_400Regular', fontSize: 20, color: colors.onSurface },
   pricePer: { fontFamily: 'Inter_300Light', fontSize: 10, color: colors.onSurfaceVariant },
   tagRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  tag: { backgroundColor: 'rgba(238,238,240,0.7)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: radii.full },
+  tag: { backgroundColor: colors.tagBg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: radii.full },
   tagText: { fontFamily: 'Inter_400Regular', fontSize: 10, color: colors.onSurfaceVariant, letterSpacing: 0.3 },
   duration: { fontFamily: 'Inter_300Light', fontSize: 11, color: colors.onSurfaceVariant, marginLeft: 'auto' },
   collectionsScroll: { paddingHorizontal: spacing.xl, gap: spacing.md },
   collectionCard: { width: COLLECTION_WIDTH, height: COLLECTION_WIDTH * 1.3, borderRadius: radii.lg, overflow: 'hidden' },
   collectionImage: { flex: 1 },
   collectionGradient: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: spacing.lg, paddingTop: spacing['3xl'], borderBottomLeftRadius: radii.lg, borderBottomRightRadius: radii.lg },
-  collectionTitle: { fontFamily: 'Manrope_400Regular', fontSize: 16, color: '#ffffff', marginBottom: 2 },
-  collectionSubtitle: { fontFamily: 'Inter_300Light', fontSize: 11, color: 'rgba(255,255,255,0.75)' },
+  collectionTitle: { fontFamily: 'Manrope_400Regular', fontSize: 16, color: colors.onImage, marginBottom: 2 },
+  collectionSubtitle: { fontFamily: 'Inter_300Light', fontSize: 11, color: colors.onImageMuted },
   arrangeCard: { borderRadius: radii.xl, overflow: 'hidden' },
   arrangeGradient: { borderRadius: radii.xl, padding: spacing.xl },
   arrangeContent: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg },
-  arrangeBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(255,255,255,0.15)', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: radii.full, marginBottom: spacing.sm },
-  arrangeBadgeText: { fontFamily: 'Inter_400Regular', fontSize: 11, color: '#F59E0B', letterSpacing: 0.3 },
-  arrangeTitle: { fontFamily: 'Manrope_400Regular', fontSize: 18, color: '#ffffff', marginBottom: 4 },
-  arrangeSub: { fontFamily: 'Inter_300Light', fontSize: 12, color: 'rgba(255,255,255,0.75)', lineHeight: 18 },
+  arrangeBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.imageBadgeBgDark, alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: radii.full, marginBottom: spacing.sm },
+  arrangeBadgeText: { fontFamily: 'Inter_400Regular', fontSize: 11, color: colors.star, letterSpacing: 0.3 },
+  arrangeTitle: { fontFamily: 'Manrope_400Regular', fontSize: 18, color: colors.onImage, marginBottom: 4 },
+  arrangeSub: { fontFamily: 'Inter_300Light', fontSize: 12, color: colors.onImageMuted, lineHeight: 18 },
 });

@@ -1,17 +1,17 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable, Animated, Easing, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { colors, typography, spacing, radii } from '../../theme';
+import { useTheme, typography, spacing, radii, type Colors } from '../../theme';
 import { FormInput } from '../../components/FormInput';
 import { useAuthStore } from '../../store';
 import { authApi } from '../../api/auth';
 import type { ProfileSetupStackParamList } from '../../types';
 
-const PHONE_REGEX = /^(\+92[0-9]{10}|0[0-9]{10})$/;
+const PHONE_REGEX = /^0[0-9]{10}$/;
 
 type NavigationProp = NativeStackNavigationProp<ProfileSetupStackParamList, 'TravelerProfileSetup'>;
 
@@ -19,9 +19,17 @@ export function TravelerProfileSetupScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
   const { setProfileCompleted, setUser } = useAuthStore();
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [phone, setPhone] = useState('');
   const [phoneError, setPhoneError] = useState('');
   const [phoneVerified, setPhoneVerified] = useState(false);
+
+  const handlePhoneChange = (text: string) => {
+    const digits = text.replace(/\D/g, '').slice(0, 11);
+    setPhone(digits);
+    if (phoneError) setPhoneError('');
+  };
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -49,7 +57,7 @@ export function TravelerProfileSetupScreen() {
 
   const handleComplete = () => {
     if (!PHONE_REGEX.test(phone.trim())) {
-      setPhoneError('Enter a valid Pakistan phone number (e.g. +923001234567 or 03001234567)');
+      setPhoneError('Enter a valid 11-digit phone number (e.g. 03001234567)');
       return;
     }
     setPhoneError('');
@@ -68,7 +76,7 @@ export function TravelerProfileSetupScreen() {
             <Ionicons name="person-circle-outline" size={80} color={colors.primary} />
           </View>
 
-          <FormInput label="Phone Number" icon="call-outline" value={phone} onChangeText={(text: string) => { setPhone(text); if (phoneError) setPhoneError(''); }} placeholder="+92 300 1234567" keyboardType="phone-pad" />
+          <FormInput label="Phone Number" icon="call-outline" value={phone} onChangeText={handlePhoneChange} placeholder="03001234567" keyboardType="number-pad" maxLength={11} />
           {phoneError ? <Text style={styles.errorText}>{phoneError}</Text> : null}
 
           <View style={styles.tipCard}>
@@ -81,7 +89,7 @@ export function TravelerProfileSetupScreen() {
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.lg }]}>
         <Pressable onPress={handleComplete} disabled={!canComplete || isSaving} style={styles.button}>
           <LinearGradient
-            colors={['#0058bc', '#0070eb']}
+            colors={[colors.gradientStart, colors.gradientEnd]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={[styles.gradient, (!canComplete || isSaving) && { opacity: 0.5 }]}
@@ -94,17 +102,17 @@ export function TravelerProfileSetupScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   scrollContent: { paddingHorizontal: spacing.xl, paddingTop: spacing['2xl'] },
   title: { fontFamily: 'Manrope_300Light', fontSize: 32, color: colors.onSurface, letterSpacing: -0.5 },
   subtitle: { ...typography.bodyMd, color: colors.onSurfaceVariant, marginTop: spacing.xs, marginBottom: spacing['2xl'] },
   iconContainer: { alignItems: 'center', marginBottom: spacing['2xl'] },
-  tipCard: { flexDirection: 'row', gap: spacing.md, backgroundColor: 'rgba(0,88,188,0.04)', borderRadius: radii.xl, padding: spacing.lg, marginTop: spacing.lg },
+  tipCard: { flexDirection: 'row', gap: spacing.md, backgroundColor: colors.primaryTint, borderRadius: radii.xl, padding: spacing.lg, marginTop: spacing.lg },
   tipText: { ...typography.bodySm, color: colors.onSurfaceVariant, flex: 1 },
   errorText: { ...typography.bodySm, color: colors.error, marginTop: spacing.xs },
   footer: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg },
   button: { width: '100%' },
   gradient: { height: 56, borderRadius: radii.xl, alignItems: 'center', justifyContent: 'center' },
-  buttonText: { fontFamily: 'Inter_400Regular', fontSize: 15, color: '#fff' },
+  buttonText: { fontFamily: 'Inter_400Regular', fontSize: 15, color: colors.onPrimary },
 });

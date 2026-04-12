@@ -1,6 +1,6 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { colors } from '../theme';
+import { useTheme } from '../theme';
 import { OnboardingScreen } from '../screens/auth/OnboardingScreen';
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { SignupScreen } from '../screens/auth/SignupScreen';
@@ -11,6 +11,8 @@ import type { AuthStackParamList } from '../types';
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
 export function AuthStack() {
+  const { colors } = useTheme();
+
   return (
     <Stack.Navigator
       screenOptions={{

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, Pressable, StyleSheet, Modal } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { colors, spacing, radii } from '../theme';
+import { spacing, radii, useTheme, type Colors } from '../theme';
 
 interface DatePickerModalProps {
   visible: boolean;
@@ -14,6 +14,8 @@ interface DatePickerModalProps {
 
 export function DatePickerModal({ visible, value, minimumDate, onConfirm, onClose, title }: DatePickerModalProps) {
   const [tempDate, setTempDate] = useState(value);
+  const { colors, isDark } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const handleChange = (_: any, date?: Date) => {
     if (date) setTempDate(date);
@@ -42,8 +44,8 @@ export function DatePickerModal({ visible, value, minimumDate, onConfirm, onClos
               minimumDate={minimumDate}
               onChange={handleChange}
               style={styles.picker}
-              textColor="#000000"
-              themeVariant="light"
+              textColor={colors.onSurface}
+              themeVariant={isDark ? 'dark' : 'light'}
             />
           </View>
           <Pressable style={styles.doneButton} onPress={handleDone}>
@@ -55,15 +57,15 @@ export function DatePickerModal({ visible, value, minimumDate, onConfirm, onClos
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: colors.scrim,
     justifyContent: 'center',
     alignItems: 'center',
   },
   card: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surfaceContainerLowest,
     borderRadius: radii.xl,
     paddingTop: spacing.lg,
     paddingBottom: spacing.lg,
@@ -71,7 +73,7 @@ const styles = StyleSheet.create({
     width: '85%',
     maxWidth: 360,
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: colors.onSurface,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 12,
@@ -80,12 +82,12 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: 'Manrope_400Regular',
     fontSize: 17,
-    color: '#1a1a1a',
+    color: colors.onSurface,
     marginBottom: spacing.md,
   },
   pickerContainer: {
     width: '100%',
-    backgroundColor: '#f0f0f0',
+    backgroundColor: colors.surfaceContainerLow,
     borderRadius: radii.lg,
     overflow: 'hidden',
   },
@@ -103,6 +105,6 @@ const styles = StyleSheet.create({
   doneText: {
     fontFamily: 'Inter_400Regular',
     fontSize: 15,
-    color: '#ffffff',
+    color: colors.onPrimary,
   },
 });

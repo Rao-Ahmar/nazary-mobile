@@ -1,19 +1,22 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable, Image, Animated, Easing } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, typography, spacing, radii, shadows } from '../../theme';
+import { useTheme, type Colors, type Shadows } from '../../theme';
+import { typography, spacing, radii } from '../../theme';
 import { useBikeStore } from '../../store/bikeStore';
-
-const levelColors = {
-  beginner: { bg: colors.successLight, text: colors.success },
-  intermediate: { bg: colors.warningLight, text: colors.warning },
-  advanced: { bg: 'rgba(0,88,188,0.08)', text: colors.primary },
-};
 
 export function BikeRidersScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
   const riders = useBikeStore((s) => s.bikeRiders);
+  const { colors, shadows } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  const levelColors = {
+    beginner: { bg: colors.successLight, text: colors.success },
+    intermediate: { bg: colors.warningLight, text: colors.warning },
+    advanced: { bg: colors.primaryTint, text: colors.primary },
+  };
 
   const anims = useRef(riders.map(() => new Animated.Value(0))).current;
   useEffect(() => {
@@ -71,7 +74,7 @@ export function BikeRidersScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.xl, paddingVertical: spacing.md },
   backButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.surfaceContainerLow, alignItems: 'center', justifyContent: 'center' },

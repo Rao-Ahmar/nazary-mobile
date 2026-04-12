@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { colors, typography, spacing, radii } from '../../theme';
+import { useTheme, typography, spacing, radii } from '../../theme';
+import type { Colors } from '../../theme';
 import type { AuthStackParamList } from '../../types';
 
 const { width, height } = Dimensions.get('window');
@@ -22,12 +23,14 @@ const { width, height } = Dimensions.get('window');
 type Props = NativeStackScreenProps<AuthStackParamList, 'Onboarding'>;
 
 const slides = [
-  { id: '1', image: 'https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=800&q=80' },
-  { id: '2', image: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&q=80' },
-  { id: '3', image: 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800&q=80' },
+  { id: '1', image: require('../../../assets/images/hunza-autumn.jpg') },
+  { id: '2', image: require('../../../assets/images/fairy-meadows.jpg') },
+  { id: '3', image: require('../../../assets/images/saif-ul-malook.jpg') },
+  { id: '4', image: require('../../../assets/images/shangrila.jpg') },
+  { id: '5', image: require('../../../assets/images/nanga-parbat.jpg') },
 ];
 
-function PageDot({ active }: { active: boolean }) {
+function PageDot({ active, dotStyle }: { active: boolean; dotStyle: any }) {
   const widthAnim = useRef(new Animated.Value(active ? 24 : 6)).current;
   const opacityAnim = useRef(new Animated.Value(active ? 1 : 0.3)).current;
 
@@ -49,12 +52,14 @@ function PageDot({ active }: { active: boolean }) {
   }, [active]);
 
   return (
-    <Animated.View style={[styles.dot, { width: widthAnim, opacity: opacityAnim }]} />
+    <Animated.View style={[dotStyle, { width: widthAnim, opacity: opacityAnim }]} />
   );
 }
 
 export function OnboardingScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [activeSlide, setActiveSlide] = useState(0);
   const flatListRef = useRef<FlatList>(null);
 
@@ -106,7 +111,7 @@ export function OnboardingScreen({ navigation }: Props) {
           ref={flatListRef}
           data={slides}
           renderItem={({ item }) => (
-            <ImageBackground source={{ uri: item.image }} style={styles.slideImage} resizeMode="cover" />
+            <ImageBackground source={typeof item.image === 'string' ? { uri: item.image } : item.image} style={styles.slideImage} resizeMode="cover" />
           )}
           keyExtractor={(item) => item.id}
           horizontal
@@ -117,7 +122,7 @@ export function OnboardingScreen({ navigation }: Props) {
           scrollEventThrottle={16}
         />
         <LinearGradient
-          colors={['transparent', 'rgba(249,249,251,0.4)', 'rgba(249,249,251,0.95)', colors.surface]}
+          colors={['transparent', colors.onboardingFade, colors.surfaceFade, colors.surface]}
           style={styles.gradient}
           locations={[0, 0.35, 0.65, 1]}
         />
@@ -127,7 +132,7 @@ export function OnboardingScreen({ navigation }: Props) {
       <View style={[styles.content, { paddingBottom: insets.bottom + 20 }]}>
         <View style={styles.dots}>
           {slides.map((_, index) => (
-            <PageDot key={index} active={index === activeSlide} />
+            <PageDot key={index} active={index === activeSlide} dotStyle={styles.dot} />
           ))}
         </View>
 
@@ -176,7 +181,7 @@ export function OnboardingScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   carouselContainer: { height: height * 0.52, position: 'relative' },
   slideImage: { width, height: height * 0.52 },

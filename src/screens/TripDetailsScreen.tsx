@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -17,7 +17,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, typography, spacing, radii, shadows } from '../theme';
+import { useTheme, typography, spacing, radii } from '../theme';
+import { type Colors } from '../theme';
 import { tripsApi } from '../api/trips';
 import { bookingsApi } from '../api/bookings';
 import { useAuthStore } from '../store';
@@ -54,6 +55,9 @@ function useSectionAnims(count: number) {
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
 export function TripDetailsScreen({ navigation, route }: any) {
+  const { colors, shadows } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const insets = useSafeAreaInsets();
   const scrollY = useRef(new Animated.Value(0)).current;
   const tripId = route?.params?.tripId;
@@ -263,7 +267,7 @@ export function TripDetailsScreen({ navigation, route }: any) {
             </View>
           )}
           <LinearGradient
-            colors={['transparent', 'rgba(249,249,251,0.6)', colors.surface]}
+            colors={['transparent', colors.surfaceFade, colors.surface]}
             style={styles.heroGradient}
             locations={[0.3, 0.7, 1]}
           />
@@ -314,7 +318,7 @@ export function TripDetailsScreen({ navigation, route }: any) {
                   {host.guild ? <Text style={styles.hostGuild}>{host.guild}</Text> : null}
                 </View>
                 <View style={styles.hostRating}>
-                  <Ionicons name="star" size={14} color="#F59E0B" />
+                  <Ionicons name="star" size={14} color={colors.star} />
                   <Text style={styles.hostRatingText}>{host.rating ?? 0}</Text>
                 </View>
               </View>
@@ -422,7 +426,7 @@ export function TripDetailsScreen({ navigation, route }: any) {
                     </View>
                     <View style={styles.reviewStars}>
                       {Array.from({ length: review.rating }).map((_, i) => (
-                        <Ionicons key={i} name="star" size={12} color="#F59E0B" />
+                        <Ionicons key={i} name="star" size={12} color={colors.star} />
                       ))}
                     </View>
                   </View>
@@ -450,7 +454,7 @@ export function TripDetailsScreen({ navigation, route }: any) {
             <Text style={styles.bottomPrice}>PKR {(trip.price ?? 0).toLocaleString()}</Text>
             <Text style={styles.bottomPricePer}>per person</Text>
           </View>
-          {hasRequested ? (
+          {isOwnTrip ? null : hasRequested ? (
             <View style={styles.requestedBadge}>
               <Ionicons name="checkmark-circle" size={18} color={colors.success} />
               <Text style={styles.requestedText}>Request Sent</Text>
@@ -485,7 +489,7 @@ export function TripDetailsScreen({ navigation, route }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.surface,
@@ -557,7 +561,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: 'rgba(0,88,188,0.06)',
+    backgroundColor: colors.primaryTint,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: radii.full,
@@ -575,7 +579,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.full,
   },
   seatsBadgeFull: {
-    backgroundColor: 'rgba(220,38,38,0.08)',
+    backgroundColor: colors.errorTint,
   },
   seatsText: {
     fontFamily: 'Inter_400Regular',
@@ -688,7 +692,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     paddingVertical: spacing.md,
     borderRadius: radii.md,
-    backgroundColor: 'rgba(0,88,188,0.06)',
+    backgroundColor: colors.primaryTint,
   },
   callButtonText: {
     fontFamily: 'Inter_400Regular',
@@ -721,7 +725,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: 'rgba(0,88,188,0.08)',
+    backgroundColor: colors.primaryTint,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -847,7 +851,7 @@ const styles = StyleSheet.create({
     right: 0,
     overflow: 'hidden',
     borderTopWidth: 0.5,
-    borderTopColor: 'rgba(193,198,215,0.2)',
+    borderTopColor: colors.borderSubtle,
   },
   bottomContent: {
     flexDirection: 'row',
@@ -901,7 +905,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 14,
     borderRadius: radii.xl,
-    backgroundColor: 'rgba(220,38,38,0.08)',
+    backgroundColor: colors.errorTint,
   },
   fullText: {
     fontFamily: 'Inter_400Regular',

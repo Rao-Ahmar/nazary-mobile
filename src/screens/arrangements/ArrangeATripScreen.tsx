@@ -1,16 +1,19 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet, ScrollView, Switch, Alert, Animated, Easing } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { colors, typography, spacing, radii, shadows } from '../../theme';
+import { useTheme, typography, spacing, radii } from '../../theme';
+import type { Colors } from '../../theme';
 import { DatePickerModal } from '../../components/DatePickerModal';
 import { arrangementApi } from '../../api/arrangements';
 
 export function ArrangeATripScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [destination, setDestination] = useState('');
   const [surpriseMe, setSurpriseMe] = useState(false);
   const [startDate, setStartDate] = useState('');
@@ -71,8 +74,8 @@ export function ArrangeATripScreen() {
       <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 100 }]} showsVerticalScrollIndicator={false}>
         <Animated.View style={{ opacity: contentOpacity }}>
           {/* Premium Badge */}
-          <LinearGradient colors={['#f59e0b', '#d97706']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.premiumBadge}>
-            <Ionicons name="star" size={16} color="#fff" />
+          <LinearGradient colors={[colors.warningGradientStart, colors.warningGradientEnd]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.premiumBadge}>
+            <Ionicons name="star" size={16} color={colors.onImage} />
             <Text style={styles.premiumText}>Premium Service by Nazary</Text>
           </LinearGradient>
 
@@ -187,14 +190,14 @@ export function ArrangeATripScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.xl, paddingVertical: spacing.md },
   headerTitle: { fontFamily: 'Manrope_400Regular', fontSize: 18, color: colors.onSurface },
   backButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.surfaceContainerLow, alignItems: 'center', justifyContent: 'center' },
   scrollContent: { paddingHorizontal: spacing.xl },
   premiumBadge: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: radii.full, marginBottom: spacing.lg },
-  premiumText: { fontFamily: 'Inter_400Regular', fontSize: 13, color: '#fff', letterSpacing: 0.3 },
+  premiumText: { fontFamily: 'Inter_400Regular', fontSize: 13, color: colors.onImage, letterSpacing: 0.3 },
   description: { ...typography.bodyLg, color: colors.onSurfaceVariant, marginBottom: spacing['2xl'] },
   label: { fontFamily: 'Manrope_400Regular', fontSize: 15, color: colors.onSurface, marginBottom: spacing.sm, marginTop: spacing.lg },
   inputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceContainerLow, borderRadius: radii.md, paddingHorizontal: spacing.lg, height: 56 },

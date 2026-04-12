@@ -17,8 +17,8 @@ export const tripsApi = {
     apiClient.get<Trip>(`/trips/${id}`),
 
   // Planner endpoints
-  getMyTrips: (page = 1) =>
-    apiClient.get<PaginatedResponse<Trip>>('/planner/trips', { params: { page } }),
+  getMyTrips: (params?: { page?: number; q?: string; status?: string; min_price?: number; max_price?: number; start_date_from?: string; start_date_to?: string }) =>
+    apiClient.get<PaginatedResponse<Trip>>('/planner/trips', { params }),
 
   create: (data: {
     title: string;
@@ -31,9 +31,12 @@ export const tripsApi = {
     start_date: string;
     end_date: string;
     total_seats: number;
+    trip_type?: string;
     tags?: string[];
     highlights?: string[];
     itinerary_days?: { day: string; title: string; desc: string }[];
+    recurring_enabled?: boolean;
+    recurring_rule?: { day_of_week: number; hour: number };
   }) =>
     apiClient.post<Trip>('/planner/trips', data),
 
@@ -61,4 +64,10 @@ export const tripsApi = {
 
   updateSeats: (id: string, totalSeats: number) =>
     apiClient.patch<Trip>(`/planner/trips/${id}/update_seats`, { total_seats: totalSeats }),
+
+  reschedule: (id: string, data: { start_date: string; end_date: string; total_seats?: number }) =>
+    apiClient.post<Trip>(`/planner/trips/${id}/reschedule`, data),
+
+  stopRecurring: (id: string) =>
+    apiClient.patch<Trip>(`/planner/trips/${id}/stop_recurring`),
 };

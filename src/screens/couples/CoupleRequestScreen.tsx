@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -16,11 +16,14 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, typography, spacing, radii } from '../../theme';
+import { useTheme, typography, spacing, radii } from '../../theme';
+import type { Colors } from '../../theme';
 import { coupleRequestsApi } from '../../api/coupleRequests';
 
 export function CoupleRequestScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const [partnerName, setPartnerName] = useState('');
   const [destinationPreference, setDestinationPreference] = useState('');
@@ -124,7 +127,7 @@ export function CoupleRequestScreen({ navigation }: any) {
           >
             {/* Description */}
             <View style={styles.descriptionCard}>
-              <Ionicons name="heart" size={20} color="#E91E63" />
+              <Ionicons name="heart" size={20} color={colors.heart} />
               <Text style={styles.descriptionText}>
                 Plan a special trip for two. Share your preferences and our team will curate the perfect couple getaway.
               </Text>
@@ -205,7 +208,7 @@ export function CoupleRequestScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   scrollContent: { paddingHorizontal: spacing.xl },
   header: {
@@ -231,7 +234,7 @@ const styles = StyleSheet.create({
   descriptionCard: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: 'rgba(233, 30, 99, 0.06)',
+    backgroundColor: colors.heartTint,
     borderRadius: radii.lg,
     padding: spacing.lg,
     gap: spacing.md,

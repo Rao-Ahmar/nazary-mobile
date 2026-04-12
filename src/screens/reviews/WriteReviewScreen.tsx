@@ -1,13 +1,17 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable, TextInput, Animated, Easing, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { colors, typography, spacing, radii } from '../../theme';
+import { useTheme, typography, spacing, radii } from '../../theme';
+import type { Colors } from '../../theme';
 import { StarRating } from '../../components/StarRating';
+import { reviewsApi } from '../../api/reviews';
 
 export function WriteReviewScreen({ navigation, route }: any) {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const { type, targetId, targetName } = route.params;
   const [rating, setRating] = useState(0);
   const [text, setText] = useState('');
@@ -17,12 +21,26 @@ export function WriteReviewScreen({ navigation, route }: any) {
     Animated.timing(fadeAnim, { toValue: 1, duration: 500, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
   }, []);
 
-  const canSubmit = rating > 0 && text.trim().length > 0;
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const canSubmit = rating > 0 && text.trim().length > 0 && !isSubmitting;
 
-  const handleSubmit = () => {
-    Alert.alert('Review Submitted', `Your ${rating}-star review for ${targetName} has been submitted!`, [
-      { text: 'OK', onPress: () => navigation.goBack() },
-    ]);
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      if (type === 'planner') {
+        await reviewsApi.createPlannerReview({ plannerId: targetId, rating, text: text.trim() });
+      } else if (type === 'place') {
+        await reviewsApi.createPlaceReview(targetId, { rating, text: text.trim() });
+      }
+      Alert.alert('Review Submitted', `Your ${rating}-star review for ${targetName} has been submitted!`, [
+        { text: 'OK', onPress: () => navigation.goBack() },
+      ]);
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || 'Could not submit review. Please try again.';
+      Alert.alert('Error', msg);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -64,7 +82,7 @@ export function WriteReviewScreen({ navigation, route }: any) {
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.lg }]}>
         <Pressable onPress={handleSubmit} disabled={!canSubmit} style={styles.submitButton}>
           <LinearGradient
-            colors={['#0058bc', '#0070eb']}
+            colors={[colors.gradientStart, colors.gradientEnd]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={[styles.gradient, !canSubmit && { opacity: 0.5 }]}
@@ -77,7 +95,7 @@ export function WriteReviewScreen({ navigation, route }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.xl, paddingVertical: spacing.md },
   backButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.surfaceContainerLow, alignItems: 'center', justifyContent: 'center' },
@@ -93,5 +111,5 @@ const styles = StyleSheet.create({
   footer: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg },
   submitButton: { width: '100%' },
   gradient: { height: 56, borderRadius: radii.xl, alignItems: 'center', justifyContent: 'center' },
-  submitText: { fontFamily: 'Inter_400Regular', fontSize: 15, color: '#fff' },
+  submitText: { fontFamily: 'Inter_400Regular', fontSize: 15, color: colors.onPrimary },
 });

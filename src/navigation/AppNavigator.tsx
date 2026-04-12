@@ -3,7 +3,7 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { colors } from '../theme';
+import { useTheme } from '../theme';
 import { useAuthStore } from '../store';
 import { LoadingScreen } from '../components/LoadingScreen';
 import { AuthStack } from './AuthStack';
@@ -39,6 +39,7 @@ const slideOptions = { animation: 'slide_from_right' as const, gestureEnabled: t
 
 export function AppNavigator() {
   const { isAuthenticated, isLoading, role, profileCompleted } = useAuthStore();
+  const { colors } = useTheme();
 
   if (isLoading) {
     return <LoadingScreen />;
@@ -48,8 +49,6 @@ export function AppNavigator() {
     <>
       <Stack.Screen name="TripDetails" component={TripDetailsScreen} options={slideOptions} />
       {/* REMOVED: messaging feature — Nazary v1 */}
-      {/* <Stack.Screen name="Conversations" component={ConversationsScreen} options={slideOptions} /> */}
-      {/* <Stack.Screen name="Chat" component={ChatScreen} options={slideOptions} /> */}
       <Stack.Screen name="CreateTripRequest" component={CreateTripRequestScreen} options={slideOptions} />
       <Stack.Screen name="MyTripRequests" component={MyTripRequestsScreen} options={slideOptions} />
       <Stack.Screen name="IncomingRequests" component={IncomingRequestsScreen} options={slideOptions} />

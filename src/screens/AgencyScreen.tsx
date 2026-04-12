@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, typography, spacing, radii, shadows } from '../theme';
+import { useTheme, typography, spacing, radii, type Colors } from '../theme';
 import { agencyStats, agencyTrips, recentBookings } from '../data/mockData';
 
 function useStaggeredFadeIn(count: number, baseDelay = 200, stagger = 70) {
@@ -38,14 +38,16 @@ function useFadeIn(delay: number, duration = 500) {
   return anim;
 }
 
-const statusColors = {
-  active: { bg: colors.successLight, text: colors.success },
-  draft: { bg: colors.surfaceContainer, text: colors.onSurfaceVariant },
-  completed: { bg: 'rgba(0,88,188,0.08)', text: colors.primary },
-};
-
 export function AgencyScreen() {
   const insets = useSafeAreaInsets();
+  const { colors, shadows } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  const statusColors = {
+    active: { bg: colors.successLight, text: colors.success },
+    draft: { bg: colors.surfaceContainer, text: colors.onSurfaceVariant },
+    completed: { bg: colors.primaryTint, text: colors.primary },
+  };
 
   const headerAnim = useFadeIn(50);
   const stat1Anim = useFadeIn(100);
@@ -82,7 +84,7 @@ export function AgencyScreen() {
         {/* Stats Grid */}
         <View style={styles.statsGrid}>
           <Animated.View style={[styles.statCard, shadows.soft, fadeStyle(stat1Anim)]}>
-            <View style={[styles.statIcon, { backgroundColor: 'rgba(0,88,188,0.08)' }]}>
+            <View style={[styles.statIcon, { backgroundColor: colors.primaryTint }]}>
               <Ionicons name="trending-up" size={20} color={colors.primary} />
             </View>
             <Text style={styles.statValue}>${(agencyStats.totalRevenue / 1000).toFixed(1)}k</Text>
@@ -110,8 +112,8 @@ export function AgencyScreen() {
           </Animated.View>
 
           <Animated.View style={[styles.statCard, shadows.soft, fadeStyle(stat4Anim)]}>
-            <View style={[styles.statIcon, { backgroundColor: 'rgba(245,158,11,0.08)' }]}>
-              <Ionicons name="star-outline" size={20} color="#F59E0B" />
+            <View style={[styles.statIcon, { backgroundColor: colors.starTint }]}>
+              <Ionicons name="star-outline" size={20} color={colors.star} />
             </View>
             <Text style={styles.statValue}>{agencyStats.avgRating}</Text>
             <Text style={styles.statLabel}>Avg Rating</Text>
@@ -222,7 +224,7 @@ export function AgencyScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.surface,

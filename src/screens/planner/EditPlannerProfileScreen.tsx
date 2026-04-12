@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -18,7 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, typography, spacing, radii } from '../../theme';
+import { useTheme, typography, spacing, radii, type Colors } from '../../theme';
 import { useAuthStore } from '../../store';
 import { profileApi } from '../../api/profile';
 import { authApi } from '../../api/auth';
@@ -32,6 +32,8 @@ const field = (obj: any, camel: string, snake: string) =>
 export function EditPlannerProfileScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
   const { user, setUser } = useAuthStore();
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [agencyName, setAgencyName] = useState('');
@@ -219,7 +221,7 @@ export function EditPlannerProfileScreen({ navigation }: any) {
                 </View>
               )}
               <View style={styles.coverPhotoEditBadge}>
-                <Ionicons name="camera" size={14} color="#fff" />
+                <Ionicons name="camera" size={14} color={colors.onPrimary} />
               </View>
             </Pressable>
 
@@ -233,7 +235,7 @@ export function EditPlannerProfileScreen({ navigation }: any) {
                 </View>
               )}
               <View style={styles.avatarEditBadge}>
-                <Ionicons name="camera" size={14} color="#fff" />
+                <Ionicons name="camera" size={14} color={colors.onPrimary} />
               </View>
             </Pressable>
             <Text style={styles.avatarHint}>Tap to change photo</Text>
@@ -300,7 +302,7 @@ export function EditPlannerProfileScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   scrollContent: { paddingHorizontal: spacing.xl },
   header: {

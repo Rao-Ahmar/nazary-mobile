@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, TextInput, StyleSheet, type ViewStyle, type TextInputProps } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, typography, spacing, radii } from '../theme';
+import { typography, spacing, radii, useTheme, type Colors } from '../theme';
 
 interface FormInputProps extends TextInputProps {
   label: string;
@@ -11,6 +11,9 @@ interface FormInputProps extends TextInputProps {
 }
 
 export function FormInput({ label, icon, error, style, ...rest }: FormInputProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   return (
     <View style={[styles.container, style]}>
       <Text style={styles.label}>{label}</Text>
@@ -27,7 +30,7 @@ export function FormInput({ label, icon, error, style, ...rest }: FormInputProps
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   container: { marginBottom: spacing.lg },
   label: { fontFamily: 'Inter_400Regular', fontSize: 13, color: colors.onSurfaceVariant, marginBottom: spacing.sm, letterSpacing: 0.3 },
   inputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceContainerLow, borderRadius: radii.md, paddingHorizontal: spacing.lg, height: 50 },

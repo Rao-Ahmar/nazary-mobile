@@ -1,6 +1,6 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { colors } from '../theme';
+import { useTheme } from '../theme';
 import { useAuthStore } from '../store';
 import { PlannerProfileSetupScreen } from '../screens/profile/PlannerProfileSetupScreen';
 import { TravelerProfileSetupScreen } from '../screens/profile/TravelerProfileSetupScreen';
@@ -11,6 +11,7 @@ const Stack = createNativeStackNavigator<ProfileSetupStackParamList>();
 
 export function ProfileSetupStack() {
   const role = useAuthStore((s) => s.role);
+  const { colors } = useTheme();
 
   return (
     <Stack.Navigator

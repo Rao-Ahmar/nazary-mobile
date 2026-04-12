@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, typography, spacing, radii, shadows } from '../theme';
+import { typography, spacing, radii, useTheme, type Colors } from '../theme';
 import type { UserRole } from '../types';
 
 interface RolePickerProps {
@@ -25,6 +25,9 @@ const roles: { key: UserRole; title: string; desc: string; icon: keyof typeof Io
 ];
 
 export function RolePicker({ selected, onSelect }: RolePickerProps) {
+  const { colors, shadows } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   return (
     <View style={styles.container}>
       {roles.map((role) => {
@@ -67,7 +70,7 @@ export function RolePicker({ selected, onSelect }: RolePickerProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     gap: spacing.md,
@@ -84,13 +87,13 @@ const styles = StyleSheet.create({
   },
   cardSelected: {
     borderColor: colors.primary,
-    backgroundColor: 'rgba(0,88,188,0.04)',
+    backgroundColor: colors.primaryTint,
   },
   iconCircle: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: 'rgba(0,88,188,0.08)',
+    backgroundColor: colors.primaryTint,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.md,

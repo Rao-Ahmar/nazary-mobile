@@ -1,7 +1,7 @@
-import React, { useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { Pressable, Text, StyleSheet, ViewStyle, ActivityIndicator, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { colors, typography, radii } from '../theme';
+import { typography, radii, useTheme, type Colors } from '../theme';
 
 interface PremiumButtonProps {
   title: string;
@@ -21,6 +21,8 @@ export function PremiumButton({
   icon,
 }: PremiumButtonProps) {
   const scale = useRef(new Animated.Value(1)).current;
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const handlePressIn = () => {
     Animated.spring(scale, {
@@ -104,7 +106,7 @@ export function PremiumButton({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   primary: {
     paddingVertical: 16,
     paddingHorizontal: 32,

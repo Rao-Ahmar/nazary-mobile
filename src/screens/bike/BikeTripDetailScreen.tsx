@@ -1,9 +1,10 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable, Image, Animated, Easing, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, typography, spacing, radii, shadows } from '../../theme';
+import { useTheme, type Colors, type Shadows } from '../../theme';
+import { typography, spacing, radii } from '../../theme';
 import { useBikeStore } from '../../store/bikeStore';
 
 const { width } = Dimensions.get('window');
@@ -12,6 +13,8 @@ export function BikeTripDetailScreen({ navigation, route }: any) {
   const insets = useSafeAreaInsets();
   const { tripId } = route.params;
   const trip = useBikeStore((s) => s.bikeTrips.find((t) => t.id === tripId));
+  const { colors, shadows } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -31,16 +34,16 @@ export function BikeTripDetailScreen({ navigation, route }: any) {
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.heroContainer}>
           <Image source={{ uri: trip.heroImage }} style={styles.heroImage} />
-          <LinearGradient colors={['transparent', 'rgba(0,0,0,0.7)']} style={styles.heroGradient}>
+          <LinearGradient colors={['transparent', colors.imageOverlayHeavy]} style={styles.heroGradient}>
             <View style={styles.bikeBadge}>
-              <Ionicons name="bicycle" size={14} color="#fff" />
+              <Ionicons name="bicycle" size={14} color={colors.onImage} />
               <Text style={styles.bikeBadgeText}>Bike Trip</Text>
             </View>
             <Text style={styles.heroTitle}>{trip.title}</Text>
             <Text style={styles.heroSubtitle}>{trip.subtitle}</Text>
           </LinearGradient>
           <Pressable onPress={() => navigation.goBack()} style={[styles.backButton, { top: insets.top + spacing.sm }]}>
-            <Ionicons name="arrow-back" size={22} color="#fff" />
+            <Ionicons name="arrow-back" size={22} color={colors.onImage} />
           </Pressable>
         </View>
 
@@ -57,7 +60,7 @@ export function BikeTripDetailScreen({ navigation, route }: any) {
               <Text style={styles.metaLabel}>Seats Left</Text>
             </View>
             <View style={styles.metaCard}>
-              <Ionicons name="star" size={18} color="#F59E0B" />
+              <Ionicons name="star" size={18} color={colors.star} />
               <Text style={styles.metaValue}>{trip.rating}</Text>
               <Text style={styles.metaLabel}>{trip.reviewCount} reviews</Text>
             </View>
@@ -115,7 +118,7 @@ export function BikeTripDetailScreen({ navigation, route }: any) {
           <Text style={styles.pricePer}>per rider</Text>
         </View>
         <Pressable style={styles.bookButton}>
-          <LinearGradient colors={['#0058bc', '#0070eb']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.bookGradient}>
+          <LinearGradient colors={[colors.gradientStart, colors.gradientEnd]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.bookGradient}>
             <Text style={styles.bookText}>Join Ride</Text>
           </LinearGradient>
         </Pressable>
@@ -124,16 +127,16 @@ export function BikeTripDetailScreen({ navigation, route }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   heroContainer: { position: 'relative' },
   heroImage: { width, height: width * 0.65 },
   heroGradient: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: spacing.xl, paddingTop: spacing['3xl'] },
-  bikeBadge: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, alignSelf: 'flex-start', backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 12, paddingVertical: 4, borderRadius: radii.full, marginBottom: spacing.sm },
-  bikeBadgeText: { fontFamily: 'Inter_400Regular', fontSize: 11, color: '#fff' },
-  heroTitle: { fontFamily: 'Manrope_300Light', fontSize: 28, color: '#fff', letterSpacing: -0.5 },
-  heroSubtitle: { fontFamily: 'Inter_300Light', fontSize: 14, color: 'rgba(255,255,255,0.8)', marginTop: 4 },
-  backButton: { position: 'absolute', left: spacing.xl, width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.3)', alignItems: 'center', justifyContent: 'center' },
+  bikeBadge: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, alignSelf: 'flex-start', backgroundColor: colors.imageBadgeBg, paddingHorizontal: 12, paddingVertical: 4, borderRadius: radii.full, marginBottom: spacing.sm },
+  bikeBadgeText: { fontFamily: 'Inter_400Regular', fontSize: 11, color: colors.onImage },
+  heroTitle: { fontFamily: 'Manrope_300Light', fontSize: 28, color: colors.onImage, letterSpacing: -0.5 },
+  heroSubtitle: { fontFamily: 'Inter_300Light', fontSize: 14, color: colors.onImageMuted, marginTop: 4 },
+  backButton: { position: 'absolute', left: spacing.xl, width: 44, height: 44, borderRadius: 22, backgroundColor: colors.scrimLight, alignItems: 'center', justifyContent: 'center' },
   content: { paddingHorizontal: spacing.xl, paddingTop: spacing.xl },
   metaRow: { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.xl },
   metaCard: { flex: 1, alignItems: 'center', backgroundColor: colors.surfaceContainerLowest, borderRadius: radii.xl, padding: spacing.lg },
@@ -149,7 +152,7 @@ const styles = StyleSheet.create({
   highlightText: { ...typography.bodyMd, color: colors.onSurface, flex: 1 },
   itineraryRow: { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.lg },
   dayBadge: { backgroundColor: colors.primary, paddingHorizontal: 12, paddingVertical: 4, borderRadius: radii.full, alignSelf: 'flex-start' },
-  dayText: { fontFamily: 'Inter_400Regular', fontSize: 11, color: '#fff' },
+  dayText: { fontFamily: 'Inter_400Regular', fontSize: 11, color: colors.onImage },
   itineraryTitle: { fontFamily: 'Manrope_400Regular', fontSize: 14, color: colors.onSurface },
   itineraryDesc: { ...typography.bodySm, color: colors.onSurfaceVariant, marginTop: 2 },
   bottomBar: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.xl, paddingTop: spacing.lg, backgroundColor: colors.surfaceContainerLowest, borderTopWidth: 0 },
@@ -157,5 +160,5 @@ const styles = StyleSheet.create({
   pricePer: { fontFamily: 'Inter_300Light', fontSize: 11, color: colors.onSurfaceVariant },
   bookButton: { borderRadius: radii.xl, overflow: 'hidden' },
   bookGradient: { paddingHorizontal: spacing['2xl'], height: 50, borderRadius: radii.xl, alignItems: 'center', justifyContent: 'center' },
-  bookText: { fontFamily: 'Inter_400Regular', fontSize: 15, color: '#fff' },
+  bookText: { fontFamily: 'Inter_400Regular', fontSize: 15, color: colors.onImage },
 });

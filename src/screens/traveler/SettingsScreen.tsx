@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, typography, spacing, radii } from '../../theme';
+import { useTheme, typography, spacing, radii } from '../../theme';
+import { type Colors } from '../../theme';
 import { useAuthStore } from '../../store';
 import { profileApi } from '../../api/profile';
 import { tripPreferencesApi, type TripPreference } from '../../api/tripPreferences';
@@ -23,6 +24,8 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 export function SettingsScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
   const { user, setUser } = useAuthStore();
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [budgetMin, setBudgetMin] = useState('');
@@ -133,7 +136,7 @@ export function SettingsScreen({ navigation }: any) {
             value={notificationsEnabled}
             onValueChange={handleToggleNotifications}
             trackColor={{ false: colors.surfaceContainerHigh, true: colors.primary }}
-            thumbColor="#fff"
+            thumbColor={colors.onPrimary}
           />
         </View>
 
@@ -195,7 +198,7 @@ export function SettingsScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   header: {
     flexDirection: 'row',

@@ -1,24 +1,13 @@
-import React, { useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable, Animated, Easing } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import { colors, typography, spacing, radii } from '../../theme';
+import { useTheme, typography, spacing, radii } from '../../theme';
+import type { Colors } from '../../theme';
 import { EmptyState } from '../../components/EmptyState';
 import { useNotificationStore } from '../../store/notificationStore';
 import type { AppNotification } from '../../types';
-
-const typeIcons: Record<string, { name: keyof typeof Ionicons.glyphMap; color: string; bg: string }> = {
-  trip_reminder: { name: 'alarm-outline', color: colors.warning, bg: colors.warningLight },
-  booking_update: { name: 'ticket-outline', color: colors.success, bg: colors.successLight },
-  request_update: { name: 'document-text-outline', color: colors.primary, bg: 'rgba(0,88,188,0.08)' },
-  review: { name: 'star-outline', color: '#F59E0B', bg: 'rgba(245,158,11,0.08)' },
-  general: { name: 'megaphone-outline', color: colors.onSurfaceVariant, bg: colors.surfaceContainer },
-  bike_trip: { name: 'bicycle-outline', color: colors.primary, bg: 'rgba(0,88,188,0.08)' },
-  trip_update: { name: 'create-outline', color: colors.warning, bg: colors.warningLight },
-  new_trip: { name: 'airplane-outline', color: colors.success, bg: colors.successLight },
-  preference_match: { name: 'heart-outline', color: colors.error, bg: 'rgba(186,26,26,0.08)' },
-};
 
 function formatTimeAgo(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -32,7 +21,21 @@ function formatTimeAgo(dateStr: string) {
 
 export function NotificationsScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const { notifications, fetchNotifications, markAsRead, markAllRead } = useNotificationStore();
+
+  const typeIcons: Record<string, { name: keyof typeof Ionicons.glyphMap; color: string; bg: string }> = useMemo(() => ({
+    trip_reminder: { name: 'alarm-outline', color: colors.warning, bg: colors.warningLight },
+    booking_update: { name: 'ticket-outline', color: colors.success, bg: colors.successLight },
+    request_update: { name: 'document-text-outline', color: colors.primary, bg: colors.primaryTint },
+    review: { name: 'star-outline', color: colors.star, bg: colors.starTint },
+    general: { name: 'megaphone-outline', color: colors.onSurfaceVariant, bg: colors.surfaceContainer },
+    bike_trip: { name: 'bicycle-outline', color: colors.primary, bg: colors.primaryTint },
+    trip_update: { name: 'create-outline', color: colors.warning, bg: colors.warningLight },
+    new_trip: { name: 'airplane-outline', color: colors.success, bg: colors.successLight },
+    preference_match: { name: 'heart-outline', color: colors.error, bg: colors.errorTint },
+  }), [colors]);
 
   // Fetch real data on focus
   useFocusEffect(
@@ -114,7 +117,7 @@ export function NotificationsScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.xl, paddingVertical: spacing.md },
   backButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.surfaceContainerLow, alignItems: 'center', justifyContent: 'center' },
@@ -122,7 +125,7 @@ const styles = StyleSheet.create({
   markAllRead: { fontFamily: 'Inter_400Regular', fontSize: 13, color: colors.primary },
   scrollContent: { paddingHorizontal: spacing.xl, paddingTop: spacing.md },
   card: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceContainerLowest, borderRadius: radii.xl, padding: spacing.lg, marginBottom: spacing.sm },
-  cardUnread: { backgroundColor: 'rgba(0,88,188,0.03)' },
+  cardUnread: { backgroundColor: colors.primaryTint },
   iconCircle: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   cardContent: { flex: 1, marginLeft: spacing.md },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },

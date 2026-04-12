@@ -1,15 +1,30 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable, Image, Animated, Easing } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, typography, spacing, radii, shadows } from '../../theme';
+import { useTheme, typography, spacing, radii } from '../../theme';
+import { type Colors } from '../../theme';
 import { StatusBadge } from '../../components/StatusBadge';
 import { EmptyState } from '../../components/EmptyState';
 import { useTripRequestStore } from '../../store/tripRequestStore';
 
 export function MyTripRequestsScreen({ navigation }: any) {
+  const { colors, shadows } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const insets = useSafeAreaInsets();
-  const myRequests = useTripRequestStore((s) => s.myRequests);
+  const { myRequests, fetchMyRequests } = useTripRequestStore();
+
+  useEffect(() => {
+    fetchMyRequests();
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchMyRequests();
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   const anims = useRef(myRequests.map(() => new Animated.Value(0))).current;
   useEffect(() => {
@@ -18,7 +33,7 @@ export function MyTripRequestsScreen({ navigation }: any) {
         Animated.timing(anim, { toValue: 1, duration: 500, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
       }, 200 + i * 80);
     });
-  }, []);
+  }, [myRequests.length]);
 
   const fadeStyle = (anim: Animated.Value) => ({
     opacity: anim,
@@ -70,7 +85,7 @@ export function MyTripRequestsScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.xl, paddingVertical: spacing.md },
   backButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.surfaceContainerLow, alignItems: 'center', justifyContent: 'center' },

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, typography, spacing, radii, shadows } from '../../theme';
+import { useTheme, typography, spacing, radii, type Colors } from '../../theme';
 import { StarRating } from '../../components/StarRating';
 import { ReviewCard } from '../../components/ReviewCard';
 import { plannersApi } from '../../api/planners';
@@ -26,6 +26,9 @@ const TRIP_CARD_WIDTH = width * 0.7;
 
 export function AgencyDetailScreen({ navigation, route }: any) {
   const insets = useSafeAreaInsets();
+  const { colors, shadows } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const { agencyId, plannerId } = route.params ?? {};
   const id = agencyId || plannerId;
 
@@ -65,9 +68,33 @@ export function AgencyDetailScreen({ navigation, route }: any) {
     }
   }, [id]);
 
+  const hasMounted = useRef(false);
+
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Silently refetch when returning from WriteReview screen
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      if (hasMounted.current) {
+        // Refetch without showing loading spinner
+        Promise.all([
+          plannersApi.getById(id),
+          reviewsApi.getPlannerReviews(id, 1).catch(() => null),
+        ]).then(([agencyRes, reviewsRes]) => {
+          const agencyData = (agencyRes.data as any)?.data ?? agencyRes.data;
+          setAgency(agencyData);
+          if (reviewsRes) {
+            const reviewsData = Array.isArray(reviewsRes.data) ? reviewsRes.data : (reviewsRes.data as any)?.data ?? [];
+            setReviews(reviewsData);
+          }
+        }).catch(() => {});
+      }
+      hasMounted.current = true;
+    });
+    return unsubscribe;
+  }, [navigation, id]);
 
   useEffect(() => {
     if (!loading && agency) {
@@ -133,13 +160,13 @@ export function AgencyDetailScreen({ navigation, route }: any) {
           }}
         >
           {/* Cover Photo Hero */}
-          {agency.cover_photo ? (
+          {agency.coverPhoto ? (
             <View style={styles.coverPhotoContainer}>
-              <Image source={{ uri: agency.cover_photo }} style={styles.coverPhoto} />
+              <Image source={{ uri: agency.coverPhoto }} style={styles.coverPhoto} />
               <View style={styles.avatarOverCover}>
                 <Image
                   source={{
-                    uri: agency.agency_logo || agency.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
+                    uri: agency.agencyLogo || agency.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
                   }}
                   style={styles.avatarOnCover}
                 />
@@ -148,29 +175,30 @@ export function AgencyDetailScreen({ navigation, route }: any) {
           ) : null}
 
           {/* Profile */}
-          <View style={[styles.profileSection, agency.cover_photo && { marginTop: 30 }]}>
-            {!agency.cover_photo && (
+          <View style={[styles.profileSection, agency.coverPhoto && { marginTop: 30 }]}>
+            {!agency.coverPhoto && (
               <Image
                 source={{
-                  uri: agency.agency_logo || agency.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
+                  uri: agency.agencyLogo || agency.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
                 }}
                 style={styles.avatar}
               />
             )}
             <View style={styles.nameRow}>
-              <Text style={styles.name}>{agency.agency_name || agency.name}</Text>
+              <Text style={styles.name}>{agency.agencyName || agency.name}</Text>
+              {/* TODO: Re-enable verified badge when admin verification is in place
               {agency.verified && (
                 <Ionicons name="checkmark-circle" size={20} color={colors.primary} style={{ marginLeft: 6 }} />
-              )}
+              )} */}
             </View>
-            {agency.name && agency.agency_name && (
+            {agency.name && agency.agencyName && (
               <Text style={styles.ownerName}>{agency.name}</Text>
             )}
-            {agency.agency_tagline ? <Text style={styles.tagline}>{agency.agency_tagline}</Text> : null}
-            {agency.average_rating > 0 && (
+            {agency.agencyTagline ? <Text style={styles.tagline}>{agency.agencyTagline}</Text> : null}
+            {Number(agency.averageRating) > 0 && (
               <>
-                <StarRating rating={Math.round(agency.average_rating)} size={20} style={{ marginTop: spacing.md }} />
-                <Text style={styles.ratingText}>{agency.average_rating.toFixed(1)} rating</Text>
+                <StarRating rating={Math.round(Number(agency.averageRating))} size={20} style={{ marginTop: spacing.md }} />
+                <Text style={styles.ratingText}>{Number(agency.averageRating).toFixed(1)} rating</Text>
               </>
             )}
           </View>
@@ -178,15 +206,15 @@ export function AgencyDetailScreen({ navigation, route }: any) {
           {/* Stats */}
           <View style={styles.statsRow}>
             <View style={[styles.statCard, shadows.soft]}>
-              <Text style={styles.statValue}>{agency.total_trips}</Text>
+              <Text style={styles.statValue}>{agency.totalTrips}</Text>
               <Text style={styles.statLabel}>Trips</Text>
             </View>
             <View style={[styles.statCard, shadows.soft]}>
-              <Text style={styles.statValue}>{agency.years_experience ?? 0}y</Text>
+              <Text style={styles.statValue}>{agency.yearsExperience ? `${agency.yearsExperience}y` : '—'}</Text>
               <Text style={styles.statLabel}>Experience</Text>
             </View>
             <View style={[styles.statCard, shadows.soft]}>
-              <Text style={styles.statValue}>{agency.average_rating > 0 ? agency.average_rating.toFixed(1) : '—'}</Text>
+              <Text style={styles.statValue}>{Number(agency.averageRating) > 0 ? Number(agency.averageRating).toFixed(1) : '—'}</Text>
               <Text style={styles.statLabel}>Rating</Text>
             </View>
           </View>
@@ -202,11 +230,11 @@ export function AgencyDetailScreen({ navigation, route }: any) {
           {/* Social Links */}
           {(() => {
             const links: { url?: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-              { url: agency.instagram_url, icon: 'logo-instagram' },
-              { url: agency.youtube_url, icon: 'logo-youtube' },
-              { url: agency.tiktok_url, icon: 'logo-tiktok' },
-              { url: agency.twitter_url, icon: 'logo-twitter' },
-              { url: agency.website_url, icon: 'globe-outline' },
+              { url: agency.instagramUrl, icon: 'logo-instagram' },
+              { url: agency.youtubeUrl, icon: 'logo-youtube' },
+              { url: agency.tiktokUrl, icon: 'logo-tiktok' },
+              { url: agency.twitterUrl, icon: 'logo-twitter' },
+              { url: agency.websiteUrl, icon: 'globe-outline' },
             ];
             const activeLinks = links.filter((l) => l.url);
             if (activeLinks.length === 0) return null;
@@ -266,7 +294,7 @@ export function AgencyDetailScreen({ navigation, route }: any) {
                   navigation.navigate('WriteReview', {
                     type: 'planner',
                     targetId: id,
-                    targetName: agency.agency_name || agency.name,
+                    targetName: agency.agencyName || agency.name,
                   })
                 }
               >
@@ -292,7 +320,7 @@ export function AgencyDetailScreen({ navigation, route }: any) {
           {/* Request a Custom Trip */}
           <Pressable
             style={styles.requestButton}
-            onPress={() => navigation.navigate('CreateTripRequest', { plannerId: id })}
+            onPress={() => navigation.navigate('CreateTripRequest', { plannerId: id, plannerName: agency.agencyName || agency.name })}
           >
             <Ionicons name="paper-plane-outline" size={18} color={colors.onPrimary} />
             <Text style={styles.requestButtonText}>Request a Custom Trip</Text>
@@ -305,7 +333,7 @@ export function AgencyDetailScreen({ navigation, route }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   header: {
     flexDirection: 'row',

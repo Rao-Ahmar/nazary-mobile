@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -18,7 +18,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, typography, spacing, radii, shadows } from '../../theme';
+import { useTheme, typography, spacing, radii } from '../../theme';
+import { type Colors } from '../../theme';
 import { tripsApi } from '../../api/trips';
 import { apiClient } from '../../api/client';
 import { featuredTrips } from '../../data/mockData';
@@ -60,12 +61,14 @@ const TRIP_TYPE_OPTIONS = [
   { label: 'Couple Trip', value: 'couple_trip' },
 ];
 
-const TRIP_TYPE_BADGE_CONFIG: Record<string, { label: string; bg: string; text: string }> = {
-  casual: { label: 'Casual', bg: 'rgba(59,130,246,0.1)', text: '#3B82F6' },
-  family: { label: 'Family', bg: 'rgba(34,197,94,0.1)', text: '#22C55E' },
-  bike_trip: { label: 'Bike', bg: 'rgba(249,115,22,0.1)', text: '#F97316' },
-  couple_trip: { label: 'Couple', bg: 'rgba(236,72,153,0.1)', text: '#EC4899' },
-};
+function getTripTypeBadgeConfig(colors: Colors): Record<string, { label: string; bg: string; text: string }> {
+  return {
+    casual: { label: 'Casual', bg: colors.casualBg, text: colors.casualColor },
+    family: { label: 'Family', bg: colors.familyBg, text: colors.familyColor },
+    bike_trip: { label: 'Bike', bg: colors.bikeBg, text: colors.bikeColor },
+    couple_trip: { label: 'Couple', bg: colors.coupleBg, text: colors.coupleColor },
+  };
+}
 
 type Planner = {
   id: string;
@@ -95,6 +98,8 @@ type PendingPicker = 'dateFrom' | 'dateTo' | 'planner' | null;
 
 export function SearchScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
+  const { colors, shadows } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [query, setQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedTripType, setSelectedTripType] = useState('');
@@ -313,7 +318,8 @@ export function SearchScreen({ navigation }: any) {
     const seats = item.seatsLeft ?? item.seats_left ?? 0;
     const reviews = item.reviewCount ?? item.review_count ?? 0;
     const tripType = item.tripType || item.trip_type;
-    const typeBadge = tripType ? TRIP_TYPE_BADGE_CONFIG[tripType] : null;
+    const tripTypeBadgeConfig = getTripTypeBadgeConfig(colors);
+    const typeBadge = tripType ? tripTypeBadgeConfig[tripType] : null;
 
     return (
       <Pressable
@@ -342,7 +348,7 @@ export function SearchScreen({ navigation }: any) {
           <View style={styles.tripMeta}>
             <Text style={styles.tripPrice}>PKR {item.price.toLocaleString()}</Text>
             <View style={styles.tripRating}>
-              <Ionicons name="star" size={12} color="#F59E0B" />
+              <Ionicons name="star" size={12} color={colors.star} />
               <Text style={styles.tripRatingText}>{item.rating}</Text>
               <Text style={styles.tripReviews}>({reviews})</Text>
             </View>
@@ -479,7 +485,7 @@ export function SearchScreen({ navigation }: any) {
       >
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <View style={styles.modalOverlay}>
-            <View style={styles.modalCard}>
+            <View style={[styles.modalCard, shadows.card]}>
               {/* Header */}
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Filters</Text>
@@ -656,7 +662,7 @@ export function SearchScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   title: {
     fontFamily: 'Manrope_300Light',
@@ -761,7 +767,7 @@ const styles = StyleSheet.create({
   // Centered Modal
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: colors.scrim,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -771,7 +777,6 @@ const styles = StyleSheet.create({
     width: '88%',
     maxHeight: '75%',
     paddingBottom: spacing.lg,
-    ...shadows.card,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -937,8 +942,8 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   tripTypeChipSelected: {
-    backgroundColor: 'rgba(59,130,246,0.08)',
-    borderColor: '#3B82F6',
+    backgroundColor: colors.casualBg,
+    borderColor: colors.casualColor,
   },
   tripTypeChipText: {
     fontFamily: 'Inter_400Regular',
@@ -946,7 +951,7 @@ const styles = StyleSheet.create({
     color: colors.onSurfaceVariant,
   },
   tripTypeChipTextSelected: {
-    color: '#3B82F6',
+    color: colors.casualColor,
   },
 
   // Trip Type badge on cards

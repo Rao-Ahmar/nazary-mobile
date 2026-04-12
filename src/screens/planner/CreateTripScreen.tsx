@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -18,11 +18,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, typography, spacing, radii } from '../../theme';
+import { useTheme, typography, spacing, radii } from '../../theme';
+import { type Colors } from '../../theme';
 import { DatePickerModal } from '../../components/DatePickerModal';
 import { tripsApi } from '../../api/trips';
+import { itineraryPresetsApi } from '../../api/itineraryPresets';
+import { ItineraryPreset } from '../../types/models';
 
 const TAG_OPTIONS = ['Adventure', 'Cultural', 'Wellness', 'Photography', 'Bike', 'Family', 'Luxury', 'Budget'];
+const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 const TRIP_TYPE_OPTIONS: { label: string; value: string; premium: boolean }[] = [
   { label: 'Casual', value: 'casual', premium: false },
@@ -39,6 +43,8 @@ interface ItineraryDay {
 
 export function CreateTripScreen({ navigation, route }: any) {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const editTripId = route?.params?.tripId;
 
   const [title, setTitle] = useState('');
@@ -66,6 +72,17 @@ export function CreateTripScreen({ navigation, route }: any) {
     { day: '1', title: '', desc: '' },
   ]);
 
+  // Presets
+  const [presets, setPresets] = useState<ItineraryPreset[]>([]);
+  const [showPresetPicker, setShowPresetPicker] = useState(false);
+  const [saveAsPreset, setSaveAsPreset] = useState(false);
+  const [presetName, setPresetName] = useState('');
+
+  // Recurring
+  const [recurringEnabled, setRecurringEnabled] = useState(false);
+  const [recurringDay, setRecurringDay] = useState(5); // Friday
+  const [recurringHour, setRecurringHour] = useState(22); // 10pm
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingTrip, setIsLoadingTrip] = useState(!!editTripId);
   // Track existing remote images (already uploaded)
@@ -75,6 +92,18 @@ export function CreateTripScreen({ navigation, route }: any) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.timing(fadeAnim, { toValue: 1, duration: 500, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+  }, []);
+
+  // Fetch itinerary presets
+  useEffect(() => {
+    const loadPresets = async () => {
+      try {
+        const res = await itineraryPresetsApi.getAll();
+        const list = (res.data as any)?.data ?? res.data;
+        if (Array.isArray(list)) setPresets(list);
+      } catch {}
+    };
+    loadPresets();
   }, []);
 
   // Load existing trip data when editing
@@ -106,6 +135,15 @@ export function CreateTripScreen({ navigation, route }: any) {
         if (ed) {
           setEndDate(ed);
           setEndDateObj(new Date(ed));
+        }
+
+        // Recurring
+        const re = t.recurringEnabled ?? t.recurring_enabled;
+        if (re) setRecurringEnabled(true);
+        const rr = t.recurringRule ?? t.recurring_rule;
+        if (rr) {
+          if (rr.day_of_week != null) setRecurringDay(rr.day_of_week);
+          if (rr.hour != null) setRecurringHour(rr.hour);
         }
 
         // Itinerary
@@ -188,6 +226,26 @@ export function CreateTripScreen({ navigation, route }: any) {
     );
   };
 
+  const loadPreset = (preset: ItineraryPreset) => {
+    setItineraryDays(
+      preset.days.map((d) => ({
+        day: String(d.day),
+        title: d.title || '',
+        desc: d.desc || '',
+      })),
+    );
+    setShowPresetPicker(false);
+  };
+
+  const deletePreset = async (id: string) => {
+    try {
+      await itineraryPresetsApi.destroy(id);
+      setPresets((prev) => prev.filter((p) => p.id !== id));
+    } catch {
+      Alert.alert('Error', 'Could not delete preset.');
+    }
+  };
+
   const handleSubmit = async () => {
     if (!title.trim() || !location.trim() || !price || !startDate || !endDate || !totalSeats) {
       Alert.alert('Missing Fields', 'Please fill in all required fields.');
@@ -233,6 +291,8 @@ export function CreateTripScreen({ navigation, route }: any) {
           title: d.title.trim(),
           desc: d.desc.trim(),
         })),
+        recurring_enabled: recurringEnabled,
+        recurring_rule: recurringEnabled ? { day_of_week: recurringDay, hour: recurringHour } : undefined,
       };
 
       let tripResponse: any;
@@ -267,6 +327,23 @@ export function CreateTripScreen({ navigation, route }: any) {
           } as any);
         });
         await tripsApi.uploadGallery(tripId, galleryFormData);
+      }
+
+      // Save itinerary as preset if requested
+      if (saveAsPreset && presetName.trim()) {
+        try {
+          await itineraryPresetsApi.create({
+            name: presetName.trim(),
+            days: validDays.map((d) => ({
+              day: parseInt(d.day, 10),
+              title: d.title.trim(),
+              desc: d.desc.trim(),
+            })),
+          });
+        } catch (presetErr: any) {
+          const presetMsg = presetErr?.response?.data?.error || 'Could not save preset';
+          Alert.alert('Preset Error', presetMsg);
+        }
       }
 
       Alert.alert('Success', editTripId ? 'Trip updated successfully' : 'Trip created as draft. Publish it when ready!');
@@ -346,7 +423,7 @@ export function CreateTripScreen({ navigation, route }: any) {
                 <View key={`new-${index}`} style={styles.galleryThumbWrap}>
                   <Image source={{ uri: img.uri }} style={styles.galleryThumb} />
                   <Pressable style={styles.galleryRemove} onPress={() => removeGalleryImage(index)}>
-                    <Ionicons name="close" size={12} color="#fff" />
+                    <Ionicons name="close" size={12} color={colors.onPrimary} />
                   </Pressable>
                 </View>
               ))}
@@ -459,6 +536,53 @@ export function CreateTripScreen({ navigation, route }: any) {
               </Pressable>
             </View>
 
+            {/* Load from Preset */}
+            {presets.length > 0 && (
+              <View style={{ marginBottom: spacing.md }}>
+                <Pressable
+                  style={styles.presetLoadButton}
+                  onPress={() => setShowPresetPicker(!showPresetPicker)}
+                >
+                  <Ionicons name="bookmark-outline" size={16} color={colors.primary} />
+                  <Text style={styles.presetLoadText}>Load from Preset</Text>
+                  <Ionicons
+                    name={showPresetPicker ? 'chevron-up' : 'chevron-down'}
+                    size={14}
+                    color={colors.primary}
+                  />
+                </Pressable>
+
+                {showPresetPicker && (
+                  <View style={styles.presetDropdown}>
+                    {presets.map((preset) => (
+                      <View key={preset.id} style={styles.presetItem}>
+                        <Pressable
+                          style={styles.presetItemContent}
+                          onPress={() => loadPreset(preset)}
+                        >
+                          <Text style={styles.presetItemName}>{preset.name}</Text>
+                          <Text style={styles.presetItemMeta}>
+                            {preset.days.length} {preset.days.length === 1 ? 'day' : 'days'}
+                          </Text>
+                        </Pressable>
+                        <Pressable
+                          onPress={() =>
+                            Alert.alert('Delete Preset', `Delete "${preset.name}"?`, [
+                              { text: 'Cancel', style: 'cancel' },
+                              { text: 'Delete', style: 'destructive', onPress: () => deletePreset(preset.id) },
+                            ])
+                          }
+                          hitSlop={8}
+                        >
+                          <Ionicons name="trash-outline" size={16} color={colors.error} />
+                        </Pressable>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </View>
+            )}
+
             {itineraryDays.map((day, index) => (
               <View key={index} style={styles.itineraryCard}>
                 <View style={styles.itineraryCardHeader}>
@@ -487,6 +611,75 @@ export function CreateTripScreen({ navigation, route }: any) {
                 />
               </View>
             ))}
+
+            {/* Save as Preset */}
+            <Pressable
+              style={styles.presetCheckRow}
+              onPress={() => setSaveAsPreset(!saveAsPreset)}
+            >
+              <Ionicons
+                name={saveAsPreset ? 'checkbox' : 'square-outline'}
+                size={20}
+                color={saveAsPreset ? colors.primary : colors.outlineVariant}
+              />
+              <Text style={styles.presetCheckLabel}>Save itinerary as preset</Text>
+            </Pressable>
+            {saveAsPreset && (
+              <TextInput
+                style={[styles.input, { marginBottom: spacing.md }]}
+                placeholder="Preset name (e.g. Hunza 5-Day Classic)"
+                placeholderTextColor={colors.outline}
+                value={presetName}
+                onChangeText={setPresetName}
+                maxLength={100}
+              />
+            )}
+
+            {/* Recurring / Loop */}
+            <Pressable
+              style={styles.presetCheckRow}
+              onPress={() => setRecurringEnabled(!recurringEnabled)}
+            >
+              <Ionicons
+                name={recurringEnabled ? 'checkbox' : 'square-outline'}
+                size={20}
+                color={recurringEnabled ? colors.primary : colors.outlineVariant}
+              />
+              <Text style={styles.presetCheckLabel}>Repeat this trip on a loop</Text>
+            </Pressable>
+            {recurringEnabled && (
+              <View style={styles.recurringConfig}>
+                <Text style={styles.recurringHint}>
+                  A new trip will auto-create every week on the selected day, 2 days before departure.
+                </Text>
+                <Text style={styles.filterLabel}>Day of Week</Text>
+                <View style={styles.dayRow}>
+                  {DAY_NAMES.map((name, i) => (
+                    <Pressable
+                      key={i}
+                      style={[styles.dayChip, recurringDay === i && styles.dayChipActive]}
+                      onPress={() => setRecurringDay(i)}
+                    >
+                      <Text style={[styles.dayChipText, recurringDay === i && styles.dayChipTextActive]}>{name}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+                <Text style={[styles.filterLabel, { marginTop: spacing.md }]}>Departure Hour</Text>
+                <View style={styles.hourRow}>
+                  {[6, 8, 10, 12, 14, 16, 18, 20, 22].map((h) => (
+                    <Pressable
+                      key={h}
+                      style={[styles.dayChip, recurringHour === h && styles.dayChipActive]}
+                      onPress={() => setRecurringHour(h)}
+                    >
+                      <Text style={[styles.dayChipText, recurringHour === h && styles.dayChipTextActive]}>
+                        {h > 12 ? `${h - 12}pm` : h === 12 ? '12pm' : `${h}am`}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+            )}
 
             {/* Submit */}
             <Pressable onPress={handleSubmit} disabled={isSubmitting}>
@@ -536,7 +729,7 @@ export function CreateTripScreen({ navigation, route }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   scrollContent: { paddingHorizontal: spacing.xl },
   header: {
@@ -653,7 +846,7 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: colors.scrimHeavy,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -687,7 +880,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   dayBadge: {
-    backgroundColor: 'rgba(0,88,188,0.08)',
+    backgroundColor: colors.primaryTint,
     paddingHorizontal: spacing.md,
     paddingVertical: 4,
     borderRadius: radii.full,
@@ -704,6 +897,101 @@ const styles = StyleSheet.create({
     height: 40,
     ...typography.bodyMd,
     color: colors.onSurface,
+  },
+  // Presets
+  presetLoadButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: spacing.sm,
+  },
+  presetLoadText: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 13,
+    color: colors.primary,
+    flex: 1,
+  },
+  presetDropdown: {
+    backgroundColor: colors.surfaceContainerLow,
+    borderRadius: radii.md,
+    padding: spacing.sm,
+  },
+  presetItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+  },
+  presetItemContent: {
+    flex: 1,
+  },
+  presetItemName: {
+    ...typography.bodyMd,
+    color: colors.onSurface,
+  },
+  presetItemMeta: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 11,
+    color: colors.onSurfaceVariant,
+    marginTop: 2,
+  },
+  presetCheckRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.lg,
+    marginBottom: spacing.sm,
+  },
+  presetCheckLabel: {
+    ...typography.bodyMd,
+    color: colors.onSurface,
+  },
+  // Recurring
+  recurringConfig: {
+    backgroundColor: colors.surfaceContainerLow,
+    borderRadius: radii.md,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  recurringHint: {
+    ...typography.bodySm,
+    color: colors.onSurfaceVariant,
+    marginBottom: spacing.md,
+  },
+  filterLabel: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 11,
+    color: colors.onSurfaceVariant,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  dayRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  hourRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  dayChip: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.full,
+    backgroundColor: colors.surfaceContainerLowest,
+  },
+  dayChipActive: {
+    backgroundColor: colors.primary,
+  },
+  dayChipText: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 12,
+    color: colors.onSurfaceVariant,
+  },
+  dayChipTextActive: {
+    color: colors.onPrimary,
   },
   // Submit
   submitButton: {
@@ -736,7 +1024,7 @@ const styles = StyleSheet.create({
     color: colors.onPrimary,
   },
   premiumTag: {
-    backgroundColor: 'rgba(249,115,22,0.15)',
+    backgroundColor: colors.bikeBg,
     paddingHorizontal: 5,
     paddingVertical: 1,
     borderRadius: radii.full,
@@ -744,7 +1032,7 @@ const styles = StyleSheet.create({
   premiumTagText: {
     fontFamily: 'Inter_400Regular',
     fontSize: 9,
-    color: '#F97316',
+    color: colors.bikeColor,
     letterSpacing: 0.3,
   },
 });

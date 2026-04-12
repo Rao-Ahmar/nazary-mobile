@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Use your machine's local IP so the phone/emulator can reach the Rails server
-const BASE_URL = 'http://192.168.100.42:3000/api/v1';
+const BASE_URL = 'http://192.168.100.26:3000/api/v1';
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,

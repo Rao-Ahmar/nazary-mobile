@@ -1,14 +1,16 @@
-import React from 'react';
-import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, Text, Image, Pressable, StyleSheet, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, typography, spacing, radii } from '../../theme';
+import { useTheme, typography, spacing, radii, type Colors } from '../../theme';
 import { useAuthStore } from '../../store';
 import { NotificationBell } from '../../components/NotificationBell';
 
 export function ProfileScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
   const { user, logout } = useAuthStore();
+  const { colors, isDark, toggleTheme } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -33,6 +35,21 @@ export function ProfileScreen({ navigation }: any) {
         </View>
       </View>
 
+      <View style={styles.themeRow}>
+        <View style={styles.themeInfo}>
+          <View style={[styles.themeIcon, { backgroundColor: isDark ? colors.primaryTint : colors.warningLight }]}>
+            <Ionicons name={isDark ? 'moon' : 'sunny'} size={18} color={isDark ? colors.primary : colors.warning} style={{ lineHeight: 18, textAlignVertical: 'center' }} />
+          </View>
+          <Text style={styles.themeText}>Dark Mode</Text>
+        </View>
+        <Switch
+          value={isDark}
+          onValueChange={toggleTheme}
+          trackColor={{ false: colors.surfaceContainerHigh, true: colors.primary }}
+          thumbColor={colors.onPrimary}
+        />
+      </View>
+
       <Pressable style={styles.settingsButton} onPress={() => navigation.navigate('Settings')}>
         <Ionicons name="settings-outline" size={20} color={colors.onSurface} />
         <Text style={styles.settingsText}>Notification Settings</Text>
@@ -46,7 +63,7 @@ export function ProfileScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface, paddingHorizontal: spacing.xl },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: spacing.lg, marginBottom: spacing['2xl'] },
   title: { fontFamily: 'Manrope_300Light', fontSize: 32, color: colors.onSurface, letterSpacing: -0.5 },
@@ -55,8 +72,12 @@ const styles = StyleSheet.create({
   avatarPlaceholder: { backgroundColor: colors.surfaceContainerHigh, alignItems: 'center', justifyContent: 'center' } as any,
   name: { fontFamily: 'Manrope_400Regular', fontSize: 22, color: colors.onSurface, marginBottom: spacing.xs },
   email: { ...typography.bodyMd, color: colors.onSurfaceVariant, marginBottom: spacing.md },
-  roleBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(0,88,188,0.06)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: radii.full },
+  roleBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.primaryTint, paddingHorizontal: 12, paddingVertical: 6, borderRadius: radii.full },
   roleText: { fontFamily: 'Inter_400Regular', fontSize: 12, color: colors.primary },
+  themeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: radii.xl, backgroundColor: colors.surfaceContainerLow, paddingHorizontal: spacing.lg, paddingVertical: spacing.md, marginBottom: spacing.md },
+  themeInfo: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  themeIcon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  themeText: { fontFamily: 'Inter_400Regular', fontSize: 15, color: colors.onSurface },
   settingsButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, height: 56, borderRadius: radii.xl, backgroundColor: colors.surfaceContainerLow, marginBottom: spacing.md },
   settingsText: { fontFamily: 'Inter_400Regular', fontSize: 15, color: colors.onSurface },
   logoutButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, height: 56, borderRadius: radii.xl, backgroundColor: colors.surfaceContainerLow },

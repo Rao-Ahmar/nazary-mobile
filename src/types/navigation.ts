@@ -41,7 +41,7 @@ export type RootStackParamList = {
   // REMOVED: messaging feature — Nazary v1
   // Conversations: undefined;
   // Chat: { conversationId?: string };
-  CreateTripRequest: { plannerId?: string };
+  CreateTripRequest: { plannerId?: string; plannerName?: string };
   MyTripRequests: undefined;
   IncomingRequests: undefined;
   TripRequestDetail: { requestId: string };

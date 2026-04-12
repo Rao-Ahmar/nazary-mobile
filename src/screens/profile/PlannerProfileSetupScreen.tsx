@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable, Animated, Easing, Alert, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -6,14 +6,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { colors, typography, spacing, radii, shadows } from '../../theme';
+import { useTheme, typography, spacing, radii, type Colors } from '../../theme';
 import { FormInput } from '../../components/FormInput';
 import { useAuthStore } from '../../store';
 import { profileApi } from '../../api/profile';
 import { authApi } from '../../api/auth';
 import type { ProfileSetupStackParamList } from '../../types';
 
-const PHONE_REGEX = /^(\+92[0-9]{10}|0[0-9]{10})$/;
+const PHONE_REGEX = /^0[0-9]{10}$/;
 
 type NavigationProp = NativeStackNavigationProp<ProfileSetupStackParamList, 'PlannerProfileSetup'>;
 
@@ -21,6 +21,8 @@ export function PlannerProfileSetupScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
   const { setProfileCompleted, setUser } = useAuthStore();
+  const { colors, shadows } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [step, setStep] = useState(0);
   const [agencyName, setAgencyName] = useState('');
   const [tagline, setTagline] = useState('');
@@ -28,6 +30,29 @@ export function PlannerProfileSetupScreen() {
   const [phoneError, setPhoneError] = useState('');
   const [yearsExperience, setYearsExperience] = useState('');
   const [cnicNumber, setCnicNumber] = useState('');
+
+  const handlePhoneChange = (text: string) => {
+    const digits = text.replace(/\D/g, '').slice(0, 11);
+    setPhone(digits);
+    if (phoneError) setPhoneError('');
+  };
+
+  const handleCnicChange = (text: string) => {
+    const digits = text.replace(/\D/g, '').slice(0, 13);
+    let formatted = digits;
+    if (digits.length > 5) {
+      formatted = digits.slice(0, 5) + '-' + digits.slice(5);
+    }
+    if (digits.length > 12) {
+      formatted = digits.slice(0, 5) + '-' + digits.slice(5, 12) + '-' + digits.slice(12);
+    }
+    setCnicNumber(formatted);
+  };
+  const [instagramUrl, setInstagramUrl] = useState('');
+  const [youtubeUrl, setYoutubeUrl] = useState('');
+  const [tiktokUrl, setTiktokUrl] = useState('');
+  const [twitterUrl, setTwitterUrl] = useState('');
+  const [websiteUrl, setWebsiteUrl] = useState('');
   const [avatar, setAvatar] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [phoneVerified, setPhoneVerified] = useState(false);
 
@@ -79,7 +104,13 @@ export function PlannerProfileSetupScreen() {
         phone: phone.trim(),
       };
       if (yearsExperience) data.years_experience = parseInt(yearsExperience, 10);
-      if (cnicNumber.trim()) data.cnic_number = cnicNumber.trim();
+      const rawCnic = cnicNumber.replace(/-/g, '');
+      if (rawCnic) data.cnic_number = rawCnic;
+      if (instagramUrl.trim()) data.instagram_url = instagramUrl.trim();
+      if (youtubeUrl.trim()) data.youtube_url = youtubeUrl.trim();
+      if (tiktokUrl.trim()) data.tiktok_url = tiktokUrl.trim();
+      if (twitterUrl.trim()) data.twitter_url = twitterUrl.trim();
+      if (websiteUrl.trim()) data.website_url = websiteUrl.trim();
 
       await profileApi.updateProfile(data as any);
 
@@ -118,7 +149,7 @@ export function PlannerProfileSetupScreen() {
             <View key={s} style={styles.stepRow}>
               <View style={[styles.stepDot, i <= step && styles.stepDotActive]}>
                 {i < step ? (
-                  <Ionicons name="checkmark" size={12} color="#fff" />
+                  <Ionicons name="checkmark" size={12} color={colors.onPrimary} />
                 ) : (
                   <Text style={[styles.stepNumber, i <= step && styles.stepNumberActive]}>{i + 1}</Text>
                 )}
@@ -145,14 +176,14 @@ export function PlannerProfileSetupScreen() {
 
               <FormInput label="Agency Name" icon="business-outline" value={agencyName} onChangeText={setAgencyName} placeholder="e.g., Khan Adventures" />
               <FormInput label="Tagline" icon="megaphone-outline" value={tagline} onChangeText={setTagline} placeholder="e.g., Discover the undiscovered" />
-              <FormInput label="Phone Number" icon="call-outline" value={phone} onChangeText={(text: string) => { setPhone(text); if (phoneError) setPhoneError(''); }} placeholder="+92 300 1234567" keyboardType="phone-pad" />
+              <FormInput label="Phone Number" icon="call-outline" value={phone} onChangeText={handlePhoneChange} placeholder="03001234567" keyboardType="number-pad" maxLength={11} />
               {phoneError ? <Text style={styles.phoneError}>{phoneError}</Text> : null}
             </View>
           )}
           {step === 1 && (
             <View>
               <FormInput label="Years of Experience" icon="calendar-outline" value={yearsExperience} onChangeText={setYearsExperience} placeholder="e.g., 5" keyboardType="numeric" />
-              <FormInput label="CNIC Number (optional)" icon="card-outline" value={cnicNumber} onChangeText={setCnicNumber} placeholder="xxxxx-xxxxxxx-x" />
+              <FormInput label="CNIC Number (optional)" icon="card-outline" value={cnicNumber} onChangeText={handleCnicChange} placeholder="XXXXX-XXXXXXX-X" keyboardType="number-pad" maxLength={15} />
               <View style={[styles.infoCard, shadows.soft]}>
                 <Ionicons name="shield-checkmark-outline" size={24} color={colors.primary} />
                 <View style={{ flex: 1, marginLeft: spacing.md }}>
@@ -160,6 +191,13 @@ export function PlannerProfileSetupScreen() {
                   <Text style={styles.infoText}>Your CNIC helps build trust with travelers. It's stored securely and never shared publicly.</Text>
                 </View>
               </View>
+
+              <Text style={styles.socialHeader}>Social Media (optional)</Text>
+              <FormInput label="Instagram" icon="logo-instagram" value={instagramUrl} onChangeText={setInstagramUrl} placeholder="https://instagram.com/your_page" autoCapitalize="none" />
+              <FormInput label="YouTube" icon="logo-youtube" value={youtubeUrl} onChangeText={setYoutubeUrl} placeholder="https://youtube.com/@your_channel" autoCapitalize="none" />
+              <FormInput label="TikTok" icon="logo-tiktok" value={tiktokUrl} onChangeText={setTiktokUrl} placeholder="https://tiktok.com/@your_page" autoCapitalize="none" />
+              <FormInput label="Twitter / X" icon="logo-twitter" value={twitterUrl} onChangeText={setTwitterUrl} placeholder="https://x.com/your_handle" autoCapitalize="none" />
+              <FormInput label="Website" icon="globe-outline" value={websiteUrl} onChangeText={setWebsiteUrl} placeholder="https://yourwebsite.com" autoCapitalize="none" />
             </View>
           )}
           {step === 2 && (
@@ -184,7 +222,7 @@ export function PlannerProfileSetupScreen() {
           onPress={() => {
             if (step === 0) {
               if (!PHONE_REGEX.test(phone.trim())) {
-                setPhoneError('Enter a valid Pakistan phone number (e.g. +923001234567 or 03001234567)');
+                setPhoneError('Enter a valid 11-digit phone number (e.g. 03001234567)');
                 return;
               }
               setPhoneError('');
@@ -199,7 +237,7 @@ export function PlannerProfileSetupScreen() {
           style={styles.nextButton}
         >
           <LinearGradient
-            colors={['#0058bc', '#0070eb']}
+            colors={[colors.gradientStart, colors.gradientEnd]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={[styles.gradient, ((step === 0 && !canProceedStep0) || (step === 1 && !canProceedStep1)) && { opacity: 0.5 }]}
@@ -212,7 +250,7 @@ export function PlannerProfileSetupScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   scrollContent: { paddingHorizontal: spacing.xl, paddingTop: spacing['2xl'] },
   title: { fontFamily: 'Manrope_300Light', fontSize: 32, color: colors.onSurface, letterSpacing: -0.5 },
@@ -222,7 +260,7 @@ const styles = StyleSheet.create({
   stepDot: { width: 28, height: 28, borderRadius: 14, backgroundColor: colors.surfaceContainerHigh, alignItems: 'center', justifyContent: 'center' },
   stepDotActive: { backgroundColor: colors.primary },
   stepNumber: { fontFamily: 'Inter_400Regular', fontSize: 12, color: colors.onSurfaceVariant },
-  stepNumberActive: { color: '#fff' },
+  stepNumberActive: { color: colors.onPrimary },
   stepLabel: { fontFamily: 'Inter_400Regular', fontSize: 11, color: colors.onSurfaceVariant, marginLeft: spacing.xs },
   stepLabelActive: { color: colors.primary },
   stepLine: { width: 20, height: 2, backgroundColor: colors.surfaceContainerHigh, marginHorizontal: spacing.xs },
@@ -239,10 +277,11 @@ const styles = StyleSheet.create({
   backText: { fontFamily: 'Inter_400Regular', fontSize: 15, color: colors.onSurface },
   nextButton: { flex: 1 },
   gradient: { height: 56, borderRadius: radii.xl, alignItems: 'center', justifyContent: 'center' },
-  nextText: { fontFamily: 'Inter_400Regular', fontSize: 15, color: '#fff' },
+  nextText: { fontFamily: 'Inter_400Regular', fontSize: 15, color: colors.onPrimary },
   phoneError: { ...typography.bodySm, color: colors.error, marginTop: spacing.xs },
   avatarPicker: { alignSelf: 'center', marginBottom: spacing.sm },
   avatarImage: { width: 120, height: 120, borderRadius: 60 },
   avatarPlaceholder: { width: 120, height: 120, borderRadius: 60, backgroundColor: colors.surfaceContainerHigh, alignItems: 'center', justifyContent: 'center' },
   avatarLabel: { ...typography.bodySm, color: colors.onSurfaceVariant, textAlign: 'center', marginBottom: spacing.lg },
+  socialHeader: { fontFamily: 'Manrope_400Regular', fontSize: 16, color: colors.onSurface, marginTop: spacing.xl, marginBottom: spacing.md },
 });
