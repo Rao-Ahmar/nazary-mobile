@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable, Animated, Easing, Alert, Image } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Pressable, Animated, Easing, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -11,6 +11,7 @@ import { FormInput } from '../../components/FormInput';
 import { useAuthStore } from '../../store';
 import { profileApi } from '../../api/profile';
 import { authApi } from '../../api/auth';
+import { useAlert } from '../../components/ThemedAlert';
 import type { ProfileSetupStackParamList } from '../../types';
 
 const PHONE_REGEX = /^0[0-9]{10}$/;
@@ -20,6 +21,7 @@ type NavigationProp = NativeStackNavigationProp<ProfileSetupStackParamList, 'Pla
 export function PlannerProfileSetupScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
+  const alert = useAlert();
   const { setProfileCompleted, setUser } = useAuthStore();
   const { colors, shadows } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
@@ -130,7 +132,7 @@ export function PlannerProfileSetupScreen() {
       setUser({ ...freshUser, profileCompleted: true });
       setProfileCompleted(true);
     } catch {
-      Alert.alert('Error', 'Could not save profile. Please try again.');
+      alert.show({ title: 'Error', message: 'Could not save profile. Please try again.', type: 'error' });
     } finally {
       setIsSaving(false);
     }

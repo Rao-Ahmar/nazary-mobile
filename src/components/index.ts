@@ -12,3 +12,4 @@ export { StatusBadge } from './StatusBadge';
 export { NotificationBell } from './NotificationBell';
 export { CategoryChip } from './CategoryChip';
 export { EmptyState } from './EmptyState';
+export { AlertProvider, useAlert } from './ThemedAlert';

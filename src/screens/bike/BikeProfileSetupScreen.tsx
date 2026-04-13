@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable, Animated, Easing, Alert } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Pressable, Animated, Easing } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -8,11 +8,13 @@ import { typography, spacing, radii } from '../../theme';
 import { FormInput } from '../../components/FormInput';
 import { CategoryChip } from '../../components/CategoryChip';
 import { useBikeStore } from '../../store/bikeStore';
+import { useAlert } from '../../components/ThemedAlert';
 
 const experienceLevels = ['beginner', 'intermediate', 'advanced'] as const;
 
 export function BikeProfileSetupScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
+  const alert = useAlert();
   const { bikeProfile, setBikeProfile } = useBikeStore();
   const [bikeModel, setBikeModel] = useState(bikeProfile?.bikeModel || '');
   const [bikeCc, setBikeCc] = useState(bikeProfile?.bikeCc?.toString() || '');
@@ -38,9 +40,9 @@ export function BikeProfileSetupScreen({ navigation }: any) {
       experienceLevel,
       bio: bio || undefined,
     });
-    Alert.alert('Profile Saved', 'Your bike profile has been updated!', [
+    alert.show({ title: 'Profile Saved', message: 'Your bike profile has been updated!', type: 'success', buttons: [
       { text: 'OK', onPress: () => navigation.goBack() },
-    ]);
+    ] });
   };
 
   return (

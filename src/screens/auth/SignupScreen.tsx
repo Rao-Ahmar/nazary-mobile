@@ -10,7 +10,6 @@ import {
   ScrollView,
   Animated,
   Easing,
-  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,6 +19,7 @@ import { useTheme, typography, spacing, radii } from '../../theme';
 import type { Colors } from '../../theme';
 import { useAuthStore } from '../../store';
 import { RolePicker } from '../../components';
+import { useAlert } from '../../components/ThemedAlert';
 import type { AuthStackParamList, UserRole } from '../../types';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Signup'>;
@@ -28,6 +28,7 @@ export function SignupScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const alert = useAlert();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -52,7 +53,7 @@ export function SignupScreen({ navigation }: Props) {
     try {
       await signup(name, email, password, role);
     } catch (error: any) {
-      Alert.alert('Signup Failed', error.message || 'Could not create account. Please try again.');
+      alert.show({ title: 'Signup Failed', message: error.message || 'Could not create account. Please try again.', type: 'error' });
     }
   };
 

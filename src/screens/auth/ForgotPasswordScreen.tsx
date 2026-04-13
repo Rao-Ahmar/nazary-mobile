@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { View, Text, TextInput, Pressable, StyleSheet, KeyboardAvoidingView, Platform, Animated, Easing, Alert } from 'react-native';
+import { View, Text, TextInput, Pressable, StyleSheet, KeyboardAvoidingView, Platform, Animated, Easing } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,6 +7,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme, typography, spacing, radii } from '../../theme';
 import type { Colors } from '../../theme';
 import { authApi } from '../../api/auth';
+import { useAlert } from '../../components/ThemedAlert';
 import type { AuthStackParamList } from '../../types';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'ForgotPassword'>;
@@ -15,6 +16,7 @@ export function ForgotPasswordScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const alert = useAlert();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -38,7 +40,7 @@ export function ForgotPasswordScreen({ navigation }: Props) {
       await authApi.forgotPassword(email);
       setSent(true);
     } catch {
-      Alert.alert('Error', 'Something went wrong. Please try again.');
+      alert.show({ title: 'Error', message: 'Something went wrong. Please try again.', type: 'error' });
     } finally {
       setIsLoading(false);
     }

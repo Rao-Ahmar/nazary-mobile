@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useMemo } from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable, Image, Animated, Easing, Alert } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Pressable, Image, Animated, Easing, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, typography, spacing, radii } from '../../theme';
@@ -7,10 +7,12 @@ import { type Colors } from '../../theme';
 import { StatusBadge } from '../../components/StatusBadge';
 import { useTripRequestStore } from '../../store/tripRequestStore';
 import { useAuthStore } from '../../store';
+import { useAlert } from '../../components/ThemedAlert';
 
 export function TripRequestDetailScreen({ navigation, route }: any) {
   const { colors, shadows } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const alert = useAlert();
 
   const insets = useSafeAreaInsets();
   const { requestId } = route.params;
@@ -85,10 +87,16 @@ export function TripRequestDetailScreen({ navigation, route }: any) {
               <Text style={styles.personName}>{isMyRequest ? request.plannerName : request.travelerName}</Text>
             </View>
             {request.status === 'accepted' && (
-              <View style={styles.phoneContainer}>
+              <Pressable
+                onPress={() => {
+                  const phone = isMyRequest ? request.plannerPhone : request.travelerPhone;
+                  if (phone) Linking.openURL(`tel:${phone}`);
+                }}
+                style={styles.phoneContainer}
+              >
                 <Ionicons name="call-outline" size={16} color={colors.primary} />
                 <Text style={styles.phoneText}>{isMyRequest ? request.plannerPhone : request.travelerPhone}</Text>
-              </View>
+              </Pressable>
             )}
           </View>
 
@@ -112,10 +120,10 @@ export function TripRequestDetailScreen({ navigation, route }: any) {
         <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.lg }]}>
           {isMyRequest ? (
             <Pressable
-              onPress={() => Alert.alert('Cancel Request', 'Are you sure?', [
+              onPress={() => alert.show({ title: 'Cancel Request', message: 'Are you sure?', type: 'warning', buttons: [
                 { text: 'No', style: 'cancel' },
                 { text: 'Cancel Request', style: 'destructive', onPress: async () => { await cancelRequest(request.id); navigation.goBack(); } },
-              ])}
+              ] })}
               style={styles.cancelButton}
             >
               <Text style={styles.cancelText}>Cancel Request</Text>

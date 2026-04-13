@@ -4,3 +4,4 @@ export { useTripRequestStore } from './tripRequestStore';
 export { useBikeStore } from './bikeStore';
 export { useArrangementStore } from './arrangementStore';
 export { useThemeStore } from './themeStore';
+export { useBookingStore } from './bookingStore';

@@ -20,23 +20,10 @@ interface AuthState {
   setProfileCompleted: (completed: boolean) => void;
   setUser: (user: User) => void;
 
-  /** Dev helpers — bypass backend for testing */
-  devLoginAsTraveler: () => void;
-  devLoginAsPlanner: () => void;
+  /** Dev helpers — login with seed accounts */
+  devLoginAsTraveler: () => Promise<void>;
+  devLoginAsPlanner: () => Promise<void>;
 }
-
-const makeFakeUser = (role: UserRole, profileCompleted = false): User => ({
-  id: `dev-${role}`,
-  name: role === 'traveler' ? 'Alex Traveler' : 'Sam Planner',
-  email: `${role}@dev.nazary.com`,
-  role,
-  avatar:
-    role === 'traveler'
-      ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80'
-      : 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&q=80',
-  profileCompleted,
-  createdAt: new Date().toISOString(),
-});
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
@@ -124,15 +111,13 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ user, role: user.role, profileCompleted: user.profileCompleted });
   },
 
-  devLoginAsTraveler: () => {
-    const user = makeFakeUser('traveler', true);
-    setAuthToken('dev-token');
-    set({ user, token: 'dev-token', refreshToken: null, role: 'traveler', isAuthenticated: true, profileCompleted: true });
+  devLoginAsTraveler: async () => {
+    const { login } = useAuthStore.getState();
+    await login('zainab@nazary.com', 'password123');
   },
 
-  devLoginAsPlanner: () => {
-    const user = makeFakeUser('planner', true);
-    setAuthToken('dev-token');
-    set({ user, token: 'dev-token', refreshToken: null, role: 'planner', isAuthenticated: true, profileCompleted: true });
+  devLoginAsPlanner: async () => {
+    const { login } = useAuthStore.getState();
+    await login('usman@nazary.com', 'password123');
   },
 }));

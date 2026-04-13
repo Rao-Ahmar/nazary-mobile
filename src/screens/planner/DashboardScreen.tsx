@@ -15,7 +15,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTheme, typography, spacing, radii } from '../../theme';
 import { type Colors } from '../../theme';
+import { LinearGradient } from 'expo-linear-gradient';
 import { NotificationBell } from '../../components/NotificationBell';
+import { AvatarGroup } from '../../components/AvatarGroup';
 import { apiClient } from '../../api/client';
 import { tripsApi } from '../../api/trips';
 
@@ -42,12 +44,18 @@ interface DashboardTrip {
 
 interface DashboardBooking {
   id: string;
+  tripId?: string;
+  trip_id?: string;
   travelerName?: string;
   traveler_name?: string;
   travelerAvatar?: string;
   traveler_avatar?: string;
   tripTitle?: string;
   trip_title?: string;
+  tripHeroImage?: string;
+  trip_hero_image?: string;
+  tripLocation?: string;
+  trip_location?: string;
   amount: number;
   status: string;
 }
@@ -79,6 +87,29 @@ export function DashboardScreen({ navigation }: any) {
   const [trips, setTrips] = useState<DashboardTrip[]>([]);
   const [bookings, setBookings] = useState<DashboardBooking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const bookingTripGroups = useMemo(() => {
+    const map = new Map<string, { tripId: string; tripTitle: string; tripHeroImage?: string; tripLocation?: string; avatars: { uri?: string; name?: string }[]; pendingCount: number }>();
+    for (const b of bookings) {
+      const tripId = b.tripId ?? b.trip_id ?? '';
+      if (!tripId) continue;
+      let group = map.get(tripId);
+      if (!group) {
+        group = {
+          tripId,
+          tripTitle: b.tripTitle ?? b.trip_title ?? 'Untitled Trip',
+          tripHeroImage: b.tripHeroImage ?? b.trip_hero_image,
+          tripLocation: b.tripLocation ?? b.trip_location,
+          avatars: [],
+          pendingCount: 0,
+        };
+        map.set(tripId, group);
+      }
+      group.avatars.push({ uri: b.travelerAvatar ?? b.traveler_avatar, name: b.travelerName ?? b.traveler_name });
+      if (b.status === 'pending') group.pendingCount++;
+    }
+    return Array.from(map.values()).slice(0, 3);
+  }, [bookings]);
 
   const headerAnim = useFadeIn(50);
   const stat1Anim = useFadeIn(100);
@@ -263,46 +294,49 @@ export function DashboardScreen({ navigation }: any) {
         <Animated.View style={[styles.section, fadeStyle(bookingsSectionAnim)]}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Recent Bookings</Text>
-            <Pressable onPress={() => navigation?.navigate?.('Requests')}>
+            <Pressable onPress={() => navigation?.navigate?.('BookingRequests')}>
               <Text style={styles.seeAll}>SEE ALL</Text>
             </Pressable>
           </View>
-          {bookings.length === 0 ? (
+          {bookingTripGroups.length === 0 ? (
             <View style={styles.emptyCard}>
               <Ionicons name="people-outline" size={32} color={colors.outlineVariant} />
               <Text style={styles.emptyText}>No bookings yet</Text>
             </View>
           ) : (
-            bookings.map((booking) => {
-              const name = booking.travelerName ?? booking.traveler_name ?? 'Traveler';
-              const avatar = booking.travelerAvatar ?? booking.traveler_avatar;
-              const tripName = booking.tripTitle ?? booking.trip_title ?? '';
-              const isConfirmed = booking.status === 'confirmed';
-
-              return (
-                <Animated.View key={booking.id} style={[styles.bookingCard, shadows.soft]}>
-                  {avatar ? (
-                    <Image source={{ uri: avatar }} style={styles.bookingAvatar} />
+            bookingTripGroups.map((group) => (
+              <Pressable
+                key={group.tripId}
+                onPress={() => navigation?.navigate?.('TripDetails', { tripId: group.tripId })}
+              >
+                <Animated.View style={[styles.bookingCard, shadows.soft]}>
+                  {group.tripHeroImage ? (
+                    <Image source={{ uri: group.tripHeroImage }} style={styles.bookingHero} />
                   ) : (
-                    <View style={[styles.bookingAvatar, { backgroundColor: colors.surfaceContainerHigh, alignItems: 'center', justifyContent: 'center' }]}>
-                      <Ionicons name="person" size={18} color={colors.outlineVariant} />
-                    </View>
+                    <LinearGradient
+                      colors={[colors.primaryTint, colors.surfaceContainerHigh]}
+                      style={[styles.bookingHero, styles.bookingHeroPlaceholder]}
+                    >
+                      <Ionicons name="map-outline" size={22} color={colors.primary} />
+                    </LinearGradient>
                   )}
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.bookingName}>{name}</Text>
-                    {tripName ? <Text style={styles.bookingTrip}>{tripName}</Text> : null}
-                  </View>
-                  <View style={styles.bookingRight}>
-                    <Text style={styles.bookingAmount}>PKR {booking.amount.toLocaleString()}</Text>
-                    <View style={[styles.bookingStatus, { backgroundColor: isConfirmed ? colors.successLight : colors.warningLight }]}>
-                      <Text style={[styles.bookingStatusText, { color: isConfirmed ? colors.success : colors.warning }]}>
-                        {booking.status}
-                      </Text>
+                    <Text style={styles.bookingName} numberOfLines={1}>{group.tripTitle}</Text>
+                    {group.tripLocation ? (
+                      <Text style={styles.bookingTrip} numberOfLines={1}>{group.tripLocation}</Text>
+                    ) : null}
+                    <View style={styles.bookingAvatarRow}>
+                      <AvatarGroup avatars={group.avatars} max={4} size={24} />
                     </View>
                   </View>
+                  {group.pendingCount > 0 && (
+                    <View style={styles.pendingBadge}>
+                      <Text style={styles.pendingBadgeText}>{group.pendingCount}</Text>
+                    </View>
+                  )}
                 </Animated.View>
-              );
-            })
+              </Pressable>
+            ))
           )}
         </Animated.View>
 
@@ -344,13 +378,13 @@ const makeStyles = (colors: Colors) => StyleSheet.create({
   progressFill: { height: '100%', borderRadius: 2 },
   progressText: { fontFamily: 'Inter_300Light', fontSize: 9, color: colors.onSurfaceVariant, marginTop: 4, textAlign: 'right' },
   bookingCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceContainerLowest, borderRadius: radii.xl, padding: spacing.lg, marginHorizontal: spacing.xl, marginBottom: spacing.sm, gap: spacing.md },
-  bookingAvatar: { width: 40, height: 40, borderRadius: 20 },
+  bookingHero: { width: 60, height: 60, borderRadius: radii.lg },
+  bookingHeroPlaceholder: { alignItems: 'center', justifyContent: 'center' },
   bookingName: { fontFamily: 'Inter_400Regular', fontSize: 13, color: colors.onSurface },
   bookingTrip: { fontFamily: 'Inter_300Light', fontSize: 11, color: colors.onSurfaceVariant, marginTop: 2 },
-  bookingRight: { alignItems: 'flex-end' },
-  bookingAmount: { fontFamily: 'Manrope_400Regular', fontSize: 15, color: colors.onSurface, marginBottom: 4 },
-  bookingStatus: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: radii.full },
-  bookingStatusText: { fontFamily: 'Inter_400Regular', fontSize: 9, letterSpacing: 0.3, textTransform: 'capitalize' },
+  bookingAvatarRow: { marginTop: spacing.sm },
+  pendingBadge: { backgroundColor: colors.warning, width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+  pendingBadgeText: { fontFamily: 'Inter_400Regular', fontSize: 10, color: '#fff' },
   emptyCard: { alignItems: 'center', paddingVertical: spacing['2xl'], marginHorizontal: spacing.xl, backgroundColor: colors.surfaceContainerLowest, borderRadius: radii.xl, gap: spacing.sm },
   emptyText: { ...typography.bodyMd, color: colors.onSurfaceVariant },
 });

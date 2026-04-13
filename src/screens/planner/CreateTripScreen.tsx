@@ -8,7 +8,6 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   Animated,
   Easing,
   Image,
@@ -24,6 +23,7 @@ import { DatePickerModal } from '../../components/DatePickerModal';
 import { tripsApi } from '../../api/trips';
 import { itineraryPresetsApi } from '../../api/itineraryPresets';
 import { ItineraryPreset } from '../../types/models';
+import { useAlert } from '../../components/ThemedAlert';
 
 const TAG_OPTIONS = ['Adventure', 'Cultural', 'Wellness', 'Photography', 'Bike', 'Family', 'Luxury', 'Budget'];
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -46,6 +46,7 @@ export function CreateTripScreen({ navigation, route }: any) {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const editTripId = route?.params?.tripId;
+  const alert = useAlert();
 
   const [title, setTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
@@ -129,8 +130,16 @@ export function CreateTripScreen({ navigation, route }: any) {
         const sd = t.startDate || t.start_date;
         const ed = t.endDate || t.end_date;
         if (sd) {
+          const sdDate = new Date(sd);
+          const today = new Date(new Date().toDateString());
+          if (sdDate < today) {
+            alert.show({ title: 'Cannot Edit', message: 'This trip cannot be edited because its start date has passed.', type: 'error', buttons: [
+              { text: 'OK', onPress: () => navigation.goBack() },
+            ] });
+            return;
+          }
           setStartDate(sd);
-          setStartDateObj(new Date(sd));
+          setStartDateObj(sdDate);
         }
         if (ed) {
           setEndDate(ed);
@@ -162,7 +171,7 @@ export function CreateTripScreen({ navigation, route }: any) {
         const gallery = t.gallery || [];
         if (gallery.length > 0) setExistingGalleryImages(gallery);
       } catch {
-        Alert.alert('Error', 'Could not load trip data.');
+        alert.show({ title: 'Error', message: 'Could not load trip data.', type: 'error' });
       } finally {
         setIsLoadingTrip(false);
       }
@@ -242,31 +251,31 @@ export function CreateTripScreen({ navigation, route }: any) {
       await itineraryPresetsApi.destroy(id);
       setPresets((prev) => prev.filter((p) => p.id !== id));
     } catch {
-      Alert.alert('Error', 'Could not delete preset.');
+      alert.show({ title: 'Error', message: 'Could not delete preset.', type: 'error' });
     }
   };
 
   const handleSubmit = async () => {
     if (!title.trim() || !location.trim() || !price || !startDate || !endDate || !totalSeats) {
-      Alert.alert('Missing Fields', 'Please fill in all required fields.');
+      alert.show({ title: 'Missing Fields', message: 'Please fill in all required fields.', type: 'warning' });
       return;
     }
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     if (startDateObj && startDateObj < today) {
-      Alert.alert('Invalid Date', 'Start date cannot be in the past.');
+      alert.show({ title: 'Invalid Date', message: 'Start date cannot be in the past.', type: 'warning' });
       return;
     }
     if (startDateObj && endDateObj && endDateObj <= startDateObj) {
-      Alert.alert('Invalid Date', 'End date must be after the start date.');
+      alert.show({ title: 'Invalid Date', message: 'End date must be after the start date.', type: 'warning' });
       return;
     }
 
     // Validate itinerary
     const validDays = itineraryDays.filter((d) => d.title.trim());
     if (validDays.length === 0) {
-      Alert.alert('Missing Itinerary', 'Please add at least one itinerary day.');
+      alert.show({ title: 'Missing Itinerary', message: 'Please add at least one itinerary day.', type: 'warning' });
       return;
     }
 
@@ -342,25 +351,26 @@ export function CreateTripScreen({ navigation, route }: any) {
           });
         } catch (presetErr: any) {
           const presetMsg = presetErr?.response?.data?.error || 'Could not save preset';
-          Alert.alert('Preset Error', presetMsg);
+          alert.show({ title: 'Preset Error', message: presetMsg, type: 'error' });
         }
       }
 
-      Alert.alert('Success', editTripId ? 'Trip updated successfully' : 'Trip created as draft. Publish it when ready!');
+      alert.show({ title: 'Success', message: editTripId ? 'Trip updated successfully' : 'Trip created as draft. Publish it when ready!', type: 'success' });
       navigation.goBack();
     } catch (error: any) {
       const msg = error?.response?.data?.error || 'Something went wrong';
       if (msg.toLowerCase().includes('profile photo')) {
-        Alert.alert(
-          'Profile Photo Required',
-          'You need to upload a profile photo before creating trips. Go to your profile to add one.',
-          [
+        alert.show({
+          title: 'Profile Photo Required',
+          message: 'You need to upload a profile photo before creating trips. Go to your profile to add one.',
+          type: 'warning',
+          buttons: [
             { text: 'Later', style: 'cancel' },
             { text: 'Go to Profile', onPress: () => navigation.navigate('EditPlannerProfile') },
-          ]
-        );
+          ],
+        });
       } else {
-        Alert.alert('Error', msg);
+        alert.show({ title: 'Error', message: msg, type: 'error' });
       }
     } finally {
       setIsSubmitting(false);
@@ -567,10 +577,10 @@ export function CreateTripScreen({ navigation, route }: any) {
                         </Pressable>
                         <Pressable
                           onPress={() =>
-                            Alert.alert('Delete Preset', `Delete "${preset.name}"?`, [
+                            alert.show({ title: 'Delete Preset', message: `Delete "${preset.name}"?`, type: 'warning', buttons: [
                               { text: 'Cancel', style: 'cancel' },
                               { text: 'Delete', style: 'destructive', onPress: () => deletePreset(preset.id) },
-                            ])
+                            ] })
                           }
                           hitSlop={8}
                         >

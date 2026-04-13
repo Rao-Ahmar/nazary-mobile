@@ -59,6 +59,7 @@ export type RootStackParamList = {
   ArrangeATrip: undefined;
   MyArrangements: undefined;
   CreateTrip: { tripId?: string };
+  BookingRequests: undefined;
   EditPlannerProfile: undefined;
   CoupleRequest: undefined;
   Settings: undefined;

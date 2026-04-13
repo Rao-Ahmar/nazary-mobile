@@ -10,7 +10,6 @@ import {
   Animated,
   Easing,
   ActivityIndicator,
-  Alert,
   Linking,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -20,8 +19,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, typography, spacing, radii } from '../theme';
 import { type Colors } from '../theme';
 import { tripsApi } from '../api/trips';
-import { bookingsApi } from '../api/bookings';
+import { bookingsApi, type PlannerBooking } from '../api/bookings';
 import { useAuthStore } from '../store';
+import { StatusBadge } from '../components/StatusBadge';
+import { useAlert } from '../components/ThemedAlert';
 
 const { width, height } = Dimensions.get('window');
 const HERO_HEIGHT = height * 0.45;
@@ -62,35 +63,102 @@ export function TripDetailsScreen({ navigation, route }: any) {
   const scrollY = useRef(new Animated.Value(0)).current;
   const tripId = route?.params?.tripId;
   const { user } = useAuthStore();
+  const alert = useAlert();
 
   const [trip, setTrip] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [isRequesting, setIsRequesting] = useState(false);
   const [hasRequested, setHasRequested] = useState(false);
+  const [tripBookings, setTripBookings] = useState<PlannerBooking[]>([]);
+
+  const fetchTrip = async () => {
+    if (!tripId) {
+      setError('No trip ID provided');
+      setIsLoading(false);
+      return;
+    }
+    try {
+      const response = await tripsApi.getById(tripId);
+      const data = (response.data as any)?.data ?? response.data;
+      setTrip(data);
+    } catch {
+      setError('Could not load trip details');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchTrip = async () => {
-      if (!tripId) {
-        setError('No trip ID provided');
-        setIsLoading(false);
-        return;
-      }
-      try {
-        const response = await tripsApi.getById(tripId);
-        const data = (response.data as any)?.data ?? response.data;
-        setTrip(data);
-      } catch {
-        setError('Could not load trip details');
-      } finally {
-        setIsLoading(false);
-      }
-    };
     fetchTrip();
   }, [tripId]);
 
-  /* 7 main content sections ---------------------------------------- */
-  const sectionAnims = useSectionAnims(7);
+  // Re-fetch when screen regains focus (e.g. after editing)
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      if (tripId) fetchTrip();
+    });
+    return unsubscribe;
+  }, [navigation, tripId]);
+
+  // Fetch bookings for this trip (planner view)
+  const fetchTripBookings = async () => {
+    if (!tripId) return;
+    try {
+      const res = await bookingsApi.getPlannerBookings({ tripId });
+      const raw = res.data;
+      const data = Array.isArray(raw) ? raw : (raw as any)?.bookings ?? (raw as any)?.data ?? [];
+      setTripBookings(data);
+    } catch {
+      // silently fail — not a planner or no bookings
+    }
+  };
+
+  useEffect(() => {
+    if (trip && user?.role === 'planner') {
+      fetchTripBookings();
+    }
+  }, [trip, user?.role]);
+
+  const handleConfirmBooking = (booking: PlannerBooking) => {
+    const bName = booking.travelerName ?? booking.traveler_name ?? 'Traveler';
+    alert.show({ title: 'Confirm Booking', message: `Confirm ${bName}'s booking?`, type: 'info', buttons: [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Confirm',
+        onPress: async () => {
+          try {
+            await bookingsApi.confirmBooking(booking.id);
+            setTripBookings((prev) => prev.map((b) => b.id === booking.id ? { ...b, status: 'confirmed' } : b));
+          } catch (err: any) {
+            alert.show({ title: 'Error', message: err?.response?.data?.error || 'Could not confirm booking', type: 'error' });
+          }
+        },
+      },
+    ] });
+  };
+
+  const handleRejectBooking = (booking: PlannerBooking) => {
+    const bName = booking.travelerName ?? booking.traveler_name ?? 'Traveler';
+    alert.show({ title: 'Reject Booking', message: `Reject ${bName}'s booking?`, type: 'warning', buttons: [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Reject',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await bookingsApi.rejectBooking(booking.id);
+            setTripBookings((prev) => prev.map((b) => b.id === booking.id ? { ...b, status: 'cancelled' } : b));
+          } catch {
+            alert.show({ title: 'Error', message: 'Could not reject booking', type: 'error' });
+          }
+        },
+      },
+    ] });
+  };
+
+  /* 8 main content sections ---------------------------------------- */
+  const sectionAnims = useSectionAnims(8);
 
   /* Hero parallax --------------------------------------------------- */
   const heroTranslateY = scrollY.interpolate({
@@ -129,10 +197,11 @@ export function TripDetailsScreen({ navigation, route }: any) {
   const handleRequestToJoin = async () => {
     if (!trip) return;
 
-    Alert.alert(
-      'Request to Join',
-      `Submit a join request for "${trip.title}"? The agency will review your request. You can also contact them by phone to confirm your booking.`,
-      [
+    alert.show({
+      title: 'Request to Join',
+      message: `Submit a join request for "${trip.title}"? The agency will review your request. You can also contact them by phone to confirm your booking.`,
+      type: 'info',
+      buttons: [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Send Request',
@@ -143,27 +212,28 @@ export function TripDetailsScreen({ navigation, route }: any) {
               setHasRequested(true);
               const hostPhone = host?.phone;
               if (hostPhone) {
-                Alert.alert(
-                  'Request Sent!',
-                  `Your join request has been sent to ${host.name}. Contact them at ${hostPhone} to confirm your booking.`,
-                  [
+                alert.show({
+                  title: 'Request Sent!',
+                  message: `Your join request has been sent to ${host.name}. Contact them at ${hostPhone} to confirm your booking.`,
+                  type: 'success',
+                  buttons: [
                     { text: 'OK' },
                     { text: 'Call Now', onPress: () => Linking.openURL(`tel:${hostPhone}`) },
                   ],
-                );
+                });
               } else {
-                Alert.alert('Request Sent!', `Your join request has been sent to ${host.name}. They will review it shortly.`);
+                alert.show({ title: 'Request Sent!', message: `Your join request has been sent to ${host.name}. They will review it shortly.`, type: 'success' });
               }
             } catch (err: any) {
               const msg = err?.response?.data?.error || 'Could not send join request';
-              Alert.alert('Error', msg);
+              alert.show({ title: 'Error', message: msg, type: 'error' });
             } finally {
               setIsRequesting(false);
             }
           },
         },
       ],
-    );
+    });
   };
 
   /* Call planner handler --------------------------------------------- */
@@ -207,6 +277,8 @@ export function TripDetailsScreen({ navigation, route }: any) {
   const reviewCount = trip.reviewCount ?? trip.review_count ?? reviews.length;
   const host = trip.host || {};
   const isOwnTrip = user?.id === host.id;
+  const tripStartDate = trip.startDate || trip.start_date;
+  const startDatePassed = tripStartDate ? new Date(tripStartDate) < new Date(new Date().toDateString()) : false;
   const noSeats = seatsLeft <= 0;
   const canRequest = !isOwnTrip && !noSeats && !hasRequested && user?.role === 'traveler';
 
@@ -339,7 +411,7 @@ export function TripDetailsScreen({ navigation, route }: any) {
                   <Text style={styles.hostStatLabel}>Reviews</Text>
                 </View>
               </View>
-              {host.phone ? (
+              {host.phone && !isOwnTrip ? (
                 <Pressable onPress={handleCallPlanner} style={styles.callButton}>
                   <Ionicons name="call-outline" size={16} color={colors.primary} />
                   <Text style={styles.callButtonText}>Call to Confirm Booking</Text>
@@ -348,9 +420,70 @@ export function TripDetailsScreen({ navigation, route }: any) {
             </Animated.View>
           ) : null}
 
+          {/* Join Requests (planner only) */}
+          {isOwnTrip && (
+            <Animated.View style={[styles.section, fadeIn(sectionAnims[2])]}>
+              <View style={styles.joinRequestsHeader}>
+                <Text style={styles.sectionTitle}>Join Requests</Text>
+                {tripBookings.length > 0 && (
+                  <View style={styles.countBadge}>
+                    <Text style={styles.countBadgeText}>{tripBookings.length}</Text>
+                  </View>
+                )}
+              </View>
+              {tripBookings.length === 0 ? (
+                <View style={styles.emptyBookings}>
+                  <Ionicons name="people-outline" size={32} color={colors.outlineVariant} />
+                  <Text style={styles.emptyBookingsText}>No requests yet</Text>
+                </View>
+              ) : (
+                tripBookings.map((booking) => {
+                  const avatar = booking.travelerAvatar ?? booking.traveler_avatar;
+                  const name = booking.travelerName ?? booking.traveler_name ?? 'Traveler';
+                  const phone = booking.travelerPhone ?? booking.traveler_phone;
+                  return (
+                  <View key={booking.id} style={[styles.bookingRequestCard, shadows.soft]}>
+                    <View style={styles.bookingRequestTop}>
+                      {avatar ? (
+                        <Image source={{ uri: avatar }} style={styles.bookingRequestAvatar} />
+                      ) : (
+                        <View style={[styles.bookingRequestAvatar, { backgroundColor: colors.surfaceContainerHigh, alignItems: 'center', justifyContent: 'center' }]}>
+                          <Ionicons name="person" size={16} color={colors.outlineVariant} />
+                        </View>
+                      )}
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.bookingRequestName}>{name}</Text>
+                        {phone ? (
+                          <Pressable onPress={() => Linking.openURL(`tel:${phone}`)} style={styles.bookingRequestPhoneRow}>
+                            <Ionicons name="call-outline" size={12} color={colors.primary} />
+                            <Text style={styles.bookingRequestPhone}>{phone}</Text>
+                          </Pressable>
+                        ) : null}
+                      </View>
+                      <StatusBadge status={booking.status} />
+                    </View>
+                    {booking.status === 'pending' && (
+                      <View style={styles.bookingRequestActions}>
+                        <Pressable onPress={() => handleConfirmBooking(booking)} style={[styles.bookingRequestActionBtn, styles.bookingRequestAcceptBtn]}>
+                          <Ionicons name="checkmark" size={16} color={colors.success} />
+                          <Text style={[styles.bookingRequestActionText, { color: colors.success }]}>Accept</Text>
+                        </Pressable>
+                        <Pressable onPress={() => handleRejectBooking(booking)} style={[styles.bookingRequestActionBtn, styles.bookingRequestRejectBtn]}>
+                          <Ionicons name="close" size={16} color={colors.error} />
+                          <Text style={[styles.bookingRequestActionText, { color: colors.error }]}>Reject</Text>
+                        </Pressable>
+                      </View>
+                    )}
+                  </View>
+                  );
+                })
+              )}
+            </Animated.View>
+          )}
+
           {/* Description */}
           {trip.description ? (
-            <Animated.View style={[styles.section, fadeIn(sectionAnims[2])]}>
+            <Animated.View style={[styles.section, fadeIn(sectionAnims[3])]}>
               <Text style={styles.sectionTitle}>About This Trip</Text>
               <Text style={styles.description}>{trip.description}</Text>
             </Animated.View>
@@ -358,7 +491,7 @@ export function TripDetailsScreen({ navigation, route }: any) {
 
           {/* Highlights */}
           {highlights.length > 0 ? (
-            <Animated.View style={[styles.section, fadeIn(sectionAnims[3])]}>
+            <Animated.View style={[styles.section, fadeIn(sectionAnims[4])]}>
               <Text style={styles.sectionTitle}>Highlights</Text>
               {highlights.map((highlight: string, index: number) => (
                 <View key={index} style={styles.highlightRow}>
@@ -373,7 +506,7 @@ export function TripDetailsScreen({ navigation, route }: any) {
 
           {/* Gallery */}
           {gallery.length > 0 ? (
-            <Animated.View style={[styles.section, fadeIn(sectionAnims[4])]}>
+            <Animated.View style={[styles.section, fadeIn(sectionAnims[5])]}>
               <Text style={styles.sectionTitle}>Gallery</Text>
               <ScrollView
                 horizontal
@@ -389,7 +522,7 @@ export function TripDetailsScreen({ navigation, route }: any) {
 
           {/* Itinerary */}
           {itinerary.length > 0 ? (
-            <Animated.View style={[styles.section, fadeIn(sectionAnims[5])]}>
+            <Animated.View style={[styles.section, fadeIn(sectionAnims[6])]}>
               <Text style={styles.sectionTitle}>Itinerary</Text>
               {itinerary.map((item: any, index: number) => (
                 <View key={index} style={styles.itineraryItem}>
@@ -407,7 +540,7 @@ export function TripDetailsScreen({ navigation, route }: any) {
           ) : null}
 
           {/* Reviews */}
-          <Animated.View style={[styles.section, fadeIn(sectionAnims[6])]}>
+          <Animated.View style={[styles.section, fadeIn(sectionAnims[7])]}>
             <Text style={styles.sectionTitle}>Reviews</Text>
             {reviews.length > 0 ? (
               reviews.map((review: any) => (
@@ -454,7 +587,19 @@ export function TripDetailsScreen({ navigation, route }: any) {
             <Text style={styles.bottomPrice}>PKR {(trip.price ?? 0).toLocaleString()}</Text>
             <Text style={styles.bottomPricePer}>per person</Text>
           </View>
-          {isOwnTrip ? null : hasRequested ? (
+          {isOwnTrip && !startDatePassed ? (
+            <Pressable onPress={() => navigation.navigate('CreateTrip', { tripId })}>
+              <LinearGradient
+                colors={[colors.primary, colors.primaryContainer]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.bookButton}
+              >
+                <Ionicons name="create-outline" size={16} color={colors.onPrimary} />
+                <Text style={styles.bookText}>Manage Trip</Text>
+              </LinearGradient>
+            </Pressable>
+          ) : hasRequested ? (
             <View style={styles.requestedBadge}>
               <Ionicons name="checkmark-circle" size={18} color={colors.success} />
               <Text style={styles.requestedText}>Request Sent</Text>
@@ -842,6 +987,94 @@ const makeStyles = (colors: Colors) => StyleSheet.create({
     marginTop: spacing.xs,
     textAlign: 'center',
     paddingHorizontal: spacing.xl,
+  },
+  // Join Requests
+  joinRequestsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.lg,
+  },
+  countBadge: {
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    minWidth: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+  },
+  countBadgeText: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 12,
+    color: colors.onPrimary,
+  },
+  emptyBookings: {
+    alignItems: 'center',
+    paddingVertical: spacing.xl,
+    backgroundColor: colors.surfaceContainerLowest,
+    borderRadius: radii.xl,
+    gap: spacing.sm,
+  },
+  emptyBookingsText: {
+    ...typography.bodyMd,
+    color: colors.onSurfaceVariant,
+  },
+  bookingRequestCard: {
+    backgroundColor: colors.surfaceContainerLowest,
+    borderRadius: radii.xl,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  bookingRequestTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  bookingRequestAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+  bookingRequestName: {
+    fontFamily: 'Manrope_400Regular',
+    fontSize: 15,
+    color: colors.onSurface,
+  },
+  bookingRequestPhoneRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
+  },
+  bookingRequestPhone: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 12,
+    color: colors.primary,
+  },
+  bookingRequestActions: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    marginTop: spacing.md,
+  },
+  bookingRequestActionBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    height: 38,
+    borderRadius: radii.md,
+  },
+  bookingRequestAcceptBtn: {
+    backgroundColor: colors.successLight,
+  },
+  bookingRequestRejectBtn: {
+    backgroundColor: colors.errorContainer,
+  },
+  bookingRequestActionText: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 13,
   },
   // Bottom Bar
   bottomBar: {

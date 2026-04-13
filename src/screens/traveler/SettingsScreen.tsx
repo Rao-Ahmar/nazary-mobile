@@ -7,7 +7,6 @@ import {
   Switch,
   TextInput,
   Pressable,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,6 +17,7 @@ import { useAuthStore } from '../../store';
 import { profileApi } from '../../api/profile';
 import { tripPreferencesApi, type TripPreference } from '../../api/tripPreferences';
 import { CategoryChip } from '../../components/CategoryChip';
+import { useAlert } from '../../components/ThemedAlert';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -26,6 +26,7 @@ export function SettingsScreen({ navigation }: any) {
   const { user, setUser } = useAuthStore();
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const alert = useAlert();
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [budgetMin, setBudgetMin] = useState('');
@@ -74,7 +75,7 @@ export function SettingsScreen({ navigation }: any) {
       }
     } catch {
       setNotificationsEnabled(!value);
-      Alert.alert('Error', 'Could not update notification setting');
+      alert.show({ title: 'Error', message: 'Could not update notification setting', type: 'error' });
     }
   }, [user, setUser]);
 
@@ -93,10 +94,10 @@ export function SettingsScreen({ navigation }: any) {
         preferred_months: preferredMonths,
         followed_agency_id: followedAgencyId,
       });
-      Alert.alert('Saved', 'Trip preferences updated');
+      alert.show({ title: 'Saved', message: 'Trip preferences updated', type: 'success' });
     } catch (error: any) {
       const msg = error?.response?.data?.error || 'Could not save preferences';
-      Alert.alert('Error', msg);
+      alert.show({ title: 'Error', message: msg, type: 'error' });
     } finally {
       setIsSaving(false);
     }

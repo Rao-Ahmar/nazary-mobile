@@ -8,7 +8,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
   Animated,
   Easing,
 } from 'react-native';
@@ -18,11 +17,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, typography, spacing, radii } from '../../theme';
 import type { Colors } from '../../theme';
 import { authApi } from '../../api/auth';
+import { useAlert } from '../../components/ThemedAlert';
 
 export function ResetPasswordScreen({ navigation, route }: any) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const alert = useAlert();
   const tokenFromRoute = route?.params?.token ?? '';
 
   const [token, setToken] = useState(tokenFromRoute);
@@ -38,15 +39,15 @@ export function ResetPasswordScreen({ navigation, route }: any) {
 
   const handleReset = async () => {
     if (!token.trim()) {
-      Alert.alert('Missing Token', 'Please enter the reset token from your email.');
+      alert.show({ title: 'Missing Token', message: 'Please enter the reset token from your email.', type: 'warning' });
       return;
     }
     if (!password || password.length < 6) {
-      Alert.alert('Invalid Password', 'Password must be at least 6 characters.');
+      alert.show({ title: 'Invalid Password', message: 'Password must be at least 6 characters.', type: 'warning' });
       return;
     }
     if (password !== confirmPassword) {
-      Alert.alert('Mismatch', 'Passwords do not match.');
+      alert.show({ title: 'Mismatch', message: 'Passwords do not match.', type: 'warning' });
       return;
     }
 
@@ -56,7 +57,7 @@ export function ResetPasswordScreen({ navigation, route }: any) {
       setSuccess(true);
     } catch (error: any) {
       const msg = error?.response?.data?.error || 'Could not reset password. The token may be invalid or expired.';
-      Alert.alert('Error', msg);
+      alert.show({ title: 'Error', message: msg, type: 'error' });
     } finally {
       setIsSubmitting(false);
     }

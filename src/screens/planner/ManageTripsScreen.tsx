@@ -9,7 +9,6 @@ import {
   ActivityIndicator,
   Animated,
   Easing,
-  Alert,
   TextInput,
   Modal,
 } from 'react-native';
@@ -20,6 +19,7 @@ import { useTheme, typography, spacing, radii } from '../../theme';
 import { type Colors } from '../../theme';
 import { tripsApi } from '../../api/trips';
 import { DatePickerModal } from '../../components/DatePickerModal';
+import { useAlert } from '../../components/ThemedAlert';
 
 type TripItem = {
   id: string;
@@ -51,6 +51,7 @@ export function ManageTripsScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
   const { colors, shadows } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const alert = useAlert();
 
   const statusColors: Record<string, { bg: string; text: string }> = {
     active: { bg: colors.successLight, text: colors.success },
@@ -130,12 +131,12 @@ export function ManageTripsScreen({ navigation }: any) {
       await tripsApi.publish(id);
       loadTrips();
     } catch {
-      Alert.alert('Error', 'Could not publish trip');
+      alert.show({ title: 'Error', message: 'Could not publish trip', type: 'error' });
     }
   };
 
   const handleDelete = (id: string) => {
-    Alert.alert('Delete Trip', 'Are you sure? Only draft trips can be deleted.', [
+    alert.show({ title: 'Delete Trip', message: 'Are you sure? Only draft trips can be deleted.', type: 'warning', buttons: [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
@@ -145,15 +146,15 @@ export function ManageTripsScreen({ navigation }: any) {
             await tripsApi.destroy(id);
             loadTrips();
           } catch {
-            Alert.alert('Error', 'Could not delete trip');
+            alert.show({ title: 'Error', message: 'Could not delete trip', type: 'error' });
           }
         },
       },
-    ]);
+    ] });
   };
 
   const handleStopRecurring = (id: string) => {
-    Alert.alert('Stop Recurring', 'This trip will no longer auto-repeat. Continue?', [
+    alert.show({ title: 'Stop Recurring', message: 'This trip will no longer auto-repeat. Continue?', type: 'warning', buttons: [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Stop',
@@ -163,11 +164,11 @@ export function ManageTripsScreen({ navigation }: any) {
             await tripsApi.stopRecurring(id);
             loadTrips();
           } catch {
-            Alert.alert('Error', 'Could not stop recurring');
+            alert.show({ title: 'Error', message: 'Could not stop recurring', type: 'error' });
           }
         },
       },
-    ]);
+    ] });
   };
 
   const openReschedule = (item: TripItem) => {
@@ -181,7 +182,7 @@ export function ManageTripsScreen({ navigation }: any) {
 
   const submitReschedule = async () => {
     if (!rescheduleTrip || !rescheduleStart || !rescheduleEnd) {
-      Alert.alert('Missing Dates', 'Please select start and end dates.');
+      alert.show({ title: 'Missing Dates', message: 'Please select start and end dates.', type: 'warning' });
       return;
     }
     setIsRescheduling(true);
@@ -190,10 +191,10 @@ export function ManageTripsScreen({ navigation }: any) {
       if (rescheduleSeats) data.total_seats = parseInt(rescheduleSeats, 10);
       await tripsApi.reschedule(rescheduleTrip.id, data);
       setRescheduleTrip(null);
-      Alert.alert('Success', 'Trip rescheduled as a new draft. You can edit and publish it.');
+      alert.show({ title: 'Success', message: 'Trip rescheduled as a new draft. You can edit and publish it.', type: 'success' });
       loadTrips();
     } catch (err: any) {
-      Alert.alert('Error', err?.response?.data?.error || 'Could not reschedule trip');
+      alert.show({ title: 'Error', message: err?.response?.data?.error || 'Could not reschedule trip', type: 'error' });
     } finally {
       setIsRescheduling(false);
     }
@@ -231,6 +232,8 @@ export function ManageTripsScreen({ navigation }: any) {
     const total = item.totalSeats ?? item.total_seats ?? 0;
     const isRecurring = item.recurringEnabled ?? item.recurring_enabled;
     const isRescheduled = item.sourceTripId ?? item.source_trip_id;
+    const sd = item.startDate ?? item.start_date;
+    const startDatePassed = sd ? new Date(sd) < new Date(new Date().toDateString()) : false;
 
     return (
       <View style={[styles.tripCard, shadows.soft]}>
@@ -276,19 +279,29 @@ export function ManageTripsScreen({ navigation }: any) {
         <View style={styles.actionRow}>
           {item.status === 'draft' && (
             <>
-              <Pressable style={styles.actionButton} onPress={() => handlePublish(item.id)}>
-                <Ionicons name="rocket-outline" size={14} color={colors.primary} />
-                <Text style={styles.actionText}>Publish</Text>
-              </Pressable>
-              <Pressable style={styles.actionButton} onPress={() => navigation.navigate('CreateTrip', { tripId: item.id })}>
-                <Ionicons name="create-outline" size={14} color={colors.onSurfaceVariant} />
-                <Text style={[styles.actionText, { color: colors.onSurfaceVariant }]}>Edit</Text>
-              </Pressable>
+              {!startDatePassed && (
+                <Pressable style={styles.actionButton} onPress={() => handlePublish(item.id)}>
+                  <Ionicons name="rocket-outline" size={14} color={colors.primary} />
+                  <Text style={styles.actionText}>Publish</Text>
+                </Pressable>
+              )}
+              {!startDatePassed && (
+                <Pressable style={styles.actionButton} onPress={() => navigation.navigate('CreateTrip', { tripId: item.id })}>
+                  <Ionicons name="create-outline" size={14} color={colors.onSurfaceVariant} />
+                  <Text style={[styles.actionText, { color: colors.onSurfaceVariant }]}>Edit</Text>
+                </Pressable>
+              )}
               <Pressable style={styles.actionButton} onPress={() => handleDelete(item.id)}>
                 <Ionicons name="trash-outline" size={14} color={colors.error} />
                 <Text style={[styles.actionText, { color: colors.error }]}>Delete</Text>
               </Pressable>
             </>
+          )}
+          {item.status === 'active' && !startDatePassed && (
+            <Pressable style={styles.actionButton} onPress={() => navigation.navigate('CreateTrip', { tripId: item.id })}>
+              <Ionicons name="create-outline" size={14} color={colors.onSurfaceVariant} />
+              <Text style={[styles.actionText, { color: colors.onSurfaceVariant }]}>Edit</Text>
+            </Pressable>
           )}
           {(item.status === 'completed' || item.status === 'active') && (
             <Pressable style={styles.actionButton} onPress={() => openReschedule(item)}>
@@ -470,6 +483,34 @@ export function ManageTripsScreen({ navigation }: any) {
                 {isRescheduling ? 'Creating...' : 'Create Rescheduled Trip'}
               </Text>
             </Pressable>
+
+            {/* Reschedule date pickers — must be inside this Modal */}
+            <DatePickerModal
+              visible={showRescheduleStartPicker}
+              value={rescheduleStartObj || new Date()}
+              minimumDate={new Date()}
+              title="Start Date"
+              onConfirm={(date) => {
+                setRescheduleStartObj(date);
+                setRescheduleStart(date.toISOString().split('T')[0]);
+                if (rescheduleEndObj && date >= rescheduleEndObj) {
+                  setRescheduleEndObj(null);
+                  setRescheduleEnd('');
+                }
+              }}
+              onClose={() => setShowRescheduleStartPicker(false)}
+            />
+            <DatePickerModal
+              visible={showRescheduleEndPicker}
+              value={rescheduleEndObj || rescheduleStartObj || new Date()}
+              minimumDate={rescheduleStartObj ? new Date(rescheduleStartObj.getTime() + 86400000) : new Date()}
+              title="End Date"
+              onConfirm={(date) => {
+                setRescheduleEndObj(date);
+                setRescheduleEnd(date.toISOString().split('T')[0]);
+              }}
+              onClose={() => setShowRescheduleEndPicker(false)}
+            />
           </View>
         </View>
       </Modal>
@@ -496,33 +537,6 @@ export function ManageTripsScreen({ navigation }: any) {
         onClose={() => setShowDateToPicker(false)}
       />
 
-      {/* Reschedule date pickers */}
-      <DatePickerModal
-        visible={showRescheduleStartPicker}
-        value={rescheduleStartObj || new Date()}
-        minimumDate={new Date()}
-        title="Start Date"
-        onConfirm={(date) => {
-          setRescheduleStartObj(date);
-          setRescheduleStart(date.toISOString().split('T')[0]);
-          if (rescheduleEndObj && date >= rescheduleEndObj) {
-            setRescheduleEndObj(null);
-            setRescheduleEnd('');
-          }
-        }}
-        onClose={() => setShowRescheduleStartPicker(false)}
-      />
-      <DatePickerModal
-        visible={showRescheduleEndPicker}
-        value={rescheduleEndObj || rescheduleStartObj || new Date()}
-        minimumDate={rescheduleStartObj ? new Date(rescheduleStartObj.getTime() + 86400000) : new Date()}
-        title="End Date"
-        onConfirm={(date) => {
-          setRescheduleEndObj(date);
-          setRescheduleEnd(date.toISOString().split('T')[0]);
-        }}
-        onClose={() => setShowRescheduleEndPicker(false)}
-      />
     </View>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useMemo } from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable, Image, Animated, Easing, Alert } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Pressable, Image, Animated, Easing } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, typography, spacing, radii } from '../../theme';
@@ -7,10 +7,12 @@ import { type Colors } from '../../theme';
 import { StatusBadge } from '../../components/StatusBadge';
 import { EmptyState } from '../../components/EmptyState';
 import { useTripRequestStore } from '../../store/tripRequestStore';
+import { useAlert } from '../../components/ThemedAlert';
 
 export function IncomingRequestsScreen({ navigation }: any) {
   const { colors, shadows } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const alert = useAlert();
 
   const insets = useSafeAreaInsets();
   const { incomingRequests, fetchIncoming, acceptRequest, rejectRequest } = useTripRequestStore();
@@ -68,10 +70,10 @@ export function IncomingRequestsScreen({ navigation }: any) {
                   <View style={styles.actions}>
                     <Pressable
                       onPress={() => {
-                        Alert.alert('Accept Request', `Accept trip request to ${req.destination}?`, [
+                        alert.show({ title: 'Accept Request', message: `Accept trip request to ${req.destination}?`, type: 'info', buttons: [
                           { text: 'Cancel', style: 'cancel' },
                           { text: 'Accept', onPress: () => acceptRequest(req.id) },
-                        ]);
+                        ] });
                       }}
                       style={[styles.actionButton, styles.acceptButton]}
                     >
@@ -80,10 +82,10 @@ export function IncomingRequestsScreen({ navigation }: any) {
                     </Pressable>
                     <Pressable
                       onPress={() => {
-                        Alert.alert('Reject Request', `Reject trip request to ${req.destination}?`, [
+                        alert.show({ title: 'Reject Request', message: `Reject trip request to ${req.destination}?`, type: 'warning', buttons: [
                           { text: 'Cancel', style: 'cancel' },
                           { text: 'Reject', style: 'destructive', onPress: () => rejectRequest(req.id) },
-                        ]);
+                        ] });
                       }}
                       style={[styles.actionButton, styles.rejectButton]}
                     >

@@ -8,7 +8,6 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   Animated,
   Easing,
   Image,
@@ -22,6 +21,7 @@ import { useTheme, typography, spacing, radii, type Colors } from '../../theme';
 import { useAuthStore } from '../../store';
 import { profileApi } from '../../api/profile';
 import { authApi } from '../../api/auth';
+import { useAlert } from '../../components/ThemedAlert';
 
 const PHONE_REGEX = /^(\+92[0-9]{10}|0[0-9]{10})$/;
 
@@ -34,6 +34,7 @@ export function EditPlannerProfileScreen({ navigation }: any) {
   const { user, setUser } = useAuthStore();
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const alert = useAlert();
 
   const [isLoading, setIsLoading] = useState(true);
   const [agencyName, setAgencyName] = useState('');
@@ -174,11 +175,11 @@ export function EditPlannerProfileScreen({ navigation }: any) {
       const fresh = res.data as any;
       setUser({ ...fresh, profileCompleted: fresh.profileCompleted ?? fresh.profile_completed ?? true } as any);
 
-      Alert.alert('Saved', 'Profile updated successfully');
+      alert.show({ title: 'Saved', message: 'Profile updated successfully', type: 'success' });
       navigation.goBack();
     } catch (error: any) {
       const msg = error?.response?.data?.error || 'Could not update profile';
-      Alert.alert('Error', msg);
+      alert.show({ title: 'Error', message: msg, type: 'error' });
     } finally {
       setIsSubmitting(false);
     }

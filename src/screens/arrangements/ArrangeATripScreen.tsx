@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { View, Text, TextInput, Pressable, StyleSheet, ScrollView, Switch, Alert, Animated, Easing } from 'react-native';
+import { View, Text, TextInput, Pressable, StyleSheet, ScrollView, Switch, Animated, Easing } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,12 +8,14 @@ import { useTheme, typography, spacing, radii } from '../../theme';
 import type { Colors } from '../../theme';
 import { DatePickerModal } from '../../components/DatePickerModal';
 import { arrangementApi } from '../../api/arrangements';
+import { useAlert } from '../../components/ThemedAlert';
 
 export function ArrangeATripScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const alert = useAlert();
   const [destination, setDestination] = useState('');
   const [surpriseMe, setSurpriseMe] = useState(false);
   const [startDate, setStartDate] = useState('');
@@ -34,12 +36,12 @@ export function ArrangeATripScreen() {
   }, []);
 
   const handleSubmit = async () => {
-    if (!startDate || !endDate) return Alert.alert('Required', 'Please select your travel start and end dates.');
+    if (!startDate || !endDate) { alert.show({ title: 'Required', message: 'Please select your travel start and end dates.', type: 'warning' }); return; }
     if (startDateObj && startDateObj < new Date(new Date().toDateString())) {
-      return Alert.alert('Invalid Date', 'Start date cannot be in the past.');
+      alert.show({ title: 'Invalid Date', message: 'Start date cannot be in the past.', type: 'warning' }); return;
     }
     if (startDateObj && endDateObj && endDateObj <= startDateObj) {
-      return Alert.alert('Invalid Date', 'End date must be after start date.');
+      alert.show({ title: 'Invalid Date', message: 'End date must be after start date.', type: 'warning' }); return;
     }
     setIsLoading(true);
     try {
@@ -51,11 +53,11 @@ export function ArrangeATripScreen() {
         budget_max: parseFloat(budgetMax) || 0,
         special_notes: specialNotes,
       });
-      Alert.alert('Request Submitted!', 'Our team will review your request and arrange the perfect trip for you.', [
+      alert.show({ title: 'Request Submitted!', message: 'Our team will review your request and arrange the perfect trip for you.', type: 'success', buttons: [
         { text: 'OK', onPress: () => navigation.goBack() },
-      ]);
+      ] });
     } catch {
-      Alert.alert('Error', 'Could not submit request. Please try again.');
+      alert.show({ title: 'Error', message: 'Could not submit request. Please try again.', type: 'error' });
     } finally {
       setIsLoading(false);
     }

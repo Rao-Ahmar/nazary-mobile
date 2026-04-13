@@ -28,6 +28,7 @@ import { PremiumPaywallScreen } from '../screens/bike/PremiumPaywallScreen';
 import { ArrangeATripScreen } from '../screens/arrangements/ArrangeATripScreen';
 import { MyArrangementsScreen } from '../screens/arrangements/MyArrangementsScreen';
 import { CreateTripScreen } from '../screens/planner/CreateTripScreen';
+import { BookingRequestsScreen } from '../screens/planner/BookingRequestsScreen';
 import { EditPlannerProfileScreen } from '../screens/planner/EditPlannerProfileScreen';
 import { CoupleRequestScreen } from '../screens/couples/CoupleRequestScreen';
 import { SettingsScreen } from '../screens/traveler/SettingsScreen';
@@ -67,6 +68,7 @@ export function AppNavigator() {
       <Stack.Screen name="ArrangeATrip" component={ArrangeATripScreen} options={slideOptions} />
       <Stack.Screen name="MyArrangements" component={MyArrangementsScreen} options={slideOptions} />
       <Stack.Screen name="CreateTrip" component={CreateTripScreen} options={slideOptions} />
+      <Stack.Screen name="BookingRequests" component={BookingRequestsScreen} options={slideOptions} />
       <Stack.Screen name="EditPlannerProfile" component={EditPlannerProfileScreen} options={slideOptions} />
       <Stack.Screen name="CoupleRequest" component={CoupleRequestScreen} options={slideOptions} />
       <Stack.Screen name="Settings" component={SettingsScreen} options={slideOptions} />

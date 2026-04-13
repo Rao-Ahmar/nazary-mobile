@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable, Animated, Easing, Alert, TextInput, ActivityIndicator, FlatList } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Pressable, Animated, Easing, TextInput, ActivityIndicator, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -10,6 +10,7 @@ import { CategoryChip } from '../../components/CategoryChip';
 import { DatePickerModal } from '../../components/DatePickerModal';
 import { tripRequestsApi } from '../../api/tripRequests';
 import { plannersApi } from '../../api/planners';
+import { useAlert } from '../../components/ThemedAlert';
 import type { Agency } from '../../types';
 
 const tripCategories = ['Family Trips', 'Friends', 'Couple Trips'];
@@ -17,6 +18,7 @@ const tripCategories = ['Family Trips', 'Friends', 'Couple Trips'];
 export function CreateTripRequestScreen({ navigation, route }: any) {
   const { colors, shadows } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const alert = useAlert();
 
   const insets = useSafeAreaInsets();
   const preselectedPlannerId = route.params?.plannerId;
@@ -101,10 +103,10 @@ export function CreateTripRequestScreen({ navigation, route }: any) {
   const handleSubmit = async () => {
     if (!selectedPlanner) return;
     if (startDateObj && startDateObj < new Date(new Date().toDateString())) {
-      return Alert.alert('Invalid Date', 'Start date cannot be in the past.');
+      alert.show({ title: 'Invalid Date', message: 'Start date cannot be in the past.', type: 'warning' }); return;
     }
     if (startDateObj && endDateObj && endDateObj <= startDateObj) {
-      return Alert.alert('Invalid Date', 'End date must be after start date.');
+      alert.show({ title: 'Invalid Date', message: 'End date must be after start date.', type: 'warning' }); return;
     }
     setIsSubmitting(true);
     try {
@@ -118,12 +120,12 @@ export function CreateTripRequestScreen({ navigation, route }: any) {
         budget: budget ? parseFloat(budget) : undefined,
         note: note.trim() || undefined,
       });
-      Alert.alert('Request Sent!', `Your custom trip request has been sent to ${selectedPlanner.name}.`, [
+      alert.show({ title: 'Request Sent!', message: `Your custom trip request has been sent to ${selectedPlanner.name}.`, type: 'success', buttons: [
         { text: 'OK', onPress: () => navigation.goBack() },
-      ]);
+      ] });
     } catch (err: any) {
       const msg = err?.response?.data?.error || 'Could not send request. Please try again.';
-      Alert.alert('Error', msg);
+      alert.show({ title: 'Error', message: msg, type: 'error' });
     } finally {
       setIsSubmitting(false);
     }

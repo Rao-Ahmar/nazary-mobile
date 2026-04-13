@@ -8,7 +8,6 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   Animated,
   Easing,
   ActivityIndicator,
@@ -19,11 +18,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, typography, spacing, radii } from '../../theme';
 import type { Colors } from '../../theme';
 import { coupleRequestsApi } from '../../api/coupleRequests';
+import { useAlert } from '../../components/ThemedAlert';
 
 export function CoupleRequestScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const alert = useAlert();
 
   const [partnerName, setPartnerName] = useState('');
   const [destinationPreference, setDestinationPreference] = useState('');
@@ -47,7 +48,7 @@ export function CoupleRequestScreen({ navigation }: any) {
 
   const handleSubmit = async () => {
     if (!partnerName.trim() || !destinationPreference.trim() || !travelDates.trim() || !budgetRange.trim()) {
-      Alert.alert('Missing Fields', 'Please fill in all required fields.');
+      alert.show({ title: 'Missing Fields', message: 'Please fill in all required fields.', type: 'warning' });
       return;
     }
 
@@ -63,7 +64,7 @@ export function CoupleRequestScreen({ navigation }: any) {
       setIsSuccess(true);
     } catch (error: any) {
       const msg = error?.response?.data?.error || 'Something went wrong. Please try again.';
-      Alert.alert('Error', msg);
+      alert.show({ title: 'Error', message: msg, type: 'error' });
     } finally {
       setIsSubmitting(false);
     }

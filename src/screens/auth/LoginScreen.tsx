@@ -10,7 +10,6 @@ import {
   ScrollView,
   Animated,
   Easing,
-  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,6 +18,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme, typography, spacing, radii } from '../../theme';
 import type { Colors } from '../../theme';
 import { useAuthStore } from '../../store';
+import { useAlert } from '../../components/ThemedAlert';
 import type { AuthStackParamList } from '../../types';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
@@ -27,6 +27,7 @@ export function LoginScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const alert = useAlert();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { login, devLoginAsTraveler, devLoginAsPlanner, isLoading } = useAuthStore();
@@ -49,7 +50,7 @@ export function LoginScreen({ navigation }: Props) {
     try {
       await login(email, password);
     } catch (error: any) {
-      Alert.alert('Login Failed', error.message || 'Invalid email or password.');
+      alert.show({ title: 'Login Failed', message: error.message || 'Invalid email or password.', type: 'error' });
     }
   };
 
@@ -139,13 +140,17 @@ export function LoginScreen({ navigation }: Props) {
 
             {/* Dev Login */}
             <View style={styles.devSection}>
-              <Text style={styles.devLabel}>Dev Login</Text>
+              <Text style={styles.devLabel}>Quick Login</Text>
               <View style={styles.devButtons}>
-                <Pressable style={styles.devButton} onPress={devLoginAsTraveler}>
+                <Pressable style={styles.devButton} disabled={isLoading} onPress={async () => {
+                  try { await devLoginAsTraveler(); } catch (e: any) { alert.show({ title: 'Error', message: e.message, type: 'error' }); }
+                }}>
                   <Ionicons name="compass-outline" size={16} color={colors.primary} />
                   <Text style={styles.devButtonText}>Traveler</Text>
                 </Pressable>
-                <Pressable style={styles.devButton} onPress={devLoginAsPlanner}>
+                <Pressable style={styles.devButton} disabled={isLoading} onPress={async () => {
+                  try { await devLoginAsPlanner(); } catch (e: any) { alert.show({ title: 'Error', message: e.message, type: 'error' }); }
+                }}>
                   <Ionicons name="briefcase-outline" size={16} color={colors.primary} />
                   <Text style={styles.devButtonText}>Planner</Text>
                 </Pressable>

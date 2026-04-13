@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable, TextInput, Animated, Easing, Alert } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Pressable, TextInput, Animated, Easing } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -7,11 +7,13 @@ import { useTheme, typography, spacing, radii } from '../../theme';
 import type { Colors } from '../../theme';
 import { StarRating } from '../../components/StarRating';
 import { reviewsApi } from '../../api/reviews';
+import { useAlert } from '../../components/ThemedAlert';
 
 export function WriteReviewScreen({ navigation, route }: any) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const alert = useAlert();
   const { type, targetId, targetName } = route.params;
   const [rating, setRating] = useState(0);
   const [text, setText] = useState('');
@@ -32,12 +34,12 @@ export function WriteReviewScreen({ navigation, route }: any) {
       } else if (type === 'place') {
         await reviewsApi.createPlaceReview(targetId, { rating, text: text.trim() });
       }
-      Alert.alert('Review Submitted', `Your ${rating}-star review for ${targetName} has been submitted!`, [
+      alert.show({ title: 'Review Submitted', message: `Your ${rating}-star review for ${targetName} has been submitted!`, type: 'success', buttons: [
         { text: 'OK', onPress: () => navigation.goBack() },
-      ]);
+      ] });
     } catch (err: any) {
       const msg = err?.response?.data?.error || 'Could not submit review. Please try again.';
-      Alert.alert('Error', msg);
+      alert.show({ title: 'Error', message: msg, type: 'error' });
     } finally {
       setIsSubmitting(false);
     }

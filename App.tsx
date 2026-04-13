@@ -17,6 +17,7 @@ import {
 } from '@expo-google-fonts/inter';
 import * as SplashScreen from 'expo-splash-screen';
 import { AppNavigator } from './src/navigation/AppNavigator';
+import { AlertProvider } from './src/components/ThemedAlert';
 import { useTheme } from './src/theme';
 import { useThemeStore } from './src/store/themeStore';
 
@@ -52,7 +53,9 @@ export default function App() {
       <SafeAreaProvider>
         <View style={{ flex: 1, backgroundColor: colors.surface }} onLayout={onLayoutRootView}>
           <StatusBar style={isDark ? 'light' : 'dark'} />
-          <AppNavigator />
+          <AlertProvider>
+            <AppNavigator />
+          </AlertProvider>
         </View>
       </SafeAreaProvider>
     </GestureHandlerRootView>
