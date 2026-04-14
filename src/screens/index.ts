@@ -65,3 +65,6 @@ export { PremiumPaywallScreen } from './bike/PremiumPaywallScreen';
 // Arrangements
 export { ArrangeATripScreen } from './arrangements/ArrangeATripScreen';
 export { MyArrangementsScreen } from './arrangements/MyArrangementsScreen';
+
+// Info
+export { AboutScreen } from './info/AboutScreen';

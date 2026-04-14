@@ -5,9 +5,6 @@ import {
   TextInput,
   Pressable,
   StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
   Animated,
   Easing,
 } from 'react-native';
@@ -18,6 +15,7 @@ import { useTheme, typography, spacing, radii } from '../../theme';
 import type { Colors } from '../../theme';
 import { authApi } from '../../api/auth';
 import { useAlert } from '../../components/ThemedAlert';
+import { KeyboardAwareScroll } from '../../components/KeyboardAwareScroll';
 
 export function ResetPasswordScreen({ navigation, route }: any) {
   const insets = useSafeAreaInsets();
@@ -65,11 +63,8 @@ export function ResetPasswordScreen({ navigation, route }: any) {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView
+        <KeyboardAwareScroll
           contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 20 }]}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
         >
           <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
             <Ionicons name="chevron-back" size={22} color={colors.onSurface} />
@@ -150,8 +145,7 @@ export function ResetPasswordScreen({ navigation, route }: any) {
               </>
             )}
           </Animated.View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+        </KeyboardAwareScroll>
     </View>
   );
 }

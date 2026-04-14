@@ -5,9 +5,6 @@ import {
   TextInput,
   Pressable,
   StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
   Animated,
   Easing,
 } from 'react-native';
@@ -19,6 +16,7 @@ import { useTheme, typography, spacing, radii } from '../../theme';
 import type { Colors } from '../../theme';
 import { useAuthStore } from '../../store';
 import { useAlert } from '../../components/ThemedAlert';
+import { KeyboardAwareScroll } from '../../components/KeyboardAwareScroll';
 import type { AuthStackParamList } from '../../types';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
@@ -56,14 +54,8 @@ export function LoginScreen({ navigation }: Props) {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <ScrollView
+        <KeyboardAwareScroll
           contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 20 }]}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
         >
           {/* Back button */}
           <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
@@ -165,8 +157,7 @@ export function LoginScreen({ navigation }: Props) {
               </Pressable>
             </View>
           </Animated.View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+        </KeyboardAwareScroll>
     </View>
   );
 }

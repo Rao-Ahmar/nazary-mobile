@@ -32,6 +32,7 @@ import { BookingRequestsScreen } from '../screens/planner/BookingRequestsScreen'
 import { EditPlannerProfileScreen } from '../screens/planner/EditPlannerProfileScreen';
 import { CoupleRequestScreen } from '../screens/couples/CoupleRequestScreen';
 import { SettingsScreen } from '../screens/traveler/SettingsScreen';
+import { AboutScreen } from '../screens/info/AboutScreen';
 import type { RootStackParamList } from '../types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -72,6 +73,7 @@ export function AppNavigator() {
       <Stack.Screen name="EditPlannerProfile" component={EditPlannerProfileScreen} options={slideOptions} />
       <Stack.Screen name="CoupleRequest" component={CoupleRequestScreen} options={slideOptions} />
       <Stack.Screen name="Settings" component={SettingsScreen} options={slideOptions} />
+      <Stack.Screen name="AboutUs" component={AboutScreen} options={slideOptions} />
     </>
   );
 

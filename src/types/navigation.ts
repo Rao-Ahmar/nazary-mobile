@@ -63,4 +63,5 @@ export type RootStackParamList = {
   EditPlannerProfile: undefined;
   CoupleRequest: undefined;
   Settings: undefined;
+  AboutUs: undefined;
 };

@@ -9,6 +9,7 @@ import { useTheme, typography, spacing, radii, type Colors } from '../../theme';
 import { FormInput } from '../../components/FormInput';
 import { useAuthStore } from '../../store';
 import { authApi } from '../../api/auth';
+import { KeyboardAwareScroll } from '../../components/KeyboardAwareScroll';
 import type { ProfileSetupStackParamList } from '../../types';
 
 const PHONE_REGEX = /^0[0-9]{10}$/;
@@ -67,7 +68,7 @@ export function TravelerProfileSetupScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <KeyboardAwareScroll contentContainerStyle={styles.scrollContent}>
         <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: fadeAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] }}>
           <Text style={styles.title}>Complete Profile</Text>
           <Text style={styles.subtitle}>Add your phone number to get started</Text>
@@ -84,7 +85,7 @@ export function TravelerProfileSetupScreen() {
             <Text style={styles.tipText}>Your phone number helps planners reach you for trip coordination. You can add an avatar later from your profile.</Text>
           </View>
         </Animated.View>
-      </ScrollView>
+      </KeyboardAwareScroll>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.lg }]}>
         <Pressable onPress={handleComplete} disabled={!canComplete || isSaving} style={styles.button}>

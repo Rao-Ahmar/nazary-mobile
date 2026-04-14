@@ -8,6 +8,7 @@ import type { Colors } from '../../theme';
 import { StarRating } from '../../components/StarRating';
 import { reviewsApi } from '../../api/reviews';
 import { useAlert } from '../../components/ThemedAlert';
+import { KeyboardAwareScroll } from '../../components/KeyboardAwareScroll';
 
 export function WriteReviewScreen({ navigation, route }: any) {
   const insets = useSafeAreaInsets();
@@ -55,7 +56,7 @@ export function WriteReviewScreen({ navigation, route }: any) {
         <View style={{ width: 44 }} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <KeyboardAwareScroll contentContainerStyle={styles.scrollContent}>
         <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: fadeAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] }}>
           <Text style={styles.targetName}>{targetName}</Text>
           <Text style={styles.label}>How would you rate your experience?</Text>
@@ -79,7 +80,7 @@ export function WriteReviewScreen({ navigation, route }: any) {
           </View>
           <Text style={styles.charCount}>{text.length}/500</Text>
         </Animated.View>
-      </ScrollView>
+      </KeyboardAwareScroll>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.lg }]}>
         <Pressable onPress={handleSubmit} disabled={!canSubmit} style={styles.submitButton}>

@@ -6,8 +6,6 @@ import {
   TextInput,
   Pressable,
   ScrollView,
-  KeyboardAvoidingView,
-  Platform,
   Animated,
   Easing,
   ActivityIndicator,
@@ -19,6 +17,7 @@ import { useTheme, typography, spacing, radii } from '../../theme';
 import type { Colors } from '../../theme';
 import { coupleRequestsApi } from '../../api/coupleRequests';
 import { useAlert } from '../../components/ThemedAlert';
+import { KeyboardAwareScroll } from '../../components/KeyboardAwareScroll';
 
 export function CoupleRequestScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
@@ -98,11 +97,8 @@ export function CoupleRequestScreen({ navigation }: any) {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView
+        <KeyboardAwareScroll
           contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 20 }]}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
         >
           {/* Header */}
           <View style={styles.header}>
@@ -203,8 +199,7 @@ export function CoupleRequestScreen({ navigation }: any) {
               </LinearGradient>
             </Pressable>
           </Animated.View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+        </KeyboardAwareScroll>
     </View>
   );
 }

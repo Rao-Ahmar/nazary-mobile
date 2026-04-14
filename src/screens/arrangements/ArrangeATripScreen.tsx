@@ -9,6 +9,7 @@ import type { Colors } from '../../theme';
 import { DatePickerModal } from '../../components/DatePickerModal';
 import { arrangementApi } from '../../api/arrangements';
 import { useAlert } from '../../components/ThemedAlert';
+import { KeyboardAwareScroll } from '../../components/KeyboardAwareScroll';
 
 export function ArrangeATripScreen() {
   const insets = useSafeAreaInsets();
@@ -73,7 +74,7 @@ export function ArrangeATripScreen() {
         <View style={{ width: 44 }} />
       </View>
 
-      <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 100 }]} showsVerticalScrollIndicator={false}>
+      <KeyboardAwareScroll contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 100 }]}>
         <Animated.View style={{ opacity: contentOpacity }}>
           {/* Premium Badge */}
           <LinearGradient colors={[colors.warningGradientStart, colors.warningGradientEnd]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.premiumBadge}>
@@ -160,7 +161,7 @@ export function ArrangeATripScreen() {
             </LinearGradient>
           </Pressable>
         </Animated.View>
-      </ScrollView>
+      </KeyboardAwareScroll>
 
       <DatePickerModal
         visible={showStartPicker}

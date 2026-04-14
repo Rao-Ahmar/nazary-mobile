@@ -11,6 +11,7 @@ import { DatePickerModal } from '../../components/DatePickerModal';
 import { tripRequestsApi } from '../../api/tripRequests';
 import { plannersApi } from '../../api/planners';
 import { useAlert } from '../../components/ThemedAlert';
+import { KeyboardAwareScroll } from '../../components/KeyboardAwareScroll';
 import type { Agency } from '../../types';
 
 const tripCategories = ['Family Trips', 'Friends', 'Couple Trips'];
@@ -141,7 +142,7 @@ export function CreateTripRequestScreen({ navigation, route }: any) {
         <View style={{ width: 44 }} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+      <KeyboardAwareScroll contentContainerStyle={styles.scrollContent}>
         <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: fadeAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] }}>
           {/* Planner Search */}
           <Text style={styles.fieldLabel}>Trip Planner *</Text>
@@ -215,7 +216,7 @@ export function CreateTripRequestScreen({ navigation, route }: any) {
 
           <FormInput label="Note (optional)" icon="chatbox-outline" value={note} onChangeText={setNote} placeholder="Any special requests or preferences..." multiline style={{ marginTop: spacing.lg }} />
         </Animated.View>
-      </ScrollView>
+      </KeyboardAwareScroll>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.lg }]}>
         <Pressable onPress={handleSubmit} disabled={!canSubmit} style={styles.submitButton}>

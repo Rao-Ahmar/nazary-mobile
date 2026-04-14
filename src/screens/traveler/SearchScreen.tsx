@@ -13,8 +13,6 @@ import {
   Modal,
   ScrollView,
   Keyboard,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,6 +21,7 @@ import { type Colors } from '../../theme';
 import { tripsApi } from '../../api/trips';
 import { apiClient } from '../../api/client';
 import { featuredTrips } from '../../data/mockData';
+import { KeyboardAwareScroll } from '../../components/KeyboardAwareScroll';
 import { DatePickerModal } from '../../components/DatePickerModal';
 
 type TripItem = {
@@ -38,6 +37,8 @@ type TripItem = {
   start_date?: string;
   seatsLeft?: number;
   seats_left?: number;
+  totalSeats?: number;
+  total_seats?: number;
   tags: string[];
   rating: number;
   reviewCount?: number;
@@ -316,6 +317,9 @@ export function SearchScreen({ navigation }: any) {
   const renderTrip = ({ item }: { item: TripItem }) => {
     const image = item.heroImage || item.hero_image || 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400&q=80';
     const seats = item.seatsLeft ?? item.seats_left ?? 0;
+    const total = item.totalSeats ?? item.total_seats ?? 0;
+    const isLowSeats = total > 0 && seats > 0 && seats <= Math.ceil(total * 0.2);
+    const isFullyBooked = seats <= 0;
     const reviews = item.reviewCount ?? item.review_count ?? 0;
     const tripType = item.tripType || item.trip_type;
     const tripTypeBadgeConfig = getTripTypeBadgeConfig(colors);
@@ -355,11 +359,20 @@ export function SearchScreen({ navigation }: any) {
           </View>
           <View style={styles.tripFooter}>
             <Text style={styles.tripDuration}>{item.duration}</Text>
-            {seats > 0 && (
+            {isFullyBooked ? (
+              <View style={styles.fullyBookedBadge}>
+                <Text style={styles.fullyBookedText}>Fully Booked</Text>
+              </View>
+            ) : isLowSeats ? (
+              <View style={styles.urgencyBadge}>
+                <Ionicons name="flame" size={10} color={colors.error} />
+                <Text style={styles.urgencyText}>Only {seats} left</Text>
+              </View>
+            ) : seats > 0 ? (
               <View style={styles.seatsBadge}>
                 <Text style={styles.seatsText}>{seats} seats left</Text>
               </View>
-            )}
+            ) : null}
           </View>
         </View>
       </Pressable>
@@ -483,7 +496,6 @@ export function SearchScreen({ navigation }: any) {
         onRequestClose={() => setShowFilters(false)}
         onDismiss={onFilterModalHide}
       >
-        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <View style={styles.modalOverlay}>
             <View style={[styles.modalCard, shadows.card]}>
               {/* Header */}
@@ -495,7 +507,7 @@ export function SearchScreen({ navigation }: any) {
               </View>
 
               {/* Content */}
-              <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="always" contentContainerStyle={{ paddingBottom: spacing.md }}>
+              <KeyboardAwareScroll keyboardShouldPersistTaps="always" contentContainerStyle={{ paddingBottom: spacing.md }}>
                 {/* Budget Range */}
                 <Text style={styles.filterSectionTitle}>Budget Range (PKR)</Text>
                 <View style={styles.budgetRow}>
@@ -566,7 +578,7 @@ export function SearchScreen({ navigation }: any) {
                     </View>
                   )}
                 </Pressable>
-              </ScrollView>
+              </KeyboardAwareScroll>
 
               {/* Footer Buttons */}
               <View style={styles.modalFooter}>
@@ -579,7 +591,6 @@ export function SearchScreen({ navigation }: any) {
               </View>
             </View>
           </View>
-        </KeyboardAvoidingView>
       </Modal>
 
       {/* ==================== PLANNER PICKER MODAL ==================== */}
@@ -760,6 +771,10 @@ const makeStyles = (colors: Colors) => StyleSheet.create({
   tripDuration: { fontFamily: 'Inter_300Light', fontSize: 11, color: colors.onSurfaceVariant },
   seatsBadge: { backgroundColor: colors.successLight, paddingHorizontal: 8, paddingVertical: 2, borderRadius: radii.full },
   seatsText: { fontFamily: 'Inter_400Regular', fontSize: 10, color: colors.success },
+  urgencyBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: colors.errorTint, paddingHorizontal: 8, paddingVertical: 2, borderRadius: radii.full },
+  urgencyText: { fontFamily: 'Inter_400Regular', fontSize: 10, color: colors.error },
+  fullyBookedBadge: { backgroundColor: colors.errorTint, paddingHorizontal: 8, paddingVertical: 2, borderRadius: radii.full },
+  fullyBookedText: { fontFamily: 'Inter_400Regular', fontSize: 10, color: colors.error },
   emptyState: { alignItems: 'center', paddingTop: spacing['4xl'], gap: spacing.md },
   emptyTitle: { fontFamily: 'Manrope_400Regular', fontSize: 18, color: colors.onSurface },
   emptySubtitle: { ...typography.bodyMd, color: colors.onSurfaceVariant },

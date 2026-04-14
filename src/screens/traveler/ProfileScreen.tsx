@@ -55,6 +55,11 @@ export function ProfileScreen({ navigation }: any) {
         <Text style={styles.settingsText}>Notification Settings</Text>
       </Pressable>
 
+      <Pressable style={styles.aboutButton} onPress={() => navigation.navigate('AboutUs')}>
+        <Ionicons name="information-circle-outline" size={20} color={colors.onSurface} />
+        <Text style={styles.aboutText}>About Us</Text>
+      </Pressable>
+
       <Pressable style={styles.logoutButton} onPress={logout}>
         <Ionicons name="log-out-outline" size={20} color={colors.error} />
         <Text style={styles.logoutText}>Log Out</Text>
@@ -80,6 +85,8 @@ const makeStyles = (colors: Colors) => StyleSheet.create({
   themeText: { fontFamily: 'Inter_400Regular', fontSize: 15, color: colors.onSurface },
   settingsButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, height: 56, borderRadius: radii.xl, backgroundColor: colors.surfaceContainerLow, marginBottom: spacing.md },
   settingsText: { fontFamily: 'Inter_400Regular', fontSize: 15, color: colors.onSurface },
+  aboutButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, height: 56, borderRadius: radii.xl, backgroundColor: colors.surfaceContainerLow, marginBottom: spacing.md },
+  aboutText: { fontFamily: 'Inter_400Regular', fontSize: 15, color: colors.onSurface },
   logoutButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, height: 56, borderRadius: radii.xl, backgroundColor: colors.surfaceContainerLow },
   logoutText: { fontFamily: 'Inter_400Regular', fontSize: 15, color: colors.error },
 });

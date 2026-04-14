@@ -6,8 +6,6 @@ import {
   TextInput,
   Pressable,
   ScrollView,
-  KeyboardAvoidingView,
-  Platform,
   Animated,
   Easing,
   Image,
@@ -22,6 +20,7 @@ import { useAuthStore } from '../../store';
 import { profileApi } from '../../api/profile';
 import { authApi } from '../../api/auth';
 import { useAlert } from '../../components/ThemedAlert';
+import { KeyboardAwareScroll } from '../../components/KeyboardAwareScroll';
 
 const PHONE_REGEX = /^(\+92[0-9]{10}|0[0-9]{10})$/;
 
@@ -195,11 +194,8 @@ export function EditPlannerProfileScreen({ navigation }: any) {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView
+        <KeyboardAwareScroll
           contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 20 }]}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
         >
           {/* Header */}
           <View style={styles.header}>
@@ -297,8 +293,7 @@ export function EditPlannerProfileScreen({ navigation }: any) {
               </LinearGradient>
             </Pressable>
           </Animated.View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+        </KeyboardAwareScroll>
     </View>
   );
 }

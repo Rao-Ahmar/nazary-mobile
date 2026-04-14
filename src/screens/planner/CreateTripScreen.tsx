@@ -6,8 +6,6 @@ import {
   TextInput,
   Pressable,
   ScrollView,
-  KeyboardAvoidingView,
-  Platform,
   Animated,
   Easing,
   Image,
@@ -24,6 +22,7 @@ import { tripsApi } from '../../api/trips';
 import { itineraryPresetsApi } from '../../api/itineraryPresets';
 import { ItineraryPreset } from '../../types/models';
 import { useAlert } from '../../components/ThemedAlert';
+import { KeyboardAwareScroll } from '../../components/KeyboardAwareScroll';
 
 const TAG_OPTIONS = ['Adventure', 'Cultural', 'Wellness', 'Photography', 'Bike', 'Family', 'Luxury', 'Budget'];
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -379,11 +378,8 @@ export function CreateTripScreen({ navigation, route }: any) {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView
+        <KeyboardAwareScroll
           contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 20 }]}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
         >
           {/* Header */}
           <View style={styles.header}>
@@ -706,8 +702,7 @@ export function CreateTripScreen({ navigation, route }: any) {
             </Pressable>
           </Animated.View>
           )}
-        </ScrollView>
-      </KeyboardAvoidingView>
+        </KeyboardAwareScroll>
 
       <DatePickerModal
         visible={showStartPicker}

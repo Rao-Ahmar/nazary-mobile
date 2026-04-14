@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable, Animated, Easing, Image } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Pressable, Animated, Easing, Image, ActivityIndicator, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
+import * as Clipboard from 'expo-clipboard';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTheme, typography, spacing, radii, type Colors } from '../../theme';
@@ -11,7 +12,9 @@ import { FormInput } from '../../components/FormInput';
 import { useAuthStore } from '../../store';
 import { profileApi } from '../../api/profile';
 import { authApi } from '../../api/auth';
+import { plannersApi } from '../../api/planners';
 import { useAlert } from '../../components/ThemedAlert';
+import { KeyboardAwareScroll } from '../../components/KeyboardAwareScroll';
 import type { ProfileSetupStackParamList } from '../../types';
 
 const PHONE_REGEX = /^0[0-9]{10}$/;
@@ -57,6 +60,36 @@ export function PlannerProfileSetupScreen() {
   const [websiteUrl, setWebsiteUrl] = useState('');
   const [avatar, setAvatar] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [phoneVerified, setPhoneVerified] = useState(false);
+  const [nameAvailable, setNameAvailable] = useState<boolean | null>(null);
+  const [nameChecking, setNameChecking] = useState(false);
+  const nameCheckTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Debounced agency name availability check
+  useEffect(() => {
+    const trimmed = agencyName.trim();
+    if (trimmed.length < 2) {
+      setNameAvailable(null);
+      setNameChecking(false);
+      return;
+    }
+    setNameChecking(true);
+    setNameAvailable(null);
+    if (nameCheckTimer.current) clearTimeout(nameCheckTimer.current);
+    nameCheckTimer.current = setTimeout(async () => {
+      try {
+        const res = await plannersApi.checkName(trimmed);
+        const available = (res.data as any)?.available ?? res.data?.available;
+        setNameAvailable(available);
+      } catch {
+        setNameAvailable(null);
+      } finally {
+        setNameChecking(false);
+      }
+    }, 500);
+    return () => {
+      if (nameCheckTimer.current) clearTimeout(nameCheckTimer.current);
+    };
+  }, [agencyName]);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -92,12 +125,14 @@ export function PlannerProfileSetupScreen() {
     }
   };
 
-  const canProceedStep0 = agencyName.trim() && tagline.trim() && phone.trim() && avatar !== null;
+  const canProceedStep0 = agencyName.trim() && tagline.trim() && phone.trim() && avatar !== null && nameAvailable === true;
   const canProceedStep1 = yearsExperience.trim();
 
   const [isSaving, setIsSaving] = useState(false);
+  const [savedNazaryUrl, setSavedNazaryUrl] = useState('');
+  const [linkCopied, setLinkCopied] = useState(false);
 
-  const handleComplete = async () => {
+  const saveProfile = async () => {
     setIsSaving(true);
     try {
       const data: Record<string, unknown> = {
@@ -126,11 +161,13 @@ export function PlannerProfileSetupScreen() {
         await profileApi.uploadAvatar(formData);
       }
 
-      // Refresh user data so avatar URL is available in the store
+      // Refresh user data so avatar URL and nazary link are available
       const res = await authApi.getCurrentUser();
       const freshUser = res.data;
+      const url = (freshUser as any).nazaryUrl ?? (freshUser as any).nazary_url ?? '';
+      setSavedNazaryUrl(url);
       setUser({ ...freshUser, profileCompleted: true });
-      setProfileCompleted(true);
+      setStep(2);
     } catch {
       alert.show({ title: 'Error', message: 'Could not save profile. Please try again.', type: 'error' });
     } finally {
@@ -138,11 +175,15 @@ export function PlannerProfileSetupScreen() {
     }
   };
 
+  const handleComplete = () => {
+    setProfileCompleted(true);
+  };
+
   const steps = ['Profile & Agency', 'Verification', 'Finish'];
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <KeyboardAwareScroll contentContainerStyle={styles.scrollContent}>
         <Text style={styles.title}>Set Up Your Agency</Text>
         <Text style={styles.subtitle}>Let travelers know who you are</Text>
 
@@ -177,6 +218,23 @@ export function PlannerProfileSetupScreen() {
               <Text style={styles.avatarLabel}>Upload Photo *</Text>
 
               <FormInput label="Agency Name" icon="business-outline" value={agencyName} onChangeText={setAgencyName} placeholder="e.g., Khan Adventures" />
+              {agencyName.trim().length >= 2 && (
+                <View style={styles.nameStatus}>
+                  {nameChecking ? (
+                    <ActivityIndicator size="small" color={colors.onSurfaceVariant} />
+                  ) : nameAvailable === true ? (
+                    <>
+                      <Ionicons name="checkmark-circle" size={16} color={colors.success} />
+                      <Text style={[styles.nameStatusText, { color: colors.success }]}>Name available</Text>
+                    </>
+                  ) : nameAvailable === false ? (
+                    <>
+                      <Ionicons name="close-circle" size={16} color={colors.error} />
+                      <Text style={[styles.nameStatusText, { color: colors.error }]}>This agency name is already taken. Please use a different name.</Text>
+                    </>
+                  ) : null}
+                </View>
+              )}
               <FormInput label="Tagline" icon="megaphone-outline" value={tagline} onChangeText={setTagline} placeholder="e.g., Discover the undiscovered" />
               <FormInput label="Phone Number" icon="call-outline" value={phone} onChangeText={handlePhoneChange} placeholder="03001234567" keyboardType="number-pad" maxLength={11} />
               {phoneError ? <Text style={styles.phoneError}>{phoneError}</Text> : null}
@@ -209,10 +267,53 @@ export function PlannerProfileSetupScreen() {
               </View>
               <Text style={styles.finishTitle}>You're All Set!</Text>
               <Text style={styles.finishText}>Your agency profile is ready. Start creating trips and accepting custom requests from travelers.</Text>
+
+              {savedNazaryUrl ? (
+                <View style={[styles.nazaryLinkCard, shadows.soft]}>
+                  <View style={styles.nazaryLinkHeader}>
+                    <Ionicons name="link-outline" size={22} color={colors.primary} />
+                    <Text style={styles.nazaryLinkTitle}>Your Nazary Link</Text>
+                  </View>
+                  <View style={styles.nazaryLinkUrlBox}>
+                    <Text style={styles.nazaryLinkUrl} selectable>{savedNazaryUrl}</Text>
+                  </View>
+                  <View style={styles.nazaryLinkActions}>
+                    <Pressable
+                      style={[styles.nazaryLinkBtn, { backgroundColor: linkCopied ? colors.successLight : colors.primaryTint }]}
+                      onPress={async () => {
+                        await Clipboard.setStringAsync(savedNazaryUrl);
+                        setLinkCopied(true);
+                        setTimeout(() => setLinkCopied(false), 2000);
+                      }}
+                    >
+                      <Ionicons name={linkCopied ? 'checkmark' : 'copy-outline'} size={16} color={linkCopied ? colors.success : colors.primary} />
+                      <Text style={[styles.nazaryLinkBtnText, { color: linkCopied ? colors.success : colors.primary }]}>
+                        {linkCopied ? 'Copied!' : 'Copy Link'}
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      style={[styles.nazaryLinkBtn, { backgroundColor: '#dcf8c6' }]}
+                      onPress={() => {
+                        const message = `Check out my agency on Nazary: ${savedNazaryUrl}`;
+                        Linking.openURL(`whatsapp://send?text=${encodeURIComponent(message)}`).catch(() => {});
+                      }}
+                    >
+                      <Ionicons name="logo-whatsapp" size={16} color="#25D366" />
+                      <Text style={[styles.nazaryLinkBtnText, { color: '#25D366' }]}>WhatsApp</Text>
+                    </Pressable>
+                  </View>
+                  <View style={styles.nazaryLinkInstructions}>
+                    <Ionicons name="information-circle-outline" size={18} color={colors.warning} />
+                    <Text style={styles.nazaryLinkInstructionText}>
+                      Add this link to your Instagram or TikTok bio to get verified on Nazary. Travelers check this to confirm your agency is legitimate.
+                    </Text>
+                  </View>
+                </View>
+              ) : null}
             </View>
           )}
         </Animated.View>
-      </ScrollView>
+      </KeyboardAwareScroll>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.lg }]}>
         {step > 0 && step < 2 && (
@@ -232,8 +333,11 @@ export function PlannerProfileSetupScreen() {
               navigation.navigate('OtpVerification', { phoneNumber: phone.trim() });
               return;
             }
-            if (step < 2) setStep(step + 1);
-            else handleComplete();
+            if (step === 1) {
+              saveProfile();
+              return;
+            }
+            handleComplete();
           }}
           disabled={(step === 0 ? !canProceedStep0 : step === 1 ? !canProceedStep1 : false) || isSaving}
           style={styles.nextButton}
@@ -286,4 +390,16 @@ const makeStyles = (colors: Colors) => StyleSheet.create({
   avatarPlaceholder: { width: 120, height: 120, borderRadius: 60, backgroundColor: colors.surfaceContainerHigh, alignItems: 'center', justifyContent: 'center' },
   avatarLabel: { ...typography.bodySm, color: colors.onSurfaceVariant, textAlign: 'center', marginBottom: spacing.lg },
   socialHeader: { fontFamily: 'Manrope_400Regular', fontSize: 16, color: colors.onSurface, marginTop: spacing.xl, marginBottom: spacing.md },
+  nameStatus: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginTop: -spacing.sm, marginBottom: spacing.sm, paddingHorizontal: spacing.xs },
+  nameStatusText: { fontFamily: 'Inter_400Regular', fontSize: 12 },
+  nazaryLinkCard: { backgroundColor: colors.surfaceContainerLowest, borderRadius: radii.xl, padding: spacing.lg, marginTop: spacing['2xl'], width: '100%' },
+  nazaryLinkHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.md },
+  nazaryLinkTitle: { fontFamily: 'Manrope_400Regular', fontSize: 16, color: colors.onSurface },
+  nazaryLinkUrlBox: { backgroundColor: colors.surfaceContainerLow, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, marginBottom: spacing.md },
+  nazaryLinkUrl: { fontFamily: 'Inter_400Regular', fontSize: 14, color: colors.primary },
+  nazaryLinkActions: { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.md },
+  nazaryLinkBtn: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, borderRadius: radii.full },
+  nazaryLinkBtnText: { fontFamily: 'Inter_400Regular', fontSize: 13 },
+  nazaryLinkInstructions: { flexDirection: 'row', gap: spacing.sm, backgroundColor: colors.warningLight, borderRadius: radii.md, padding: spacing.md },
+  nazaryLinkInstructionText: { fontFamily: 'Inter_300Light', fontSize: 12, color: colors.onSurfaceVariant, lineHeight: 18, flex: 1 },
 });

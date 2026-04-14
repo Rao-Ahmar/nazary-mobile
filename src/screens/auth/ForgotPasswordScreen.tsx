@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { View, Text, TextInput, Pressable, StyleSheet, KeyboardAvoidingView, Platform, Animated, Easing } from 'react-native';
+import { View, Text, TextInput, Pressable, StyleSheet, Animated, Easing } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,6 +8,7 @@ import { useTheme, typography, spacing, radii } from '../../theme';
 import type { Colors } from '../../theme';
 import { authApi } from '../../api/auth';
 import { useAlert } from '../../components/ThemedAlert';
+import { KeyboardAwareScroll } from '../../components/KeyboardAwareScroll';
 import type { AuthStackParamList } from '../../types';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'ForgotPassword'>;
@@ -48,8 +49,7 @@ export function ForgotPasswordScreen({ navigation }: Props) {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <View style={[styles.content, { paddingBottom: insets.bottom + 20 }]}>
+        <KeyboardAwareScroll contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 20 }]}>
           <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
             <Ionicons name="chevron-back" size={22} color={colors.onSurface} />
           </Pressable>
@@ -107,8 +107,7 @@ export function ForgotPasswordScreen({ navigation }: Props) {
               </>
             )}
           </Animated.View>
-        </View>
-      </KeyboardAvoidingView>
+        </KeyboardAwareScroll>
     </View>
   );
 }

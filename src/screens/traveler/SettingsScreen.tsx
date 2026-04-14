@@ -18,6 +18,7 @@ import { profileApi } from '../../api/profile';
 import { tripPreferencesApi, type TripPreference } from '../../api/tripPreferences';
 import { CategoryChip } from '../../components/CategoryChip';
 import { useAlert } from '../../components/ThemedAlert';
+import { KeyboardAwareScroll } from '../../components/KeyboardAwareScroll';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -122,9 +123,8 @@ export function SettingsScreen({ navigation }: any) {
         <View style={{ width: 44 }} />
       </View>
 
-      <ScrollView
+      <KeyboardAwareScroll
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 20 }]}
-        showsVerticalScrollIndicator={false}
       >
         {/* Notifications Toggle */}
         <Text style={styles.sectionTitle}>Notifications</Text>
@@ -194,7 +194,7 @@ export function SettingsScreen({ navigation }: any) {
         <Pressable style={[styles.saveButton, isSaving && { opacity: 0.6 }]} onPress={handleSavePreferences} disabled={isSaving}>
           <Text style={styles.saveButtonText}>{isSaving ? 'Saving...' : 'Save Preferences'}</Text>
         </Pressable>
-      </ScrollView>
+      </KeyboardAwareScroll>
     </View>
   );
 }
