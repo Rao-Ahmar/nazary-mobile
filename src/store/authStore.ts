@@ -16,6 +16,7 @@ interface AuthState {
 
   login: (email: string, password: string) => Promise<void>;
   signup: (name: string, email: string, password: string, role: UserRole) => Promise<void>;
+  googleLogin: (idToken: string) => Promise<void>;
   logout: () => void;
   setProfileCompleted: (completed: boolean) => void;
   setUser: (user: User) => void;
@@ -81,6 +82,31 @@ export const useAuthStore = create<AuthState>((set) => ({
       });
     } catch (error: any) {
       const msg = error?.response?.data?.error || 'Signup failed. Please try again.';
+      set({ isLoading: false });
+      throw new Error(msg);
+    }
+  },
+
+  googleLogin: async (idToken) => {
+    set({ isLoading: true });
+    try {
+      const response = await authApi.googleLogin(idToken);
+      const { user, token, refresh_token } = response.data;
+      setAuthToken(token);
+      set({
+        user,
+        token,
+        refreshToken: refresh_token,
+        role: user.role,
+        isAuthenticated: true,
+        isLoading: false,
+        profileCompleted: user.profileCompleted ?? (user as any).profile_completed ?? false,
+      });
+      registerForPushNotifications().then((pushToken) => {
+        if (pushToken) profileApi.registerDeviceToken(pushToken).catch(() => {});
+      });
+    } catch (error: any) {
+      const msg = error?.response?.data?.error || 'Google sign-in failed. Please try again.';
       set({ isLoading: false });
       throw new Error(msg);
     }

@@ -35,4 +35,8 @@ export const authApi = {
   refresh(refreshToken: string) {
     return apiClient.post<{ token: string; refresh_token: string }>('/auth/refresh', { refresh_token: refreshToken });
   },
+
+  googleLogin(idToken: string) {
+    return apiClient.post<AuthResponse>('/auth/google', { id_token: idToken });
+  },
 };

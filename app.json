@@ -29,6 +29,9 @@
     "plugins": [
       "expo-font",
       "@react-native-community/datetimepicker"
-    ]
+    ],
+    "extra": {
+      "googleWebClientId": "YOUR_CLIENT_ID_HERE"
+    }
   }
 }

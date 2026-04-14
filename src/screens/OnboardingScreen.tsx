@@ -14,8 +14,13 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Google from 'expo-auth-session/providers/google';
+import { makeRedirectUri } from 'expo-auth-session';
+import Constants from 'expo-constants';
 import { useTheme, typography, spacing, radii } from '../theme';
 import type { Colors } from '../theme';
+import { useAuthStore } from '../store';
+import { useAlert } from '../components/ThemedAlert';
 
 const { width, height } = Dimensions.get('window');
 
@@ -77,9 +82,27 @@ export function OnboardingScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const alert = useAlert();
+  const { googleLogin, isLoading } = useAuthStore();
   const [activeSlide, setActiveSlide] = useState(0);
   const [email, setEmail] = useState('');
   const flatListRef = useRef<FlatList>(null);
+
+  const [_googleRequest, googleResponse, promptGoogleAsync] = Google.useAuthRequest({
+    webClientId: Constants.expoConfig?.extra?.googleWebClientId,
+    redirectUri: makeRedirectUri({ scheme: 'nazary-mobile' }),
+  });
+
+  useEffect(() => {
+    if (googleResponse?.type === 'success') {
+      const idToken = googleResponse.authentication?.idToken;
+      if (idToken) {
+        googleLogin(idToken).catch((error: any) => {
+          alert.show({ title: 'Google Sign-In Failed', message: error.message, type: 'error' });
+        });
+      }
+    }
+  }, [googleResponse]);
 
   // Entry animations
   const logoOpacity = useRef(new Animated.Value(0)).current;
@@ -266,7 +289,7 @@ export function OnboardingScreen({ navigation }: any) {
             <Ionicons name="logo-apple" size={20} color={colors.onSurface} />
             <Text style={styles.socialText}>Apple</Text>
           </Pressable>
-          <Pressable style={styles.socialButton} onPress={() => {}}>
+          <Pressable style={styles.socialButton} onPress={() => promptGoogleAsync()}>
             <Ionicons name="logo-google" size={20} color={colors.onSurface} />
             <Text style={styles.socialText}>Google</Text>
           </Pressable>
