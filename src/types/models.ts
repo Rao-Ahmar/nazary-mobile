@@ -29,6 +29,11 @@ export interface TripPlanner extends User {
   twitterUrl?: string;
   websiteUrl?: string;
   coverPhoto?: string;
+  slug?: string;
+  nazaryUrl?: string;
+  instagramVerified?: boolean;
+  tiktokVerified?: boolean;
+  socialVerified?: boolean;
 }
 
 export interface PlannerProfile {
@@ -256,6 +261,11 @@ export interface Agency {
   twitterUrl?: string;
   websiteUrl?: string;
   coverPhoto?: string;
+  slug?: string;
+  nazaryUrl?: string;
+  instagramVerified?: boolean;
+  tiktokVerified?: boolean;
+  socialVerified?: boolean;
 }
 
 export interface ItineraryPreset {

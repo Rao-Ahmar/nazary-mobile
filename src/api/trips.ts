@@ -62,8 +62,8 @@ export const tripsApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
 
-  updateSeats: (id: string, totalSeats: number) =>
-    apiClient.patch<Trip>(`/planner/trips/${id}/update_seats`, { total_seats: totalSeats }),
+  updateSeats: (id: string, seatsLeft: number) =>
+    apiClient.patch<Trip>(`/planner/trips/${id}/update_seats`, { seats_left: seatsLeft }),
 
   reschedule: (id: string, data: { start_date: string; end_date: string; total_seats?: number }) =>
     apiClient.post<Trip>(`/planner/trips/${id}/reschedule`, data),

@@ -203,6 +203,8 @@ export function AgenciesListScreen({ navigation }: any) {
         renderItem={renderAgencyCard}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         onEndReached={() => {
           if (hasMore && !isLoading) fetchAgencies(false);
         }}

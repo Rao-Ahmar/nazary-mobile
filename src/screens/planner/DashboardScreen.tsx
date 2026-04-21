@@ -18,8 +18,12 @@ import { type Colors } from '../../theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NotificationBell } from '../../components/NotificationBell';
 import { AvatarGroup } from '../../components/AvatarGroup';
+import * as Clipboard from 'expo-clipboard';
+import { Linking } from 'react-native';
 import { apiClient } from '../../api/client';
 import { tripsApi } from '../../api/trips';
+import { useAuthStore } from '../../store';
+import { TourOverlay, useTourGuide } from '../../components/tour';
 
 interface Stats {
   totalRevenue: number;
@@ -75,6 +79,25 @@ export function DashboardScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
   const { colors, shadows } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const user = useAuthStore((s) => s.user) as any;
+
+  // Tour guide refs
+  const statsRef = useRef<View>(null);
+  const nazaryLinkRef = useRef<View>(null);
+  const tripsRef = useRef<View>(null);
+
+  const { tourVisible, tourSteps, completeTour } = useTourGuide(
+    'planner',
+    [null, statsRef, nazaryLinkRef, tripsRef],
+    [
+      { id: 'welcome', title: 'Welcome to Your Dashboard!', description: 'Manage your agency and grow your travel business. Here\'s a quick tour!', icon: 'business' },
+      { id: 'stats', title: 'Your Performance', description: 'Revenue, bookings, and ratings updated in real-time', icon: 'stats-chart' },
+      { id: 'nazary-link', title: 'Share Your Profile', description: 'Copy your unique link to share on WhatsApp or add to your social bio', icon: 'link' },
+      { id: 'trips', title: 'Manage Trips', description: 'View all trips, track bookings, and monitor seat fill rates', icon: 'map' },
+    ],
+  );
+  const nazaryUrl = user?.nazaryUrl ?? user?.nazary_url;
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const statusColors: Record<string, { bg: string; text: string }> = {
     active: { bg: colors.successLight, text: colors.success },
@@ -116,8 +139,9 @@ export function DashboardScreen({ navigation }: any) {
   const stat2Anim = useFadeIn(150);
   const stat3Anim = useFadeIn(200);
   const stat4Anim = useFadeIn(250);
-  const tripsSectionAnim = useFadeIn(300);
-  const bookingsSectionAnim = useFadeIn(500);
+  const nazaryLinkAnim = useFadeIn(280);
+  const tripsSectionAnim = useFadeIn(350);
+  const bookingsSectionAnim = useFadeIn(550);
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -179,7 +203,7 @@ export function DashboardScreen({ navigation }: any) {
         </Animated.View>
 
         {/* Stats Grid */}
-        <View style={styles.statsGrid}>
+        <View ref={statsRef} collapsable={false} style={styles.statsGrid}>
           <Animated.View style={[styles.statCard, shadows.soft, fadeStyle(stat1Anim)]}>
             <View style={[styles.statIcon, { backgroundColor: colors.primaryTint }]}>
               <Ionicons name="trending-up" size={20} color={colors.primary} />
@@ -222,8 +246,78 @@ export function DashboardScreen({ navigation }: any) {
           </Animated.View>
         </View>
 
+        {/* Nazary Link Card */}
+        {nazaryUrl ? (
+          <Animated.View ref={nazaryLinkRef} collapsable={false} style={[styles.section, fadeStyle(nazaryLinkAnim)]}>
+            <View style={[styles.nazaryLinkCard, shadows.soft]}>
+              <View style={styles.nazaryLinkHeader}>
+                <View style={[styles.nazaryLinkIcon, { backgroundColor: colors.primaryTint }]}>
+                  <Ionicons name="link-outline" size={20} color={colors.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.nazaryLinkTitle}>Your Nazary Link</Text>
+                  <Text style={styles.nazaryLinkSubtitle}>Share your public agency page</Text>
+                </View>
+              </View>
+              <View style={styles.nazaryLinkUrlContainer}>
+                <Text style={styles.nazaryLinkUrl} numberOfLines={1}>{nazaryUrl}</Text>
+              </View>
+              <View style={styles.nazaryLinkActions}>
+                <Pressable
+                  style={[styles.nazaryLinkButton, { backgroundColor: linkCopied ? colors.successLight : colors.primaryTint }]}
+                  onPress={async () => {
+                    await Clipboard.setStringAsync(nazaryUrl);
+                    setLinkCopied(true);
+                    setTimeout(() => setLinkCopied(false), 2000);
+                  }}
+                >
+                  <Ionicons name={linkCopied ? 'checkmark' : 'copy-outline'} size={16} color={linkCopied ? colors.success : colors.primary} />
+                  <Text style={[styles.nazaryLinkButtonText, { color: linkCopied ? colors.success : colors.primary }]}>
+                    {linkCopied ? 'Copied!' : 'Copy'}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  style={[styles.nazaryLinkButton, { backgroundColor: '#dcf8c6' }]}
+                  onPress={() => {
+                    const message = `Check out my agency on Nazary: ${nazaryUrl}`;
+                    const whatsappUrl = `whatsapp://send?text=${encodeURIComponent(message)}`;
+                    Linking.openURL(whatsappUrl).catch(() => {});
+                  }}
+                >
+                  <Ionicons name="logo-whatsapp" size={16} color="#25D366" />
+                  <Text style={[styles.nazaryLinkButtonText, { color: '#25D366' }]}>Share</Text>
+                </Pressable>
+              </View>
+              <Text style={styles.nazaryLinkHint}>
+                Add this link to your Instagram or TikTok bio to get verified on Nazary
+              </Text>
+            </View>
+          </Animated.View>
+        ) : null}
+
+        {/* Social Links Encouragement Banner */}
+        {!user?.instagramUrl && !user?.instagram_url && !user?.tiktokUrl && !user?.tiktok_url ? (
+          <Animated.View style={[styles.section, fadeStyle(nazaryLinkAnim)]}>
+            <Pressable
+              style={[styles.socialBanner, shadows.soft]}
+              onPress={() => navigation?.navigate?.('PlannerSettings')}
+            >
+              <View style={styles.socialBannerIcon}>
+                <Ionicons name="shield-checkmark-outline" size={24} color={colors.warning} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.socialBannerTitle}>Add your social media links</Text>
+                <Text style={styles.socialBannerText}>
+                  Travelers verify planners by checking their Nazary link in Instagram or TikTok bio. Add your links so travelers can trust and book with you easily.
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.onSurfaceVariant} />
+            </Pressable>
+          </Animated.View>
+        ) : null}
+
         {/* Your Trips */}
-        <Animated.View style={[styles.section, fadeStyle(tripsSectionAnim)]}>
+        <Animated.View ref={tripsRef} collapsable={false} style={[styles.section, fadeStyle(tripsSectionAnim)]}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Your Trips</Text>
             <Pressable onPress={() => navigation?.navigate?.('ManageTrips')}>
@@ -342,6 +436,7 @@ export function DashboardScreen({ navigation }: any) {
 
         <View style={{ height: 100 }} />
       </ScrollView>
+      <TourOverlay steps={tourSteps} visible={tourVisible} onComplete={completeTour} />
     </View>
   );
 }
@@ -387,4 +482,45 @@ const makeStyles = (colors: Colors) => StyleSheet.create({
   pendingBadgeText: { fontFamily: 'Inter_400Regular', fontSize: 10, color: '#fff' },
   emptyCard: { alignItems: 'center', paddingVertical: spacing['2xl'], marginHorizontal: spacing.xl, backgroundColor: colors.surfaceContainerLowest, borderRadius: radii.xl, gap: spacing.sm },
   emptyText: { ...typography.bodyMd, color: colors.onSurfaceVariant },
+  nazaryLinkCard: { backgroundColor: colors.surfaceContainerLowest, borderRadius: radii.xl, padding: spacing.lg, marginHorizontal: spacing.xl },
+  nazaryLinkHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.md },
+  nazaryLinkIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  nazaryLinkTitle: { fontFamily: 'Manrope_400Regular', fontSize: 16, color: colors.onSurface },
+  nazaryLinkSubtitle: { fontFamily: 'Inter_300Light', fontSize: 11, color: colors.onSurfaceVariant, marginTop: 2 },
+  nazaryLinkUrlContainer: { backgroundColor: colors.surfaceContainerLow, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, marginBottom: spacing.md },
+  nazaryLinkUrl: { fontFamily: 'Inter_400Regular', fontSize: 13, color: colors.primary },
+  nazaryLinkActions: { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.md },
+  nazaryLinkButton: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, borderRadius: radii.full },
+  nazaryLinkButtonText: { fontFamily: 'Inter_400Regular', fontSize: 12 },
+  nazaryLinkHint: { fontFamily: 'Inter_300Light', fontSize: 11, color: colors.onSurfaceVariant, lineHeight: 16 },
+  socialBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    backgroundColor: colors.warningLight,
+    borderRadius: radii.xl,
+    padding: spacing.lg,
+    marginHorizontal: spacing.xl,
+  },
+  socialBannerIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.surfaceContainerLowest,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  socialBannerTitle: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 14,
+    color: colors.onSurface,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  socialBannerText: {
+    fontFamily: 'Inter_300Light',
+    fontSize: 11,
+    color: colors.onSurfaceVariant,
+    lineHeight: 16,
+  },
 });

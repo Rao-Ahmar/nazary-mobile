@@ -30,6 +30,7 @@ export function SignupScreen({ navigation }: Props) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState<UserRole | null>(null);
   const { signup, isLoading } = useAuthStore();
 
@@ -110,8 +111,11 @@ export function SignupScreen({ navigation }: Props) {
                   placeholderTextColor={colors.outline}
                   value={password}
                   onChangeText={setPassword}
-                  secureTextEntry
+                  secureTextEntry={!showPassword}
                 />
+                <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8} accessibilityLabel={showPassword ? 'Hide password' : 'Show password'} accessibilityRole="button">
+                  <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={colors.outline} />
+                </Pressable>
               </View>
 
               <Pressable onPress={handleSignup} disabled={isLoading || !isFormValid}>

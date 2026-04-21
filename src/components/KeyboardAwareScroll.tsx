@@ -1,6 +1,9 @@
 import React from 'react';
-import { Platform } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scrollview';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+} from 'react-native';
 
 interface KeyboardAwareScrollProps {
   children: React.ReactNode;
@@ -22,17 +25,24 @@ export function KeyboardAwareScroll({
   extraScrollHeight = 40,
   keyboardShouldPersistTaps = 'handled',
   showsVerticalScrollIndicator = false,
+  style,
+  contentContainerStyle,
   ...rest
 }: KeyboardAwareScrollProps) {
   return (
-    <KeyboardAwareScrollView
-      enableOnAndroid
-      extraScrollHeight={extraScrollHeight}
-      keyboardShouldPersistTaps={keyboardShouldPersistTaps}
-      showsVerticalScrollIndicator={showsVerticalScrollIndicator}
-      {...rest}
+    <KeyboardAvoidingView
+      style={[{ flex: 1 }, style]}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={extraScrollHeight}
     >
-      {children}
-    </KeyboardAwareScrollView>
+      <ScrollView
+        contentContainerStyle={contentContainerStyle}
+        keyboardShouldPersistTaps={keyboardShouldPersistTaps}
+        showsVerticalScrollIndicator={showsVerticalScrollIndicator}
+        {...rest}
+      >
+        {children}
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }

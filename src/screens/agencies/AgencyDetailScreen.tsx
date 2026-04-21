@@ -227,6 +227,16 @@ export function AgencyDetailScreen({ navigation, route }: any) {
             </View>
           ) : null}
 
+          {/* Nazary Public URL */}
+          {(agency as any).nazaryUrl || (agency as any).nazary_url ? (
+            <View style={styles.nazaryUrlCard}>
+              <Ionicons name="link-outline" size={16} color={colors.primary} />
+              <Text style={styles.nazaryUrlText} numberOfLines={1}>
+                {(agency as any).nazaryUrl ?? (agency as any).nazary_url}
+              </Text>
+            </View>
+          ) : null}
+
           {/* Social Links */}
           {(() => {
             const links: { url?: string; icon: keyof typeof Ionicons.glyphMap }[] = [
@@ -237,19 +247,60 @@ export function AgencyDetailScreen({ navigation, route }: any) {
               { url: agency.websiteUrl, icon: 'globe-outline' },
             ];
             const activeLinks = links.filter((l) => l.url);
-            if (activeLinks.length === 0) return null;
+            const hasInstagramOrTiktok = !!(agency.instagramUrl || agency.tiktokUrl);
+            const nUrl = (agency as any).nazaryUrl ?? (agency as any).nazary_url;
+
+            if (activeLinks.length === 0) {
+              return (
+                <View style={styles.noSocialWarning}>
+                  <View style={styles.noSocialIconRow}>
+                    <Ionicons name="warning-outline" size={20} color={colors.warning} />
+                    <Text style={styles.noSocialTitle}>No social media linked</Text>
+                  </View>
+                  <Text style={styles.noSocialText}>
+                    This planner has not added any social media links.{nUrl
+                      ? ` Verify them by checking that their Instagram or TikTok bio contains their Nazary link before sending any payment.`
+                      : ` Please verify this planner through other means before sending any payment.`}
+                  </Text>
+                  {nUrl ? (
+                    <View style={styles.noSocialLinkBox}>
+                      <Ionicons name="link-outline" size={14} color={colors.primary} />
+                      <Text style={styles.noSocialLinkText} selectable>{nUrl}</Text>
+                    </View>
+                  ) : null}
+                </View>
+              );
+            }
+
             return (
-              <View style={styles.socialRow}>
-                {activeLinks.map((link) => (
-                  <Pressable
-                    key={link.icon}
-                    style={styles.socialButton}
-                    onPress={() => Linking.openURL(link.url!)}
-                  >
-                    <Ionicons name={link.icon} size={20} color={colors.onSurface} />
-                  </Pressable>
-                ))}
-              </View>
+              <>
+                {!hasInstagramOrTiktok && nUrl ? (
+                  <View style={styles.noSocialWarning}>
+                    <View style={styles.noSocialIconRow}>
+                      <Ionicons name="warning-outline" size={20} color={colors.warning} />
+                      <Text style={styles.noSocialTitle}>Instagram / TikTok not linked</Text>
+                    </View>
+                    <Text style={styles.noSocialText}>
+                      This planner has not added Instagram or TikTok. Verify them by checking that their social profile bio contains their Nazary link before sending any payment.
+                    </Text>
+                    <View style={styles.noSocialLinkBox}>
+                      <Ionicons name="link-outline" size={14} color={colors.primary} />
+                      <Text style={styles.noSocialLinkText} selectable>{nUrl}</Text>
+                    </View>
+                  </View>
+                ) : null}
+                <View style={styles.socialRow}>
+                  {activeLinks.map((link) => (
+                    <Pressable
+                      key={link.icon}
+                      style={styles.socialButton}
+                      onPress={() => Linking.openURL(link.url!)}
+                    >
+                      <Ionicons name={link.icon} size={20} color={colors.onSurface} />
+                    </Pressable>
+                  ))}
+                </View>
+              </>
             );
           })()}
 
@@ -386,6 +437,62 @@ const makeStyles = (colors: Colors) => StyleSheet.create({
   bioSection: { marginBottom: spacing['2xl'] },
   sectionTitle: { fontFamily: 'Manrope_400Regular', fontSize: 18, color: colors.onSurface, marginBottom: spacing.md },
   bioText: { ...typography.bodyMd, color: colors.onSurfaceVariant },
+
+  // Nazary URL
+  nazaryUrlCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.primaryTint,
+    borderRadius: radii.lg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.lg,
+    alignSelf: 'center',
+  },
+  nazaryUrlText: { fontFamily: 'Inter_400Regular', fontSize: 13, color: colors.primary },
+
+  // No social warning
+  noSocialWarning: {
+    backgroundColor: colors.warningLight,
+    borderRadius: radii.lg,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+  },
+  noSocialIconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  noSocialTitle: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 14,
+    color: colors.onSurface,
+    fontWeight: '600',
+  },
+  noSocialText: {
+    fontFamily: 'Inter_300Light',
+    fontSize: 12,
+    color: colors.onSurfaceVariant,
+    lineHeight: 18,
+  },
+  noSocialLinkBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.surfaceContainerLowest,
+    borderRadius: radii.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    marginTop: spacing.md,
+  },
+  noSocialLinkText: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 13,
+    color: colors.primary,
+    flex: 1,
+  },
 
   // Social links
   socialRow: { flexDirection: 'row', justifyContent: 'center', gap: spacing.md, marginBottom: spacing['2xl'] },

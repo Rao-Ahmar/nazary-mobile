@@ -30,6 +30,7 @@ export const featuredTrips = [
     duration: '5 days',
     dates: 'May 10 - 14',
     seatsLeft: 4,
+    totalSeats: 20,
     host: {
       name: 'Ali Khan',
       avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
@@ -49,6 +50,7 @@ export const featuredTrips = [
     duration: '4 days',
     dates: 'Jun 1 - 4',
     seatsLeft: 6,
+    totalSeats: 15,
     host: {
       name: 'Ahmed R.',
       avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&q=80',
@@ -68,6 +70,7 @@ export const featuredTrips = [
     duration: '6 days',
     dates: 'Jul 5 - 10',
     seatsLeft: 3,
+    totalSeats: 12,
     host: {
       name: 'Usman T.',
       avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80',

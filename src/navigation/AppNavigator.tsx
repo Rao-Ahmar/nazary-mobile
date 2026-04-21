@@ -1,6 +1,7 @@
 // REMOVED: messaging feature — Nazary v1
 // Conversations and Chat screens removed from navigation
 import React from 'react';
+import { Keyboard } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useTheme } from '../theme';
@@ -78,7 +79,7 @@ export function AppNavigator() {
   );
 
   return (
-    <NavigationContainer>
+    <NavigationContainer onStateChange={() => Keyboard.dismiss()}>
       <Stack.Navigator
         screenOptions={{
           headerShown: false,

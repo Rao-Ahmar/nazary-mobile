@@ -13,6 +13,7 @@ import {
   Modal,
   ScrollView,
   Keyboard,
+  RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,6 +24,7 @@ import { apiClient } from '../../api/client';
 import { featuredTrips } from '../../data/mockData';
 import { KeyboardAwareScroll } from '../../components/KeyboardAwareScroll';
 import { DatePickerModal } from '../../components/DatePickerModal';
+import { useDebounce } from '../../hooks/useDebounce';
 
 type TripItem = {
   id: string;
@@ -102,11 +104,13 @@ export function SearchScreen({ navigation }: any) {
   const { colors, shadows } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const [query, setQuery] = useState('');
+  const debouncedQuery = useDebounce(query, 300);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedTripType, setSelectedTripType] = useState('');
   const [selectedSort, setSelectedSort] = useState('start_date_asc');
   const [trips, setTrips] = useState<TripItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
@@ -150,7 +154,7 @@ export function SearchScreen({ navigation }: any) {
     setIsLoading(true);
     try {
       const params: Record<string, unknown> = { page: p, sort: selectedSort };
-      if (query.trim()) params.q = query.trim();
+      if (debouncedQuery.trim()) params.q = debouncedQuery.trim();
       if (selectedCategory !== 'All') params.tag = selectedCategory;
       if (minPrice) params.min_price = Number(minPrice);
       if (maxPrice) params.max_price = Number(maxPrice);
@@ -186,7 +190,7 @@ export function SearchScreen({ navigation }: any) {
         host: t.host,
       }));
       const filtered = mock.filter((t) => {
-        const matchQ = !query.trim() || t.title.toLowerCase().includes(query.toLowerCase()) || t.location.toLowerCase().includes(query.toLowerCase());
+        const matchQ = !debouncedQuery.trim() || t.title.toLowerCase().includes(debouncedQuery.toLowerCase()) || t.location.toLowerCase().includes(debouncedQuery.toLowerCase());
         const matchCat = selectedCategory === 'All' || t.tags.some((tag) => tag.toLowerCase().includes(selectedCategory.toLowerCase()));
         const matchMin = !minPrice || t.price >= Number(minPrice);
         const matchMax = !maxPrice || t.price <= Number(maxPrice);
@@ -197,13 +201,19 @@ export function SearchScreen({ navigation }: any) {
     } finally {
       setIsLoading(false);
     }
-  }, [query, selectedCategory, selectedTripType, selectedSort, page, minPrice, maxPrice, dateFrom, dateTo, selectedPlanner]);
+  }, [debouncedQuery, selectedCategory, selectedTripType, selectedSort, page, minPrice, maxPrice, dateFrom, dateTo, selectedPlanner]);
 
   useEffect(() => {
     fetchTrips(true);
-  }, [selectedCategory, selectedTripType, selectedSort, minPrice, maxPrice, dateFrom, dateTo, selectedPlanner]);
+  }, [debouncedQuery, selectedCategory, selectedTripType, selectedSort, minPrice, maxPrice, dateFrom, dateTo, selectedPlanner]);
 
-  const handleSearch = () => fetchTrips(true);
+  const handleSearch = () => Keyboard.dismiss();
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchTrips(true);
+    setRefreshing(false);
+  }, [fetchTrips]);
 
   // --- Filter modal open/close ---
   const openFilters = () => {
@@ -315,7 +325,7 @@ export function SearchScreen({ navigation }: any) {
   };
 
   const renderTrip = ({ item }: { item: TripItem }) => {
-    const image = item.heroImage || item.hero_image || 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400&q=80';
+    const image = item.heroImage || item.hero_image;
     const seats = item.seatsLeft ?? item.seats_left ?? 0;
     const total = item.totalSeats ?? item.total_seats ?? 0;
     const isLowSeats = total > 0 && seats > 0 && seats <= Math.ceil(total * 0.2);
@@ -330,7 +340,13 @@ export function SearchScreen({ navigation }: any) {
         style={[styles.tripCard, shadows.soft]}
         onPress={() => navigation.navigate('TripDetails', { tripId: item.id })}
       >
-        <Image source={{ uri: image }} style={styles.tripImage} />
+        {image ? (
+          <Image source={{ uri: image }} style={styles.tripImage} />
+        ) : (
+          <View style={[styles.tripImage, styles.tripImageFallback]}>
+            <Ionicons name="image-outline" size={28} color={colors.outlineVariant} />
+          </View>
+        )}
         <View style={styles.tripInfo}>
           <View style={styles.tripTitleRow}>
             <Text style={styles.tripTitle} numberOfLines={1}>{item.title}</Text>
@@ -404,14 +420,29 @@ export function SearchScreen({ navigation }: any) {
         data={TRIP_TYPE_OPTIONS}
         keyExtractor={(item) => item.value || 'all'}
         contentContainerStyle={styles.chipList}
-        renderItem={({ item }) => (
-          <Pressable
-            onPress={() => setSelectedTripType(item.value)}
-            style={[styles.tripTypeChip, selectedTripType === item.value && styles.tripTypeChipSelected]}
-          >
-            <Text style={[styles.tripTypeChipText, selectedTripType === item.value && styles.tripTypeChipTextSelected]}>{item.label}</Text>
-          </Pressable>
-        )}
+        renderItem={({ item }) => {
+          const isSelected = selectedTripType === item.value;
+          const typeBadgeConfig = getTripTypeBadgeConfig(colors);
+          const typeConfig = item.value ? typeBadgeConfig[item.value] : null;
+          return (
+            <Pressable
+              onPress={() => setSelectedTripType(item.value)}
+              style={[
+                styles.tripTypeChip,
+                isSelected && typeConfig
+                  ? { backgroundColor: typeConfig.bg, borderColor: typeConfig.text }
+                  : isSelected && styles.tripTypeChipSelected,
+              ]}
+            >
+              <Text style={[
+                styles.tripTypeChipText,
+                isSelected && typeConfig
+                  ? { color: typeConfig.text }
+                  : isSelected && styles.tripTypeChipTextSelected,
+              ]}>{item.label}</Text>
+            </Pressable>
+          );
+        }}
       />
       <FlatList
         horizontal
@@ -451,7 +482,7 @@ export function SearchScreen({ navigation }: any) {
             returnKeyType="search"
           />
           {query.length > 0 && (
-            <Pressable onPress={() => { setQuery(''); fetchTrips(true); }} hitSlop={8}>
+            <Pressable onPress={() => setQuery('')} hitSlop={8}>
               <Ionicons name="close-circle" size={18} color={colors.outline} />
             </Pressable>
           )}
@@ -473,7 +504,9 @@ export function SearchScreen({ navigation }: any) {
         contentContainerStyle={styles.resultsList}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         ListHeaderComponent={headerComponent}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />}
         onEndReached={() => { if (hasMore && !isLoading) fetchTrips(false); }}
         onEndReachedThreshold={0.3}
         ListEmptyComponent={
@@ -739,7 +772,7 @@ const makeStyles = (colors: Colors) => StyleSheet.create({
   sortList: { paddingHorizontal: spacing.xl, gap: spacing.sm, marginBottom: spacing.md },
   sortChip: {
     paddingHorizontal: spacing.md,
-    paddingVertical: 6,
+    paddingVertical: 10,
     borderRadius: radii.full,
     backgroundColor: 'transparent',
   },
@@ -755,6 +788,7 @@ const makeStyles = (colors: Colors) => StyleSheet.create({
     marginBottom: spacing.md,
   },
   tripImage: { width: 110, height: 130 },
+  tripImageFallback: { backgroundColor: colors.surfaceContainerHigh, alignItems: 'center', justifyContent: 'center' },
   tripInfo: { flex: 1, padding: spacing.md, justifyContent: 'space-between' },
   tripTitleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.xs },
   tripTitle: { fontFamily: 'Manrope_400Regular', fontSize: 15, color: colors.onSurface, flex: 1 },
@@ -950,7 +984,7 @@ const makeStyles = (colors: Colors) => StyleSheet.create({
   // Trip Type chips
   tripTypeChip: {
     paddingHorizontal: spacing.md,
-    paddingVertical: 6,
+    paddingVertical: 10,
     borderRadius: radii.full,
     backgroundColor: colors.surfaceContainerLow,
     borderWidth: 1,

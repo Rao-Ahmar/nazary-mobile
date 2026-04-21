@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { radii, useTheme } from '../theme';
+import { radii, spacing, useTheme, type Colors } from '../theme';
 
 interface GlassCardProps {
   children: React.ReactNode;
@@ -11,8 +11,9 @@ interface GlassCardProps {
 }
 
 export function GlassCard({ children, style, intensity = 40, tint }: GlassCardProps) {
-  const { isDark } = useTheme();
+  const { colors, isDark } = useTheme();
   const resolvedTint = tint ?? (isDark ? 'dark' : 'light');
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   return (
     <View style={[styles.container, style]}>
@@ -22,14 +23,14 @@ export function GlassCard({ children, style, intensity = 40, tint }: GlassCardPr
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Colors) => StyleSheet.create({
   container: {
     borderRadius: radii.xl,
     overflow: 'hidden',
     borderWidth: 0.5,
-    borderColor: 'rgba(255,255,255,0.25)',
+    borderColor: colors.borderSubtle,
   },
   inner: {
-    padding: 20,
+    padding: spacing.xl,
   },
 });

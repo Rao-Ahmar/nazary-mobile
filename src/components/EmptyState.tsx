@@ -15,7 +15,7 @@ export function EmptyState({ icon, title, message, style }: EmptyStateProps) {
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   return (
-    <View style={[styles.container, style]}>
+    <View style={[styles.container, style]} accessibilityLabel={`${title}. ${message}`} accessibilityRole="text">
       <Ionicons name={icon} size={48} color={colors.outlineVariant} />
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.message}>{message}</Text>

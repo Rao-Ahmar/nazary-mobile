@@ -14,7 +14,7 @@ export function CategoryChip({ label, selected = false, onPress, style }: Catego
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   return (
-    <Pressable onPress={onPress} style={[styles.chip, selected && styles.chipSelected, style]}>
+    <Pressable onPress={onPress} style={[styles.chip, selected && styles.chipSelected, style]} accessibilityRole="button" accessibilityState={{ selected }} accessibilityLabel={label}>
       <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{label}</Text>
     </Pressable>
   );

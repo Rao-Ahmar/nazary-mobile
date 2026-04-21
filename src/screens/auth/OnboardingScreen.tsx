@@ -1,9 +1,9 @@
-import React, { useRef, useState, useEffect, useMemo } from 'react';
+import React, { useRef, useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  Dimensions,
+  useWindowDimensions,
   Pressable,
   FlatList,
   ImageBackground,
@@ -17,8 +17,6 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme, typography, spacing, radii } from '../../theme';
 import type { Colors } from '../../theme';
 import type { AuthStackParamList } from '../../types';
-
-const { width, height } = Dimensions.get('window');
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Onboarding'>;
 
@@ -58,10 +56,13 @@ function PageDot({ active, dotStyle }: { active: boolean; dotStyle: any }) {
 
 export function OnboardingScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
+  const { width, height } = useWindowDimensions();
   const { colors } = useTheme();
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = useMemo(() => makeStyles(colors, width, height), [colors, width, height]);
   const [activeSlide, setActiveSlide] = useState(0);
   const flatListRef = useRef<FlatList>(null);
+  const userInteractedRef = useRef(false);
+  const resumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const logoOpacity = useRef(new Animated.Value(0)).current;
   const logoTranslateY = useRef(new Animated.Value(20)).current;
@@ -84,15 +85,32 @@ export function OnboardingScreen({ navigation }: Props) {
     }, 600);
   }, []);
 
+  // Auto-scroll with pause on user interaction
   useEffect(() => {
     const interval = setInterval(() => {
+      if (userInteractedRef.current) return;
       setActiveSlide((prev) => {
         const next = (prev + 1) % slides.length;
         flatListRef.current?.scrollToIndex({ index: next, animated: true });
         return next;
       });
     }, 4000);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+    };
+  }, []);
+
+  const handleScrollBeginDrag = useCallback(() => {
+    userInteractedRef.current = true;
+    if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+  }, []);
+
+  const handleScrollEndDrag = useCallback(() => {
+    if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+    resumeTimerRef.current = setTimeout(() => {
+      userInteractedRef.current = false;
+    }, 6000);
   }, []);
 
   const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
@@ -120,6 +138,8 @@ export function OnboardingScreen({ navigation }: Props) {
           onViewableItemsChanged={onViewableItemsChanged}
           viewabilityConfig={viewabilityConfig}
           scrollEventThrottle={16}
+          onScrollBeginDrag={handleScrollBeginDrag}
+          onScrollEndDrag={handleScrollEndDrag}
         />
         <LinearGradient
           colors={['transparent', colors.onboardingFade, colors.surfaceFade, colors.surface]}
@@ -181,7 +201,7 @@ export function OnboardingScreen({ navigation }: Props) {
   );
 }
 
-const makeStyles = (colors: Colors) => StyleSheet.create({
+const makeStyles = (colors: Colors, width: number, height: number) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   carouselContainer: { height: height * 0.52, position: 'relative' },
   slideImage: { width, height: height * 0.52 },

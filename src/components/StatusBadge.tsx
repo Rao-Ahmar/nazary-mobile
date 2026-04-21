@@ -24,10 +24,11 @@ export function StatusBadge({ status, style }: StatusBadgeProps) {
   const { colors } = useTheme();
   const statusConfig = useMemo(() => getStatusConfig(colors), [colors]);
   const config = statusConfig[status] ?? statusConfig.pending;
+  const label = status.charAt(0).toUpperCase() + status.slice(1);
   return (
-    <View style={[styles.badge, { backgroundColor: config.bg }, style]}>
+    <View style={[styles.badge, { backgroundColor: config.bg }, style]} accessibilityLabel={`Status: ${label}`} accessibilityRole="text">
       <Text style={[styles.text, { color: config.text }]}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
+        {label}
       </Text>
     </View>
   );

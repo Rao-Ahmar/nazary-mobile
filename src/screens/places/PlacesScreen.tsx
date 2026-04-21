@@ -65,7 +65,7 @@ export function PlacesScreen({ navigation }: any) {
         ))}
       </ScrollView>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.grid}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.grid} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
         {filtered.map((place, i) => (
           <Animated.View key={place.id} style={[styles.placeCard, { opacity: anims[i] || 1, transform: [{ translateY: (anims[i] || new Animated.Value(1)).interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] }]}>
             <Pressable onPress={() => navigation.navigate('PlaceDetail', { placeId: place.id })} style={[shadows.soft]}>

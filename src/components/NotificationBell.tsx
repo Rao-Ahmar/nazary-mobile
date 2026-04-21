@@ -12,7 +12,7 @@ export function NotificationBell() {
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   return (
-    <Pressable onPress={() => navigation.navigate('Notifications')} style={styles.container}>
+    <Pressable onPress={() => navigation.navigate('Notifications')} style={styles.container} accessibilityRole="button" accessibilityLabel={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}>
       <Ionicons name="notifications-outline" size={22} color={colors.onSurface} />
       {unreadCount > 0 && (
         <View style={styles.badge}>

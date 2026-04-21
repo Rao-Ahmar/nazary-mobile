@@ -60,11 +60,13 @@ export function PremiumPaywallScreen({ navigation }: any) {
           <Text style={styles.comingSoonText}>Payment integration coming soon!</Text>
         </View>
 
-        <Pressable onPress={handleDevBypass} style={styles.devButton}>
-          <LinearGradient colors={[colors.gradientStart, colors.gradientEnd]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.devGradient}>
-            <Text style={styles.devText}>Dev Bypass - Unlock Premium</Text>
-          </LinearGradient>
-        </Pressable>
+        {__DEV__ && (
+          <Pressable onPress={handleDevBypass} style={styles.devButton} accessibilityLabel="Dev bypass unlock premium" accessibilityRole="button">
+            <LinearGradient colors={[colors.gradientStart, colors.gradientEnd]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.devGradient}>
+              <Text style={styles.devText}>Dev Bypass - Unlock Premium</Text>
+            </LinearGradient>
+          </Pressable>
+        )}
       </Animated.View>
     </View>
   );

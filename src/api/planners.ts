@@ -15,4 +15,10 @@ export const plannersApi = {
 
   getTrips: (id: string, page = 1) =>
     apiClient.get<PaginatedResponse<Trip>>(`/agencies/${id}/trips`, { params: { page } }),
+
+  checkName: (name: string) =>
+    apiClient.get<{ available: boolean }>('/agencies/check-name', { params: { name } }),
+
+  getBySlug: (slug: string) =>
+    apiClient.get<Agency>(`/explore/${slug}`),
 };

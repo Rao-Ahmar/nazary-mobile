@@ -422,6 +422,8 @@ export function ManageTripsScreen({ navigation }: any) {
           renderItem={renderTrip}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
           ListEmptyComponent={
             <View style={styles.emptyState}>
               <Ionicons name="map-outline" size={48} color={colors.outlineVariant} />

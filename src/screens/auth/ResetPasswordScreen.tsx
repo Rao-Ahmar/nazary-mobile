@@ -27,6 +27,8 @@ export function ResetPasswordScreen({ navigation, route }: any) {
   const [token, setToken] = useState(tokenFromRoute);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
 
@@ -115,8 +117,11 @@ export function ResetPasswordScreen({ navigation, route }: any) {
                       placeholderTextColor={colors.outline}
                       value={password}
                       onChangeText={setPassword}
-                      secureTextEntry
+                      secureTextEntry={!showPassword}
                     />
+                    <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8} accessibilityLabel={showPassword ? 'Hide password' : 'Show password'} accessibilityRole="button">
+                      <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={colors.outline} />
+                    </Pressable>
                   </View>
 
                   <View style={styles.inputContainer}>
@@ -127,8 +132,11 @@ export function ResetPasswordScreen({ navigation, route }: any) {
                       placeholderTextColor={colors.outline}
                       value={confirmPassword}
                       onChangeText={setConfirmPassword}
-                      secureTextEntry
+                      secureTextEntry={!showConfirm}
                     />
+                    <Pressable onPress={() => setShowConfirm(!showConfirm)} hitSlop={8} accessibilityLabel={showConfirm ? 'Hide password' : 'Show password'} accessibilityRole="button">
+                      <Ionicons name={showConfirm ? 'eye-off-outline' : 'eye-outline'} size={20} color={colors.outline} />
+                    </Pressable>
                   </View>
 
                   <Pressable onPress={handleReset} disabled={isSubmitting}>

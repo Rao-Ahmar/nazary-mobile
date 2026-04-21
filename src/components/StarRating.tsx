@@ -16,14 +16,14 @@ export function StarRating({ rating, size = 18, interactive = false, onRate, sty
   const stars = [1, 2, 3, 4, 5];
 
   return (
-    <View style={[styles.container, style]}>
+    <View style={[styles.container, style]} accessibilityLabel={`${rating} out of 5 stars`} accessibilityRole={interactive ? 'adjustable' : 'text'}>
       {stars.map((star) => {
         const filled = star <= rating;
         const StarWrapper = interactive ? Pressable : View;
         return (
           <StarWrapper
             key={star}
-            {...(interactive ? { onPress: () => onRate?.(star) } : {})}
+            {...(interactive ? { onPress: () => onRate?.(star), accessibilityLabel: `Rate ${star} star${star > 1 ? 's' : ''}`, accessibilityRole: 'button' as const, hitSlop: 4 } : {})}
             style={styles.star}
           >
             <Ionicons

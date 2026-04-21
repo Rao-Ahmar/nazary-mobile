@@ -53,6 +53,8 @@ export function PremiumButton({
           onPress={onPress}
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
+          accessibilityRole="button"
+          accessibilityLabel={title}
         >
           <Text style={[styles.tertiaryText]}>{title}</Text>
           <Animated.View style={styles.underline} />
@@ -69,6 +71,9 @@ export function PremiumButton({
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
           style={styles.pressableInner}
+          accessibilityRole="button"
+          accessibilityLabel={title}
+          accessibilityState={{ busy: loading }}
         >
           {icon}
           {loading ? (
@@ -87,6 +92,9 @@ export function PremiumButton({
         onPress={onPress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
+        accessibilityRole="button"
+        accessibilityLabel={title}
+        accessibilityState={{ busy: loading }}
       >
         <LinearGradient
           colors={[colors.primary, colors.primaryContainer]}

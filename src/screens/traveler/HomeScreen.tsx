@@ -1,15 +1,16 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   Pressable,
-  Dimensions,
+  useWindowDimensions,
   Image,
   ImageBackground,
   Animated,
   Easing,
+  RefreshControl,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -21,10 +22,7 @@ import { featuredTrips as mockFeaturedTrips, categories, curatedCollections } fr
 import { useAuthStore } from '../../store';
 import { NotificationBell } from '../../components/NotificationBell';
 import { tripsApi } from '../../api/trips';
-
-const { width } = Dimensions.get('window');
-const CARD_WIDTH = width - 48;
-const COLLECTION_WIDTH = width * 0.42;
+import { TourOverlay, useTourGuide } from '../../components/tour';
 
 type FeaturedTrip = {
   id: string;
@@ -36,6 +34,7 @@ type FeaturedTrip = {
   duration: string;
   dates: string;
   seatsLeft: number;
+  totalSeats: number;
   host: { name: string; avatar: string; guild: string };
   tags: string[];
   rating: number;
@@ -80,47 +79,75 @@ function fadeInRightStyle(anim: Animated.Value) {
   };
 }
 
+const MAX_FEATURED = 5;
+
 export function HomeScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const COLLECTION_WIDTH = width * 0.42;
   const [selectedCategory, setSelectedCategory] = React.useState('1');
   const user = useAuthStore((s) => s.user);
   const { colors, shadows } = useTheme();
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = useMemo(() => makeStyles(colors, width), [colors, width]);
+
+  // Tour guide refs
+  const searchRef = useRef<View>(null);
+  const actionCardsRef = useRef<View>(null);
+  const featuredRef = useRef<View>(null);
+
+  const { tourVisible, tourSteps, completeTour } = useTourGuide(
+    'traveler',
+    [null, searchRef, actionCardsRef, featuredRef],
+    [
+      { id: 'welcome', title: 'Welcome to Nazary!', description: 'Your gateway to curated trips across Pakistan. Let\'s show you around!', icon: 'compass' },
+      { id: 'search', title: 'Find Your Trip', description: 'Search by destination, experience, or planner name', icon: 'search' },
+      { id: 'actions', title: 'Quick Actions', description: 'Request a custom trip, explore destinations, or browse bike rides', icon: 'apps' },
+      { id: 'featured', title: 'Curated For You', description: 'Handpicked trips from verified planners. Tap any to book!', icon: 'star' },
+    ],
+  );
+  const [refreshing, setRefreshing] = useState(false);
 
   const [featuredTripsData, setFeaturedTripsData] = useState<FeaturedTrip[]>(mockFeaturedTrips);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const response = await tripsApi.getFeatured();
-        const data = Array.isArray(response.data) ? response.data : (response.data as any)?.data ?? [];
-        if (data.length > 0) {
-          const mapped: FeaturedTrip[] = data.map((t: any) => ({
-            id: t.id,
-            title: t.title,
-            location: t.location,
-            image: t.hero_image || t.heroImage || 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80',
-            price: t.price,
-            currency: t.currency || 'PKR',
-            duration: t.duration,
-            dates: t.dates || '',
-            seatsLeft: t.seats_left ?? t.seatsLeft ?? 0,
-            host: t.host ? {
-              name: t.host.name || 'Unknown',
-              avatar: t.host.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
-              guild: t.host.guild || t.host.agency_name || '',
-            } : { name: 'Unknown', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80', guild: '' },
-            tags: t.tags || [],
-            rating: t.rating ?? t.average_rating ?? 0,
-            reviewCount: t.review_count ?? t.reviewCount ?? 0,
-          }));
-          setFeaturedTripsData(mapped);
-        }
-      } catch {
-        // Keep mock data as fallback
+  const loadFeaturedTrips = useCallback(async () => {
+    try {
+      const response = await tripsApi.getFeatured();
+      const data = Array.isArray(response.data) ? response.data : (response.data as any)?.data ?? [];
+      if (data.length > 0) {
+        const mapped: FeaturedTrip[] = data.map((t: any) => ({
+          id: t.id,
+          title: t.title,
+          location: t.location,
+          image: t.hero_image || t.heroImage || 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80',
+          price: t.price,
+          currency: t.currency || 'PKR',
+          duration: t.duration,
+          dates: t.dates || '',
+          seatsLeft: t.seats_left ?? t.seatsLeft ?? 0,
+          totalSeats: t.total_seats ?? t.totalSeats ?? 0,
+          host: t.host ? {
+            name: t.host.name || 'Unknown',
+            avatar: t.host.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
+            guild: t.host.guild || t.host.agency_name || '',
+          } : { name: 'Unknown', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80', guild: '' },
+          tags: t.tags || [],
+          rating: t.rating ?? t.average_rating ?? 0,
+          reviewCount: t.review_count ?? t.reviewCount ?? 0,
+        }));
+        setFeaturedTripsData(mapped);
       }
-    })();
+    } catch {
+      // Keep mock data as fallback
+    }
   }, []);
+
+  useEffect(() => { loadFeaturedTrips(); }, [loadFeaturedTrips]);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadFeaturedTrips();
+    setRefreshing(false);
+  }, [loadFeaturedTrips]);
 
   const headerAnim = useFadeIn(100, 600);
   const searchAnim = useFadeIn(200, 600);
@@ -145,10 +172,21 @@ export function HomeScreen({ navigation }: any) {
       <Pressable onPress={() => navigation.navigate('TripDetails', { tripId: trip.id })}>
         <ImageBackground source={typeof trip.image === 'string' ? { uri: trip.image } : trip.image} style={styles.featuredImage} imageStyle={{ borderRadius: radii.xl }} resizeMode="cover">
           <View style={styles.featuredBadges}>
-            <View style={styles.seatsBadge}>
-              <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFill} />
-              <Text style={styles.seatsBadgeText}>{trip.seatsLeft} seats left</Text>
-            </View>
+            {trip.seatsLeft <= 0 ? (
+              <View style={styles.fullyBookedBadge}>
+                <Text style={styles.fullyBookedText}>Fully Booked</Text>
+              </View>
+            ) : trip.totalSeats > 0 && trip.seatsLeft <= Math.ceil(trip.totalSeats * 0.2) ? (
+              <View style={styles.urgencyBadge}>
+                <Ionicons name="flame" size={12} color="#fff" />
+                <Text style={styles.urgencyBadgeText}>Only {trip.seatsLeft} {trip.seatsLeft === 1 ? 'seat' : 'seats'} left</Text>
+              </View>
+            ) : (
+              <View style={styles.seatsBadge}>
+                <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFill} />
+                <Text style={styles.seatsBadgeText}>{trip.seatsLeft} seats left</Text>
+              </View>
+            )}
           </View>
           <View style={styles.featuredOverlay}>
             <BlurView intensity={50} tint="light" style={StyleSheet.absoluteFill} />
@@ -208,7 +246,7 @@ export function HomeScreen({ navigation }: any) {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />}>
         <Animated.View style={[styles.header, fadeInDownStyle(headerAnim)]}>
           <View>
             <Text style={styles.greeting}>Where to next?</Text>
@@ -217,7 +255,7 @@ export function HomeScreen({ navigation }: any) {
           <NotificationBell />
         </Animated.View>
 
-        <Animated.View style={[styles.searchContainer, fadeInDownStyle(searchAnim)]}>
+        <Animated.View ref={searchRef} collapsable={false} style={[styles.searchContainer, fadeInDownStyle(searchAnim)]}>
           <Pressable style={styles.searchPressable} onPress={() => navigation.navigate('Search')}>
             <Ionicons name="search-outline" size={18} color={colors.outline} />
             <Text style={styles.searchPlaceholder}>Search destinations, experiences...</Text>
@@ -228,7 +266,7 @@ export function HomeScreen({ navigation }: any) {
         </Animated.View>
 
         {/* Action Cards: Custom Trip + Places + Bike Trips */}
-        <Animated.View style={[styles.actionCardsRow, fadeInDownStyle(actionCardsAnim)]}>
+        <Animated.View ref={actionCardsRef} collapsable={false} style={[styles.actionCardsRow, fadeInDownStyle(actionCardsAnim)]}>
           <Pressable onPress={() => navigation.navigate('CreateTripRequest', {})} style={[styles.actionCard, shadows.soft]}>
             <View style={[styles.actionIcon, { backgroundColor: colors.primaryTint }]}>
               <Ionicons name="document-text-outline" size={20} color={colors.primary} />
@@ -275,18 +313,18 @@ export function HomeScreen({ navigation }: any) {
           {categories.map((cat, i) => renderCategoryChip(cat, i))}
         </ScrollView>
 
-        <View style={styles.sectionContainer}>
+        <View ref={featuredRef} collapsable={false} style={styles.sectionContainer}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Curated for You</Text>
-            <Pressable onPress={() => navigation.navigate('Search')}><Text style={styles.seeAll}>SEE ALL</Text></Pressable>
+            <Pressable onPress={() => navigation.navigate('Search')} hitSlop={8}><Text style={styles.seeAll}>SEE ALL</Text></Pressable>
           </View>
-          {featuredTripsData.map((trip, i) => renderFeaturedCard(trip, i))}
+          {featuredTripsData.slice(0, MAX_FEATURED).map((trip, i) => renderFeaturedCard(trip, i))}
         </View>
 
         <View style={styles.sectionContainer}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Collections</Text>
-            <Pressable><Text style={styles.seeAll}>SEE ALL</Text></Pressable>
+            <Pressable onPress={() => navigation.navigate('Places')} hitSlop={8}><Text style={styles.seeAll}>SEE ALL</Text></Pressable>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.collectionsScroll}>
             {curatedCollections.map((c, i) => renderCollectionCard(c, i))}
@@ -295,11 +333,12 @@ export function HomeScreen({ navigation }: any) {
 
         <View style={{ height: 100 }} />
       </ScrollView>
+      <TourOverlay steps={tourSteps} visible={tourVisible} onComplete={completeTour} />
     </View>
   );
 }
 
-const makeStyles = (colors: Colors) => StyleSheet.create({
+const makeStyles = (colors: Colors, width: number) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   scrollContent: { paddingTop: spacing.lg },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: spacing.xl, marginBottom: spacing.xl },
@@ -329,6 +368,10 @@ const makeStyles = (colors: Colors) => StyleSheet.create({
   featuredBadges: { flexDirection: 'row', justifyContent: 'flex-end', padding: spacing.lg },
   seatsBadge: { borderRadius: radii.full, overflow: 'hidden', paddingHorizontal: 14, paddingVertical: 6 },
   seatsBadgeText: { fontFamily: 'Inter_400Regular', fontSize: 11, color: colors.onSurface, letterSpacing: 0.3 },
+  urgencyBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.error, borderRadius: radii.full, paddingHorizontal: 14, paddingVertical: 6 },
+  urgencyBadgeText: { fontFamily: 'Inter_400Regular', fontSize: 11, color: colors.onError, letterSpacing: 0.3 },
+  fullyBookedBadge: { backgroundColor: colors.onSurface, borderRadius: radii.full, paddingHorizontal: 14, paddingVertical: 6 },
+  fullyBookedText: { fontFamily: 'Inter_400Regular', fontSize: 11, color: colors.onImage, letterSpacing: 0.3 },
   featuredOverlay: { borderBottomLeftRadius: radii.xl, borderBottomRightRadius: radii.xl, overflow: 'hidden' },
   featuredContent: { padding: spacing.lg, paddingTop: spacing.xl },
   featuredTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: spacing.md },
@@ -349,7 +392,7 @@ const makeStyles = (colors: Colors) => StyleSheet.create({
   tagText: { fontFamily: 'Inter_400Regular', fontSize: 10, color: colors.onSurfaceVariant, letterSpacing: 0.3 },
   duration: { fontFamily: 'Inter_300Light', fontSize: 11, color: colors.onSurfaceVariant, marginLeft: 'auto' },
   collectionsScroll: { paddingHorizontal: spacing.xl, gap: spacing.md },
-  collectionCard: { width: COLLECTION_WIDTH, height: COLLECTION_WIDTH * 1.3, borderRadius: radii.lg, overflow: 'hidden' },
+  collectionCard: { width: width * 0.42, height: width * 0.42 * 1.3, borderRadius: radii.lg, overflow: 'hidden' },
   collectionImage: { flex: 1 },
   collectionGradient: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: spacing.lg, paddingTop: spacing['3xl'], borderBottomLeftRadius: radii.lg, borderBottomRightRadius: radii.lg },
   collectionTitle: { fontFamily: 'Manrope_400Regular', fontSize: 16, color: colors.onImage, marginBottom: 2 },

@@ -5,3 +5,4 @@ export { useBikeStore } from './bikeStore';
 export { useArrangementStore } from './arrangementStore';
 export { useThemeStore } from './themeStore';
 export { useBookingStore } from './bookingStore';
+export { useTourStore } from './tourStore';

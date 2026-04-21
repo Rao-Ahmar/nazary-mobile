@@ -12,9 +12,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import * as Google from 'expo-auth-session/providers/google';
-import { makeRedirectUri } from 'expo-auth-session';
-import Constants from 'expo-constants';
+// TODO: Re-enable when Google OAuth credentials are configured
+// import * as Google from 'expo-auth-session/providers/google';
+// import { makeRedirectUri } from 'expo-auth-session';
+// import Constants from 'expo-constants';
 import { useTheme, typography, spacing, radii } from '../../theme';
 import type { Colors } from '../../theme';
 import { useAuthStore } from '../../store';
@@ -31,23 +32,15 @@ export function LoginScreen({ navigation }: Props) {
   const alert = useAlert();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { login, googleLogin, devLoginAsTraveler, devLoginAsPlanner, isLoading } = useAuthStore();
+  const [showPassword, setShowPassword] = useState(false);
+  const { login, devLoginAsTraveler, devLoginAsPlanner, isLoading } = useAuthStore();
 
-  const [_googleRequest, googleResponse, promptGoogleAsync] = Google.useAuthRequest({
-    webClientId: Constants.expoConfig?.extra?.googleWebClientId,
-    redirectUri: makeRedirectUri({ scheme: 'nazary-mobile' }),
-  });
-
-  useEffect(() => {
-    if (googleResponse?.type === 'success') {
-      const idToken = googleResponse.authentication?.idToken;
-      if (idToken) {
-        googleLogin(idToken).catch((error: any) => {
-          alert.show({ title: 'Google Sign-In Failed', message: error.message, type: 'error' });
-        });
-      }
-    }
-  }, [googleResponse]);
+  // TODO: Re-enable when Google OAuth credentials are configured
+  // const [_googleRequest, googleResponse, promptGoogleAsync] = Google.useAuthRequest({
+  //   iosClientId: Constants.expoConfig?.extra?.googleIosClientId,
+  //   webClientId: Constants.expoConfig?.extra?.googleWebClientId,
+  //   redirectUri: makeRedirectUri({ scheme: 'nazary-mobile' }),
+  // });
 
   const contentOpacity = useRef(new Animated.Value(0)).current;
   const contentTranslateY = useRef(new Animated.Value(30)).current;
@@ -108,8 +101,11 @@ export function LoginScreen({ navigation }: Props) {
                   placeholderTextColor={colors.outline}
                   value={password}
                   onChangeText={setPassword}
-                  secureTextEntry
+                  secureTextEntry={!showPassword}
                 />
+                <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8} accessibilityLabel={showPassword ? 'Hide password' : 'Show password'} accessibilityRole="button">
+                  <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={colors.outline} />
+                </Pressable>
               </View>
 
               <Pressable style={styles.forgotButton} onPress={() => navigation.navigate('ForgotPassword')}>
@@ -143,30 +139,33 @@ export function LoginScreen({ navigation }: Props) {
                 <Ionicons name="logo-apple" size={20} color={colors.onSurface} />
                 <Text style={styles.socialText}>Apple</Text>
               </Pressable>
-              <Pressable style={styles.socialButton} onPress={() => promptGoogleAsync()}>
+              <Pressable style={[styles.socialButton, { opacity: 0.5 }]} disabled accessibilityLabel="Google sign-in coming soon" accessibilityRole="button">
                 <Ionicons name="logo-google" size={20} color={colors.onSurface} />
                 <Text style={styles.socialText}>Google</Text>
+                <Text style={styles.comingSoonLabel}>Soon</Text>
               </Pressable>
             </View>
 
-            {/* Dev Login */}
-            <View style={styles.devSection}>
-              <Text style={styles.devLabel}>Quick Login</Text>
-              <View style={styles.devButtons}>
-                <Pressable style={styles.devButton} disabled={isLoading} onPress={async () => {
-                  try { await devLoginAsTraveler(); } catch (e: any) { alert.show({ title: 'Error', message: e.message, type: 'error' }); }
-                }}>
-                  <Ionicons name="compass-outline" size={16} color={colors.primary} />
-                  <Text style={styles.devButtonText}>Traveler</Text>
-                </Pressable>
-                <Pressable style={styles.devButton} disabled={isLoading} onPress={async () => {
-                  try { await devLoginAsPlanner(); } catch (e: any) { alert.show({ title: 'Error', message: e.message, type: 'error' }); }
-                }}>
-                  <Ionicons name="briefcase-outline" size={16} color={colors.primary} />
-                  <Text style={styles.devButtonText}>Planner</Text>
-                </Pressable>
+            {/* Dev Login - only visible in development */}
+            {__DEV__ && (
+              <View style={styles.devSection}>
+                <Text style={styles.devLabel}>Dev Quick Login</Text>
+                <View style={styles.devButtons}>
+                  <Pressable style={styles.devButton} disabled={isLoading} onPress={async () => {
+                    try { await devLoginAsTraveler(); } catch (e: any) { alert.show({ title: 'Error', message: e.message, type: 'error' }); }
+                  }} accessibilityLabel="Dev login as traveler" accessibilityRole="button">
+                    <Ionicons name="compass-outline" size={16} color={colors.primary} />
+                    <Text style={styles.devButtonText}>Traveler</Text>
+                  </Pressable>
+                  <Pressable style={styles.devButton} disabled={isLoading} onPress={async () => {
+                    try { await devLoginAsPlanner(); } catch (e: any) { alert.show({ title: 'Error', message: e.message, type: 'error' }); }
+                  }} accessibilityLabel="Dev login as planner" accessibilityRole="button">
+                    <Ionicons name="briefcase-outline" size={16} color={colors.primary} />
+                    <Text style={styles.devButtonText}>Planner</Text>
+                  </Pressable>
+                </View>
               </View>
-            </View>
+            )}
 
             {/* Sign Up Link */}
             <View style={styles.signupRow}>
@@ -241,6 +240,7 @@ const makeStyles = (colors: Colors) => StyleSheet.create({
     gap: 8,
   },
   socialText: { fontFamily: 'Inter_400Regular', fontSize: 14, color: colors.onSurface },
+  comingSoonLabel: { fontFamily: 'Inter_400Regular', fontSize: 9, color: colors.outline, position: 'absolute', bottom: 8, letterSpacing: 0.3 },
   devSection: {
     backgroundColor: colors.surfaceContainerLow,
     borderRadius: radii.lg,

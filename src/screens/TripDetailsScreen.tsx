@@ -71,6 +71,7 @@ export function TripDetailsScreen({ navigation, route }: any) {
   const [isRequesting, setIsRequesting] = useState(false);
   const [hasRequested, setHasRequested] = useState(false);
   const [tripBookings, setTripBookings] = useState<PlannerBooking[]>([]);
+  const [isUpdatingSeats, setIsUpdatingSeats] = useState(false);
 
   const fetchTrip = async () => {
     if (!tripId) {
@@ -197,9 +198,17 @@ export function TripDetailsScreen({ navigation, route }: any) {
   const handleRequestToJoin = async () => {
     if (!trip) return;
 
+    const hostNazaryUrl = host?.nazaryUrl ?? host?.nazary_url;
+    const hostInstaUrl = host?.instagramUrl ?? host?.instagram_url;
+    const hostTiktokUrl = host?.tiktokUrl ?? host?.tiktok_url;
+    const disclaimerParts = [];
+    if (hostNazaryUrl && (hostInstaUrl || hostTiktokUrl)) {
+      disclaimerParts.push(`\n\nPlease verify this agency is legitimate by checking that their ${hostInstaUrl ? 'Instagram' : ''}${hostInstaUrl && hostTiktokUrl ? ' or ' : ''}${hostTiktokUrl ? 'TikTok' : ''} bio contains their Nazary link (${hostNazaryUrl}). This helps avoid fraud.`);
+    }
+
     alert.show({
       title: 'Request to Join',
-      message: `Submit a join request for "${trip.title}"? The agency will review your request. You can also contact them by phone to confirm your booking.`,
+      message: `Submit a join request for "${trip.title}"? The agency will review your request. You can also contact them by phone to confirm your booking.${disclaimerParts.join('')}`,
       type: 'info',
       buttons: [
         { text: 'Cancel', style: 'cancel' },
@@ -244,6 +253,24 @@ export function TripDetailsScreen({ navigation, route }: any) {
     }
   };
 
+  /* Update seats left handler (planner only) --------------------------- */
+  const handleUpdateSeats = async (delta: number) => {
+    if (!trip || isUpdatingSeats) return;
+    const currentLeft = trip.seatsLeft ?? trip.seats_left ?? 0;
+    const newLeft = currentLeft + delta;
+    if (newLeft < 0) return;
+    setIsUpdatingSeats(true);
+    try {
+      const res = await tripsApi.updateSeats(tripId, newLeft);
+      const data = (res.data as any)?.data ?? res.data;
+      setTrip(data);
+    } catch (err: any) {
+      alert.show({ title: 'Error', message: err?.response?.data?.error || 'Could not update seats', type: 'error' });
+    } finally {
+      setIsUpdatingSeats(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
@@ -280,7 +307,10 @@ export function TripDetailsScreen({ navigation, route }: any) {
   const tripStartDate = trip.startDate || trip.start_date;
   const startDatePassed = tripStartDate ? new Date(tripStartDate) < new Date(new Date().toDateString()) : false;
   const noSeats = seatsLeft <= 0;
-  const canRequest = !isOwnTrip && !noSeats && !hasRequested && user?.role === 'traveler';
+  const myBookingStatus = trip.myBookingStatus ?? trip.my_booking_status ?? null;
+  const isBookingConfirmed = myBookingStatus === 'confirmed';
+  const alreadyRequested = hasRequested || myBookingStatus === 'pending' || myBookingStatus === 'confirmed';
+  const canRequest = !isOwnTrip && !noSeats && !alreadyRequested && user?.role === 'traveler';
 
   return (
     <View style={styles.container}>
@@ -372,53 +402,140 @@ export function TripDetailsScreen({ navigation, route }: any) {
               <Ionicons name="location-outline" size={14} color={colors.onSurfaceVariant} />
               <Text style={styles.locationText}>{trip.location}</Text>
             </View>
+
+            {/* Seats Stepper — planner only */}
+            {isOwnTrip ? (
+              <View style={styles.seatsStepper}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.seatsStepperLabel}>Seats Left</Text>
+                  <Text style={styles.seatsStepperSub}>{totalSeats} total seats</Text>
+                </View>
+                <View style={styles.seatsStepperControls}>
+                  <Pressable
+                    onPress={() => handleUpdateSeats(-1)}
+                    disabled={isUpdatingSeats || seatsLeft <= 0}
+                    style={[styles.seatsStepperBtn, (isUpdatingSeats || seatsLeft <= 0) && { opacity: 0.3 }]}
+                  >
+                    <Ionicons name="remove" size={18} color={colors.onSurface} />
+                  </Pressable>
+                  <Text style={styles.seatsStepperCount}>
+                    {isUpdatingSeats ? '...' : seatsLeft}
+                  </Text>
+                  <Pressable
+                    onPress={() => handleUpdateSeats(1)}
+                    disabled={isUpdatingSeats || seatsLeft >= totalSeats}
+                    style={[styles.seatsStepperBtn, (isUpdatingSeats || seatsLeft >= totalSeats) && { opacity: 0.3 }]}
+                  >
+                    <Ionicons name="add" size={18} color={colors.onSurface} />
+                  </Pressable>
+                </View>
+              </View>
+            ) : null}
+
+            {/* Urgency Banner — traveler view, ≤20% seats remaining */}
+            {!isOwnTrip && !noSeats && totalSeats > 0 && seatsLeft <= Math.ceil(totalSeats * 0.2) ? (
+              <View style={styles.urgencyBanner}>
+                <Ionicons name="flame" size={16} color={colors.error} />
+                <Text style={styles.urgencyText}>
+                  Only {seatsLeft} {seatsLeft === 1 ? 'seat' : 'seats'} left — Request to join now!
+                </Text>
+              </View>
+            ) : null}
           </Animated.View>
 
-          {/* Host Card */}
+          {/* Host Card — clickable to open agency profile */}
           {host.name ? (
-            <Animated.View style={[styles.hostCard, shadows.soft, fadeIn(sectionAnims[1])]}>
-              <View style={styles.hostTop}>
-                {host.avatar ? (
-                  <Image source={{ uri: host.avatar }} style={styles.hostAvatar} />
-                ) : (
-                  <View style={[styles.hostAvatar, { backgroundColor: colors.surfaceContainerHigh, alignItems: 'center', justifyContent: 'center' }]}>
-                    <Ionicons name="person" size={20} color={colors.outlineVariant} />
+            <Pressable onPress={() => !isOwnTrip && host.id && navigation.navigate('AgencyDetail', { agencyId: host.id })}>
+              <Animated.View style={[styles.hostCard, shadows.soft, fadeIn(sectionAnims[1])]}>
+                <View style={styles.hostTop}>
+                  {host.avatar ? (
+                    <Image source={{ uri: host.avatar }} style={styles.hostAvatar} />
+                  ) : (
+                    <View style={[styles.hostAvatar, { backgroundColor: colors.surfaceContainerHigh, alignItems: 'center', justifyContent: 'center' }]}>
+                      <Ionicons name="person" size={20} color={colors.outlineVariant} />
+                    </View>
+                  )}
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.hostName}>{host.name}</Text>
+                    {host.guild ? <Text style={styles.hostGuild}>{host.guild}</Text> : null}
                   </View>
-                )}
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.hostName}>{host.name}</Text>
-                  {host.guild ? <Text style={styles.hostGuild}>{host.guild}</Text> : null}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+                    <View style={styles.hostRating}>
+                      <Ionicons name="star" size={14} color={colors.star} />
+                      <Text style={styles.hostRatingText}>{host.rating ?? 0}</Text>
+                    </View>
+                    {!isOwnTrip && <Ionicons name="chevron-forward" size={16} color={colors.outlineVariant} />}
+                  </View>
                 </View>
-                <View style={styles.hostRating}>
-                  <Ionicons name="star" size={14} color={colors.star} />
-                  <Text style={styles.hostRatingText}>{host.rating ?? 0}</Text>
+                {host.bio ? <Text style={styles.hostBio}>{host.bio}</Text> : null}
+                <View style={styles.hostStats}>
+                  <View style={styles.hostStat}>
+                    <Text style={styles.hostStatNumber}>{host.tripsHosted ?? host.trips_hosted ?? 0}</Text>
+                    <Text style={styles.hostStatLabel}>Trips Hosted</Text>
+                  </View>
+                  <View style={styles.hostStatDivider} />
+                  <View style={styles.hostStat}>
+                    <Text style={styles.hostStatNumber}>{host.rating ?? 0}</Text>
+                    <Text style={styles.hostStatLabel}>Rating</Text>
+                  </View>
+                  <View style={styles.hostStatDivider} />
+                  <View style={styles.hostStat}>
+                    <Text style={styles.hostStatNumber}>{reviewCount}</Text>
+                    <Text style={styles.hostStatLabel}>Reviews</Text>
+                  </View>
                 </View>
-              </View>
-              {host.bio ? <Text style={styles.hostBio}>{host.bio}</Text> : null}
-              <View style={styles.hostStats}>
-                <View style={styles.hostStat}>
-                  <Text style={styles.hostStatNumber}>{host.tripsHosted ?? host.trips_hosted ?? 0}</Text>
-                  <Text style={styles.hostStatLabel}>Trips Hosted</Text>
-                </View>
-                <View style={styles.hostStatDivider} />
-                <View style={styles.hostStat}>
-                  <Text style={styles.hostStatNumber}>{host.rating ?? 0}</Text>
-                  <Text style={styles.hostStatLabel}>Rating</Text>
-                </View>
-                <View style={styles.hostStatDivider} />
-                <View style={styles.hostStat}>
-                  <Text style={styles.hostStatNumber}>{reviewCount}</Text>
-                  <Text style={styles.hostStatLabel}>Reviews</Text>
-                </View>
-              </View>
-              {host.phone && !isOwnTrip ? (
-                <Pressable onPress={handleCallPlanner} style={styles.callButton}>
-                  <Ionicons name="call-outline" size={16} color={colors.primary} />
-                  <Text style={styles.callButtonText}>Call to Confirm Booking</Text>
-                </Pressable>
-              ) : null}
-            </Animated.View>
+                {host.phone && !isOwnTrip && isBookingConfirmed ? (
+                  <Pressable onPress={handleCallPlanner} style={styles.callButton}>
+                    <Ionicons name="call-outline" size={16} color={colors.primary} />
+                    <Text style={styles.callButtonText}>Call to Confirm Booking</Text>
+                  </Pressable>
+                ) : null}
+              </Animated.View>
+            </Pressable>
           ) : null}
+
+          {/* Verification Disclaimer (traveler view only) */}
+          {!isOwnTrip && user?.role === 'traveler' ? (() => {
+            const nUrl = host?.nazaryUrl ?? host?.nazary_url;
+            const instaUrl = host?.instagramUrl ?? host?.instagram_url;
+            const tiktokUrl = host?.tiktokUrl ?? host?.tiktok_url;
+            if (!nUrl) return null;
+            return (
+              <Animated.View style={[styles.disclaimerCard, fadeIn(sectionAnims[1])]}>
+                <View style={styles.disclaimerIconRow}>
+                  <Ionicons name="shield-checkmark-outline" size={22} color={colors.warning} />
+                  <Text style={styles.disclaimerTitle}>Verify this agency before joining</Text>
+                </View>
+                <Text style={styles.disclaimerText}>
+                  Check that this agency has their Nazary link in their{' '}
+                  {instaUrl ? 'Instagram' : ''}{instaUrl && tiktokUrl ? ' or ' : ''}{tiktokUrl ? 'TikTok' : ''}{' '}
+                  bio to confirm they are legitimate.
+                </Text>
+                <View style={styles.disclaimerLinkBox}>
+                  <Ionicons name="link-outline" size={14} color={colors.primary} />
+                  <Text style={styles.disclaimerLinkText} selectable>{nUrl}</Text>
+                </View>
+                <View style={styles.disclaimerSocialRow}>
+                  {instaUrl ? (
+                    <Pressable style={styles.disclaimerSocialBtn} onPress={() => Linking.openURL(instaUrl)}>
+                      <Ionicons name="logo-instagram" size={16} color="#E4405F" />
+                      <Text style={styles.disclaimerSocialText}>Open Instagram</Text>
+                    </Pressable>
+                  ) : null}
+                  {tiktokUrl ? (
+                    <Pressable style={styles.disclaimerSocialBtn} onPress={() => Linking.openURL(tiktokUrl)}>
+                      <Ionicons name="logo-tiktok" size={16} color={colors.onSurface} />
+                      <Text style={styles.disclaimerSocialText}>Open TikTok</Text>
+                    </Pressable>
+                  ) : null}
+                  <Pressable style={styles.disclaimerSocialBtn} onPress={() => navigation.navigate('AgencyDetail', { agencyId: host.id })}>
+                    <Ionicons name="business-outline" size={16} color={colors.primary} />
+                    <Text style={[styles.disclaimerSocialText, { color: colors.primary }]}>View Profile</Text>
+                  </Pressable>
+                </View>
+              </Animated.View>
+            );
+          })() : null}
 
           {/* Join Requests (planner only) */}
           {isOwnTrip && (
@@ -599,10 +716,15 @@ export function TripDetailsScreen({ navigation, route }: any) {
                 <Text style={styles.bookText}>Manage Trip</Text>
               </LinearGradient>
             </Pressable>
-          ) : hasRequested ? (
-            <View style={styles.requestedBadge}>
+          ) : isBookingConfirmed ? (
+            <Pressable onPress={handleCallPlanner} style={styles.confirmedBadge}>
               <Ionicons name="checkmark-circle" size={18} color={colors.success} />
-              <Text style={styles.requestedText}>Request Sent</Text>
+              <Text style={styles.confirmedText}>Confirmed</Text>
+            </Pressable>
+          ) : alreadyRequested ? (
+            <View style={styles.requestedBadge}>
+              <Ionicons name="time-outline" size={18} color={colors.warning} />
+              <Text style={styles.requestedText}>Pending</Text>
             </View>
           ) : noSeats ? (
             <View style={styles.fullBadge}>
@@ -735,6 +857,63 @@ const makeStyles = (colors: Colors) => StyleSheet.create({
   seatsTextFull: {
     color: colors.error,
   },
+  // Seats Stepper (planner)
+  seatsStepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surfaceContainerLowest,
+    borderRadius: radii.lg,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+  },
+  seatsStepperLabel: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 14,
+    color: colors.onSurface,
+  },
+  seatsStepperSub: {
+    fontFamily: 'Inter_300Light',
+    fontSize: 11,
+    color: colors.onSurfaceVariant,
+    marginTop: 2,
+  },
+  seatsStepperControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  seatsStepperBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: colors.surfaceContainerHigh,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  seatsStepperCount: {
+    fontFamily: 'Manrope_400Regular',
+    fontSize: 18,
+    color: colors.onSurface,
+    minWidth: 28,
+    textAlign: 'center',
+  },
+  // Urgency Banner
+  urgencyBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.errorTint,
+    borderRadius: radii.lg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.lg,
+  },
+  urgencyText: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 13,
+    color: colors.error,
+    flex: 1,
+  },
   title: {
     fontFamily: 'Manrope_300Light',
     fontSize: 34,
@@ -843,6 +1022,67 @@ const makeStyles = (colors: Colors) => StyleSheet.create({
     fontFamily: 'Inter_400Regular',
     fontSize: 13,
     color: colors.primary,
+  },
+  // Disclaimer
+  disclaimerCard: {
+    backgroundColor: colors.warningLight,
+    borderRadius: radii.lg,
+    padding: spacing.lg,
+    marginBottom: spacing['2xl'],
+  },
+  disclaimerIconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  disclaimerTitle: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 14,
+    color: colors.onSurface,
+    fontWeight: '600',
+  },
+  disclaimerText: {
+    fontFamily: 'Inter_300Light',
+    fontSize: 12,
+    color: colors.onSurfaceVariant,
+    lineHeight: 18,
+    marginBottom: spacing.md,
+  },
+  disclaimerLinkBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.surfaceContainerLowest,
+    borderRadius: radii.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  disclaimerLinkText: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 13,
+    color: colors.primary,
+    flex: 1,
+  },
+  disclaimerSocialRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  disclaimerSocialBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: colors.surfaceContainerLowest,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 8,
+    borderRadius: radii.full,
+  },
+  disclaimerSocialText: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 12,
+    color: colors.onSurface,
   },
   // Sections
   section: {
@@ -1117,7 +1357,7 @@ const makeStyles = (colors: Colors) => StyleSheet.create({
     color: colors.onPrimary,
     letterSpacing: 0.3,
   },
-  requestedBadge: {
+  confirmedBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
@@ -1126,10 +1366,24 @@ const makeStyles = (colors: Colors) => StyleSheet.create({
     borderRadius: radii.xl,
     backgroundColor: colors.successLight,
   },
-  requestedText: {
+  confirmedText: {
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
     color: colors.success,
+  },
+  requestedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: radii.xl,
+    backgroundColor: colors.warningLight,
+  },
+  requestedText: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 14,
+    color: colors.warning,
   },
   fullBadge: {
     flexDirection: 'row',

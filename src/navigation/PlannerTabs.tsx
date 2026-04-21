@@ -24,6 +24,7 @@ export function PlannerTabs() {
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: true,
+        tabBarHideOnKeyboard: true,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.outline,
         tabBarLabelStyle: {

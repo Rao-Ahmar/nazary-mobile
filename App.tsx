@@ -8,7 +8,6 @@ import {
   Manrope_300Light,
   Manrope_400Regular,
   Manrope_500Medium,
-  Manrope_600SemiBold,
 } from '@expo-google-fonts/manrope';
 import {
   Inter_300Light,
@@ -20,6 +19,7 @@ import { AppNavigator } from './src/navigation/AppNavigator';
 import { AlertProvider } from './src/components/ThemedAlert';
 import { useTheme } from './src/theme';
 import { useThemeStore } from './src/store/themeStore';
+import { useTourStore } from './src/store/tourStore';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -28,7 +28,6 @@ export default function App() {
     Manrope_300Light,
     Manrope_400Regular,
     Manrope_500Medium,
-    Manrope_600SemiBold,
     Inter_300Light,
     Inter_400Regular,
     Inter_500Medium,
@@ -38,6 +37,7 @@ export default function App() {
 
   useEffect(() => {
     useThemeStore.getState().hydrate();
+    useTourStore.getState().hydrate();
   }, []);
 
   const onLayoutRootView = useCallback(async () => {

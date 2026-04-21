@@ -22,6 +22,8 @@ export function FormInput({ label, icon, error, style, ...rest }: FormInputProps
         <TextInput
           style={styles.input}
           placeholderTextColor={colors.outline}
+          accessibilityLabel={label}
+          accessibilityHint={error}
           {...rest}
         />
       </View>
