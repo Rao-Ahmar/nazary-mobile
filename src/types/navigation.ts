@@ -62,6 +62,9 @@ export type RootStackParamList = {
   BookingRequests: undefined;
   EditPlannerProfile: undefined;
   CoupleRequest: undefined;
+  Rewards: undefined;
   Settings: undefined;
   AboutUs: undefined;
+  PaymentInfo: { bookingId: string };
+  SubmitPaymentProof: { bookingId: string; amount?: number };
 };

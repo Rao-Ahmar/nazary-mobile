@@ -8,7 +8,21 @@ export interface User {
   avatar?: string;
   phone?: string;
   profileCompleted: boolean;
+  referralCode?: string;
+  points?: number;
+  completedTripsCount?: number;
   createdAt: string;
+}
+
+export interface UserPointsInfo {
+  points: number;
+  completedTripsCount: number;
+  surpriseGiftEligible: boolean;
+  freeTripEligible: boolean;
+  freeTripPairName?: string;
+  referralCode: string;
+  referralsCount: number;
+  referralBonusPoints: number;
 }
 
 export interface TripPlanner extends User {
@@ -95,6 +109,10 @@ export interface Trip {
   sourceTripId?: string;
   recurringEnabled?: boolean;
   recurringRule?: { day_of_week: number; hour: number };
+  myBookingStatus?: string;
+  my_booking_status?: string;
+  myBookingId?: string;
+  my_booking_id?: string;
 }
 
 export interface CoupleRequest {
@@ -110,15 +128,40 @@ export interface CoupleRequest {
   createdAt: string;
 }
 
-// Booking (legacy - existing bookings for trips)
+// Booking
 export interface Booking {
   id: string;
   tripId: string;
   travelerId: string;
   travelerName: string;
   travelerAvatar?: string;
-  status: 'pending' | 'confirmed' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'cancelled' | 'approved' | 'payment_submitted' | 'rejected';
   amount: number;
+  adminNote?: string;
+  createdAt: string;
+}
+
+// Payment Account (admin-configured payment methods)
+export interface PaymentAccount {
+  id: string;
+  methodType: string;
+  accountTitle: string;
+  accountNumber: string;
+  bankName?: string;
+  isActive: boolean;
+}
+
+// Payment Proof (traveler-submitted payment evidence)
+export interface PaymentProof {
+  id: string;
+  bookingId: string;
+  referenceNumber: string;
+  amount: number;
+  methodUsed: string;
+  status: 'submitted' | 'verified' | 'rejected';
+  adminNote?: string;
+  screenshotUrl?: string;
+  verifiedAt?: string;
   createdAt: string;
 }
 

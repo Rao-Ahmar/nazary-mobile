@@ -50,6 +50,20 @@ export function ProfileScreen({ navigation }: any) {
         />
       </View>
 
+      <Pressable
+        style={styles.rewardsCard}
+        onPress={() => navigation.navigate('Rewards')}
+      >
+        <View style={styles.rewardsInfo}>
+          <Ionicons name="star" size={20} color={colors.warning} />
+          <View>
+            <Text style={styles.rewardsTitle}>Rewards & Referrals</Text>
+            <Text style={styles.rewardsPoints}>{user?.points ?? 0} points</Text>
+          </View>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color={colors.primary} />
+      </Pressable>
+
       <Pressable style={styles.settingsButton} onPress={() => navigation.navigate('Settings')}>
         <Ionicons name="settings-outline" size={20} color={colors.onSurface} />
         <Text style={styles.settingsText}>Notification Settings</Text>
@@ -83,6 +97,10 @@ const makeStyles = (colors: Colors) => StyleSheet.create({
   themeInfo: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   themeIcon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   themeText: { fontFamily: 'Inter_400Regular', fontSize: 15, color: colors.onSurface },
+  rewardsCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: radii.xl, backgroundColor: colors.primaryTint, paddingHorizontal: spacing.lg, paddingVertical: spacing.md, marginBottom: spacing.md },
+  rewardsInfo: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  rewardsTitle: { fontFamily: 'Inter_400Regular', fontSize: 15, color: colors.onSurface },
+  rewardsPoints: { fontFamily: 'Manrope_400Regular', fontSize: 13, color: colors.primary, marginTop: 2 },
   settingsButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, height: 56, borderRadius: radii.xl, backgroundColor: colors.surfaceContainerLow, marginBottom: spacing.md },
   settingsText: { fontFamily: 'Inter_400Regular', fontSize: 15, color: colors.onSurface },
   aboutButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, height: 56, borderRadius: radii.xl, backgroundColor: colors.surfaceContainerLow, marginBottom: spacing.md },

@@ -32,8 +32,11 @@ import { CreateTripScreen } from '../screens/planner/CreateTripScreen';
 import { BookingRequestsScreen } from '../screens/planner/BookingRequestsScreen';
 import { EditPlannerProfileScreen } from '../screens/planner/EditPlannerProfileScreen';
 import { CoupleRequestScreen } from '../screens/couples/CoupleRequestScreen';
+import { RewardsScreen } from '../screens/rewards/RewardsScreen';
 import { SettingsScreen } from '../screens/traveler/SettingsScreen';
 import { AboutScreen } from '../screens/info/AboutScreen';
+import { PaymentInfoScreen } from '../screens/traveler/PaymentInfoScreen';
+import { SubmitPaymentProofScreen } from '../screens/traveler/SubmitPaymentProofScreen';
 import type { RootStackParamList } from '../types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -73,8 +76,11 @@ export function AppNavigator() {
       <Stack.Screen name="BookingRequests" component={BookingRequestsScreen} options={slideOptions} />
       <Stack.Screen name="EditPlannerProfile" component={EditPlannerProfileScreen} options={slideOptions} />
       <Stack.Screen name="CoupleRequest" component={CoupleRequestScreen} options={slideOptions} />
+      <Stack.Screen name="Rewards" component={RewardsScreen} options={slideOptions} />
       <Stack.Screen name="Settings" component={SettingsScreen} options={slideOptions} />
       <Stack.Screen name="AboutUs" component={AboutScreen} options={slideOptions} />
+      <Stack.Screen name="PaymentInfo" component={PaymentInfoScreen} options={slideOptions} />
+      <Stack.Screen name="SubmitPaymentProof" component={SubmitPaymentProofScreen} options={slideOptions} />
     </>
   );
 
