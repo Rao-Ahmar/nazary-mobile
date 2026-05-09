@@ -33,7 +33,7 @@ export function LoginScreen({ navigation }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const { login, devLoginAsTraveler, devLoginAsPlanner, isLoading } = useAuthStore();
+  const { login, isLoading } = useAuthStore();
 
   // TODO: Re-enable when Google OAuth credentials are configured
   // const [_googleRequest, googleResponse, promptGoogleAsync] = Google.useAuthRequest({
@@ -135,9 +135,10 @@ export function LoginScreen({ navigation }: Props) {
 
             {/* Social */}
             <View style={styles.socialContainer}>
-              <Pressable style={styles.socialButton}>
+              <Pressable style={[styles.socialButton, { opacity: 0.5 }]} disabled accessibilityLabel="Apple sign-in coming soon" accessibilityRole="button">
                 <Ionicons name="logo-apple" size={20} color={colors.onSurface} />
                 <Text style={styles.socialText}>Apple</Text>
+                <Text style={styles.comingSoonLabel}>Soon</Text>
               </Pressable>
               <Pressable style={[styles.socialButton, { opacity: 0.5 }]} disabled accessibilityLabel="Google sign-in coming soon" accessibilityRole="button">
                 <Ionicons name="logo-google" size={20} color={colors.onSurface} />
@@ -145,27 +146,6 @@ export function LoginScreen({ navigation }: Props) {
                 <Text style={styles.comingSoonLabel}>Soon</Text>
               </Pressable>
             </View>
-
-            {/* Dev Login - only visible in development */}
-            {__DEV__ && (
-              <View style={styles.devSection}>
-                <Text style={styles.devLabel}>Dev Quick Login</Text>
-                <View style={styles.devButtons}>
-                  <Pressable style={styles.devButton} disabled={isLoading} onPress={async () => {
-                    try { await devLoginAsTraveler(); } catch (e: any) { alert.show({ title: 'Error', message: e.message, type: 'error' }); }
-                  }} accessibilityLabel="Dev login as traveler" accessibilityRole="button">
-                    <Ionicons name="compass-outline" size={16} color={colors.primary} />
-                    <Text style={styles.devButtonText}>Traveler</Text>
-                  </Pressable>
-                  <Pressable style={styles.devButton} disabled={isLoading} onPress={async () => {
-                    try { await devLoginAsPlanner(); } catch (e: any) { alert.show({ title: 'Error', message: e.message, type: 'error' }); }
-                  }} accessibilityLabel="Dev login as planner" accessibilityRole="button">
-                    <Ionicons name="briefcase-outline" size={16} color={colors.primary} />
-                    <Text style={styles.devButtonText}>Planner</Text>
-                  </Pressable>
-                </View>
-              </View>
-            )}
 
             {/* Sign Up Link */}
             <View style={styles.signupRow}>
@@ -241,33 +221,6 @@ const makeStyles = (colors: Colors) => StyleSheet.create({
   },
   socialText: { fontFamily: 'Inter_400Regular', fontSize: 14, color: colors.onSurface },
   comingSoonLabel: { fontFamily: 'Inter_400Regular', fontSize: 9, color: colors.outline, position: 'absolute', bottom: 8, letterSpacing: 0.3 },
-  devSection: {
-    backgroundColor: colors.surfaceContainerLow,
-    borderRadius: radii.lg,
-    padding: spacing.lg,
-    marginBottom: spacing['2xl'],
-  },
-  devLabel: {
-    ...typography.labelMd,
-    color: colors.onSurfaceVariant,
-    textTransform: 'uppercase',
-    textAlign: 'center',
-    marginBottom: spacing.md,
-  },
-  devButtons: { flexDirection: 'row', gap: spacing.md },
-  devButton: {
-    flex: 1,
-    height: 48,
-    borderRadius: radii.md,
-    backgroundColor: colors.surfaceContainerLowest,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    borderWidth: 1,
-    borderColor: colors.outlineVariant,
-  },
-  devButtonText: { fontFamily: 'Inter_400Regular', fontSize: 13, color: colors.primary },
   signupRow: { flexDirection: 'row', justifyContent: 'center' },
   signupText: { ...typography.bodyMd, color: colors.onSurfaceVariant },
   signupLink: { ...typography.bodyMd, color: colors.primary, fontFamily: 'Inter_400Regular' },

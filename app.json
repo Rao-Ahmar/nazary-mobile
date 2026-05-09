@@ -2,6 +2,7 @@
   "expo": {
     "name": "nazary-mobile",
     "slug": "nazary-mobile",
+    "scheme": "nazary-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -13,9 +14,11 @@
       "backgroundColor": "#f9f9fb"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.nazary.mobile"
     },
     "android": {
+      "package": "com.nazary.mobile",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -28,7 +31,21 @@
     },
     "plugins": [
       "expo-font",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Nazary needs access to your photos to upload profile pictures and trip images.",
+          "cameraPermission": "Nazary needs access to your camera to take photos for trips and profile."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#ffffff"
+        }
+      ]
     ],
     "extra": {
       "googleWebClientId": "YOUR_CLIENT_ID_HERE"

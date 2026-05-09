@@ -20,6 +20,7 @@ import { AlertProvider } from './src/components/ThemedAlert';
 import { useTheme } from './src/theme';
 import { useThemeStore } from './src/store/themeStore';
 import { useTourStore } from './src/store/tourStore';
+import { useAuthStore } from './src/store/authStore';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -38,6 +39,7 @@ export default function App() {
   useEffect(() => {
     useThemeStore.getState().hydrate();
     useTourStore.getState().hydrate();
+    useAuthStore.getState().hydrate();
   }, []);
 
   const onLayoutRootView = useCallback(async () => {

@@ -17,7 +17,6 @@ export async function registerForPushNotifications(): Promise<string | null> {
     const Device = require('expo-device');
 
     if (!Device.isDevice) {
-      console.log('Push notifications require a physical device');
       return null;
     }
 
@@ -30,7 +29,6 @@ export async function registerForPushNotifications(): Promise<string | null> {
     }
 
     if (finalStatus !== 'granted') {
-      console.log('Push notification permission denied');
       return null;
     }
 
@@ -47,8 +45,7 @@ export async function registerForPushNotifications(): Promise<string | null> {
     }
 
     return token;
-  } catch (error) {
-    console.log('Push notification setup skipped:', error);
+  } catch {
     return null;
   }
 }

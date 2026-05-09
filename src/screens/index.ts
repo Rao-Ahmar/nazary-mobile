@@ -1,10 +1,7 @@
-// Legacy — kept so existing imports don't break
 export { OnboardingScreen } from './OnboardingScreen';
 export { DiscoveryScreen } from './DiscoveryScreen';
 export { TripDetailsScreen } from './TripDetailsScreen';
 export { AgencyScreen } from './AgencyScreen';
-// REMOVED: messaging feature — Nazary v1
-export { ConversationsScreen } from './ConversationsScreen';
 
 // Auth
 export { OnboardingScreen as AuthOnboardingScreen } from './auth/OnboardingScreen';
@@ -26,9 +23,6 @@ export { BookingRequestsScreen } from './planner/BookingRequestsScreen';
 export { PlannerProfileScreen } from './planner/PlannerProfileScreen';
 export { CreateTripScreen } from './planner/CreateTripScreen';
 export { EditPlannerProfileScreen } from './planner/EditPlannerProfileScreen';
-
-// Shared
-export { ChatScreen } from './shared/ChatScreen';
 
 // Profile Setup
 export { PlannerProfileSetupScreen } from './profile/PlannerProfileSetupScreen';
