@@ -25,9 +25,8 @@ function getBaseUrl(): string {
     return 'http://localhost:3000/api/v1';
   }
 
-  // Production: MUST be set via EXPO_PUBLIC_API_URL env variable
-  // Falling back to localhost will not work in production builds
-  return 'http://localhost:3000/api/v1';
+  // Production fallback
+  return 'http://16.170.146.169/api/v1';
 }
 
 const BASE_URL = getBaseUrl();
