@@ -1,16 +1,29 @@
-import React, { useMemo } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { View, Text, Image, Pressable, StyleSheet, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, typography, spacing, radii, type Colors } from '../../theme';
 import { useAuthStore } from '../../store';
 import { NotificationBell } from '../../components/NotificationBell';
+import { TourOverlay, useTourGuide } from '../../components/tour';
 
 export function ProfileScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
   const { user, logout } = useAuthStore();
   const { colors, isDark, toggleTheme } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  // Tour guide
+  const profileCardRef = useRef<View>(null);
+  const rewardsRef = useRef<View>(null);
+  const { tourVisible, tourSteps, completeTour } = useTourGuide(
+    'traveler_profile',
+    [profileCardRef, rewardsRef],
+    [
+      { id: 'profile', title: 'Your Profile', description: 'View your account details and switch between light and dark mode', icon: 'person' },
+      { id: 'rewards', title: 'Rewards & Referrals', description: 'Earn points by referring friends and completing trips', icon: 'star' },
+    ],
+  );
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -19,7 +32,7 @@ export function ProfileScreen({ navigation }: any) {
         <NotificationBell />
       </View>
 
-      <View style={styles.profileCard}>
+      <View ref={profileCardRef} collapsable={false} style={styles.profileCard}>
         {user?.avatar ? (
           <Image source={{ uri: user.avatar }} style={styles.avatar} />
         ) : (
@@ -51,6 +64,8 @@ export function ProfileScreen({ navigation }: any) {
       </View>
 
       <Pressable
+        ref={rewardsRef}
+        collapsable={false}
         style={styles.rewardsCard}
         onPress={() => navigation.navigate('Rewards')}
       >
@@ -78,6 +93,7 @@ export function ProfileScreen({ navigation }: any) {
         <Ionicons name="log-out-outline" size={20} color={colors.error} />
         <Text style={styles.logoutText}>Log Out</Text>
       </Pressable>
+      <TourOverlay steps={tourSteps} visible={tourVisible} onComplete={completeTour} />
     </View>
   );
 }

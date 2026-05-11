@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -6,12 +6,25 @@ import { useTheme, typography, spacing, radii } from '../../theme';
 import { type Colors } from '../../theme';
 import { useTripRequestStore } from '../../store/tripRequestStore';
 import { StatusBadge } from '../../components/StatusBadge';
+import { TourOverlay, useTourGuide } from '../../components/tour';
 
 export function MyTripsScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
   const { myRequests, isLoading, fetchMyRequests } = useTripRequestStore();
   const { colors, shadows } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  // Tour guide
+  const requestsRef = useRef<View>(null);
+  const bookedRef = useRef<View>(null);
+  const { tourVisible, tourSteps, completeTour } = useTourGuide(
+    'traveler_mytrips',
+    [requestsRef, bookedRef],
+    [
+      { id: 'requests', title: 'Your Requests', description: 'Track custom trip requests you\'ve sent to planners', icon: 'document-text' },
+      { id: 'booked', title: 'Booked Trips', description: 'View your confirmed bookings and upcoming trip details', icon: 'map' },
+    ],
+  );
 
   useEffect(() => {
     fetchMyRequests();
@@ -30,7 +43,7 @@ export function MyTripsScreen({ navigation }: any) {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* My Requests Section */}
-        <View style={styles.section}>
+        <View ref={requestsRef} collapsable={false} style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>My Requests</Text>
             <Pressable onPress={() => navigation.navigate('MyTripRequests')}>
@@ -64,7 +77,7 @@ export function MyTripsScreen({ navigation }: any) {
         </View>
 
         {/* Booked Trips Section */}
-        <View style={styles.section}>
+        <View ref={bookedRef} collapsable={false} style={styles.section}>
           <Text style={styles.sectionTitle}>Booked Trips</Text>
           <View style={styles.placeholder}>
             <Ionicons name="map-outline" size={48} color={colors.outlineVariant} />
@@ -74,6 +87,7 @@ export function MyTripsScreen({ navigation }: any) {
 
         <View style={{ height: 100 }} />
       </ScrollView>
+      <TourOverlay steps={tourSteps} visible={tourVisible} onComplete={completeTour} />
     </View>
   );
 }

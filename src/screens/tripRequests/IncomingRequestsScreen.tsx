@@ -8,6 +8,7 @@ import { StatusBadge } from '../../components/StatusBadge';
 import { EmptyState } from '../../components/EmptyState';
 import { useTripRequestStore } from '../../store/tripRequestStore';
 import { useAlert } from '../../components/ThemedAlert';
+import { TourOverlay, useTourGuide } from '../../components/tour';
 
 export function IncomingRequestsScreen({ navigation }: any) {
   const { colors, shadows } = useTheme();
@@ -16,6 +17,18 @@ export function IncomingRequestsScreen({ navigation }: any) {
 
   const insets = useSafeAreaInsets();
   const { incomingRequests, fetchIncoming, acceptRequest, rejectRequest } = useTripRequestStore();
+
+  // Tour guide
+  const titleRef = useRef<View>(null);
+  const cardsRef = useRef<View>(null);
+  const { tourVisible, tourSteps, completeTour } = useTourGuide(
+    'planner_requests',
+    [titleRef, cardsRef],
+    [
+      { id: 'title', title: 'Trip Requests', description: 'Travelers send you custom trip requests. Review and respond here', icon: 'document-text' },
+      { id: 'cards', title: 'Accept or Reject', description: 'Tap any request to view details, then accept or reject it', icon: 'checkmark-circle' },
+    ],
+  );
 
   useEffect(() => {
     fetchIncoming();
@@ -44,9 +57,12 @@ export function IncomingRequestsScreen({ navigation }: any) {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <Text style={styles.title}>Incoming Requests</Text>
+      <View ref={titleRef} collapsable={false}>
+        <Text style={styles.title}>Incoming Requests</Text>
+      </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        <View ref={cardsRef} collapsable={false}>
         {incomingRequests.length === 0 ? (
           <EmptyState icon="document-text-outline" title="No Requests" message="Custom trip requests from travelers will appear here" />
         ) : (
@@ -98,8 +114,10 @@ export function IncomingRequestsScreen({ navigation }: any) {
             </Animated.View>
           ))
         )}
+        </View>
         <View style={{ height: 100 }} />
       </ScrollView>
+      <TourOverlay steps={tourSteps} visible={tourVisible} onComplete={completeTour} />
     </View>
   );
 }

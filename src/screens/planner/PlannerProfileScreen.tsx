@@ -1,10 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { View, Text, Image, Pressable, StyleSheet, Linking, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, typography, spacing, radii, type Colors } from '../../theme';
 import { useAuthStore } from '../../store';
 import type { TripPlanner } from '../../types';
+import { TourOverlay, useTourGuide } from '../../components/tour';
 
 export function PlannerProfileScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
@@ -12,6 +13,18 @@ export function PlannerProfileScreen({ navigation }: any) {
   const planner = user as TripPlanner | null;
   const { colors, isDark, toggleTheme } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  // Tour guide
+  const profileCardRef = useRef<View>(null);
+  const editBtnRef = useRef<View>(null);
+  const { tourVisible, tourSteps, completeTour } = useTourGuide(
+    'planner_profile',
+    [profileCardRef, editBtnRef],
+    [
+      { id: 'profile', title: 'Your Profile', description: 'View your agency details, social links, and account info', icon: 'person' },
+      { id: 'edit', title: 'Edit Agency', description: 'Update your agency name, tagline, logo, and social links', icon: 'create' },
+    ],
+  );
 
   const socialLinks: { key: keyof TripPlanner; icon: string; label: string }[] = [
     { key: 'youtubeUrl', icon: 'logo-youtube', label: 'YouTube' },
@@ -30,7 +43,7 @@ export function PlannerProfileScreen({ navigation }: any) {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <Text style={styles.title}>Profile</Text>
 
-      <View style={styles.profileCard}>
+      <View ref={profileCardRef} collapsable={false} style={styles.profileCard}>
         {user?.avatar ? (
           <Image source={{ uri: user.avatar }} style={styles.avatar} />
         ) : (
@@ -92,7 +105,7 @@ export function PlannerProfileScreen({ navigation }: any) {
         <Ionicons name="chevron-forward" size={20} color={colors.primary} />
       </Pressable>
 
-      <Pressable style={styles.editButton} onPress={() => navigation.navigate('EditPlannerProfile')}>
+      <Pressable ref={editBtnRef} collapsable={false} style={styles.editButton} onPress={() => navigation.navigate('EditPlannerProfile')}>
         <Ionicons name="create-outline" size={20} color={colors.primary} />
         <Text style={styles.editText}>Edit Agency Profile</Text>
       </Pressable>
@@ -106,6 +119,7 @@ export function PlannerProfileScreen({ navigation }: any) {
         <Ionicons name="log-out-outline" size={20} color={colors.error} />
         <Text style={styles.logoutText}>Log Out</Text>
       </Pressable>
+      <TourOverlay steps={tourSteps} visible={tourVisible} onComplete={completeTour} />
     </View>
   );
 }

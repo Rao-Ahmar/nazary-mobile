@@ -3,26 +3,41 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const TOUR_KEY = '@nazary_tour_completed';
 
+/** All screen keys that have tours */
+const TRAVELER_SCREENS = [
+  'traveler_home',
+  'traveler_search',
+  'traveler_mytrips',
+  'traveler_agencies',
+  'traveler_profile',
+] as const;
+
+const PLANNER_SCREENS = [
+  'planner_dashboard',
+  'planner_managetrips',
+  'planner_requests',
+  'planner_profile',
+] as const;
+
 interface TourState {
-  travelerDone: boolean;
-  plannerDone: boolean;
-  completeTour: (role: 'traveler' | 'planner') => void;
+  completedScreens: Record<string, boolean>;
+  isScreenDone: (screenKey: string) => boolean;
+  completeScreen: (screenKey: string) => void;
   hydrate: () => Promise<void>;
 }
 
 export const useTourStore = create<TourState>((set, get) => ({
-  travelerDone: false,
-  plannerDone: false,
+  completedScreens: {},
 
-  completeTour: (role) => {
-    const key = role === 'traveler' ? 'travelerDone' : 'plannerDone';
-    set({ [key]: true });
-    const state = get();
-    const persisted = JSON.stringify({
-      travelerDone: state.travelerDone,
-      plannerDone: state.plannerDone,
-    });
-    AsyncStorage.setItem(TOUR_KEY, persisted).catch(() => {});
+  isScreenDone: (screenKey: string) => {
+    return !!get().completedScreens[screenKey];
+  },
+
+  completeScreen: (screenKey: string) => {
+    set((state) => ({
+      completedScreens: { ...state.completedScreens, [screenKey]: true },
+    }));
+    AsyncStorage.setItem(TOUR_KEY, JSON.stringify(get().completedScreens)).catch(() => {});
   },
 
   hydrate: async () => {
@@ -30,10 +45,21 @@ export const useTourStore = create<TourState>((set, get) => ({
       const stored = await AsyncStorage.getItem(TOUR_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        set({
-          travelerDone: !!parsed.travelerDone,
-          plannerDone: !!parsed.plannerDone,
-        });
+
+        // Migrate legacy format { travelerDone, plannerDone } -> per-screen
+        if (parsed.travelerDone !== undefined || parsed.plannerDone !== undefined) {
+          const migrated: Record<string, boolean> = {};
+          if (parsed.travelerDone) {
+            for (const key of TRAVELER_SCREENS) migrated[key] = true;
+          }
+          if (parsed.plannerDone) {
+            for (const key of PLANNER_SCREENS) migrated[key] = true;
+          }
+          set({ completedScreens: migrated });
+          AsyncStorage.setItem(TOUR_KEY, JSON.stringify(migrated)).catch(() => {});
+        } else {
+          set({ completedScreens: parsed });
+        }
       }
     } catch {}
   },

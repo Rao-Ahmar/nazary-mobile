@@ -25,6 +25,7 @@ import { featuredTrips } from '../../data/mockData';
 import { KeyboardAwareScroll } from '../../components/KeyboardAwareScroll';
 import { DatePickerModal } from '../../components/DatePickerModal';
 import { useDebounce } from '../../hooks/useDebounce';
+import { TourOverlay, useTourGuide } from '../../components/tour';
 
 type TripItem = {
   id: string;
@@ -103,6 +104,18 @@ export function SearchScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
   const { colors, shadows } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  // Tour guide
+  const searchBarRef = useRef<View>(null);
+  const filterBtnRef = useRef<View>(null);
+  const { tourVisible, tourSteps, completeTour } = useTourGuide(
+    'traveler_search',
+    [searchBarRef, filterBtnRef],
+    [
+      { id: 'search', title: 'Quick Search', description: 'Search trips by destination, planner name, or experience type', icon: 'search' },
+      { id: 'filters', title: 'Refine Results', description: 'Filter by price, dates, trip type, and planner to find the perfect trip', icon: 'options' },
+    ],
+  );
+
   const [query, setQuery] = useState('');
   const debouncedQuery = useDebounce(query, 300);
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -470,7 +483,7 @@ export function SearchScreen({ navigation }: any) {
       </Animated.Text>
 
       <View style={styles.searchContainer}>
-        <View style={styles.searchBar}>
+        <View ref={searchBarRef} collapsable={false} style={styles.searchBar}>
           <Ionicons name="search-outline" size={18} color={colors.onSurfaceVariant} />
           <TextInput
             style={styles.searchInput}
@@ -487,7 +500,7 @@ export function SearchScreen({ navigation }: any) {
             </Pressable>
           )}
         </View>
-        <Pressable style={styles.filterButton} onPress={openFilters} hitSlop={4}>
+        <Pressable ref={filterBtnRef} collapsable={false} style={styles.filterButton} onPress={openFilters} hitSlop={4}>
           <Ionicons name="options-outline" size={20} color={colors.onSurface} />
           {activeFilterCount > 0 && (
             <View style={styles.filterBadge}>
@@ -702,6 +715,7 @@ export function SearchScreen({ navigation }: any) {
         onConfirm={onDateToConfirm}
         onClose={onDateToClose}
       />
+      <TourOverlay steps={tourSteps} visible={tourVisible} onComplete={completeTour} />
     </View>
   );
 }

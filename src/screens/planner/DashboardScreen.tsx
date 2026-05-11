@@ -87,7 +87,7 @@ export function DashboardScreen({ navigation }: any) {
   const tripsRef = useRef<View>(null);
 
   const { tourVisible, tourSteps, completeTour } = useTourGuide(
-    'planner',
+    'planner_dashboard',
     [null, statsRef, nazaryLinkRef, tripsRef],
     [
       { id: 'welcome', title: 'Welcome to Your Dashboard!', description: 'Manage your agency and grow your travel business. Here\'s a quick tour!', icon: 'business' },

@@ -16,11 +16,24 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, typography, spacing, radii, type Colors } from '../../theme';
 import { plannersApi } from '../../api/planners';
 import type { Agency } from '../../types';
+import { TourOverlay, useTourGuide } from '../../components/tour';
 
 export function AgenciesListScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
   const { colors, shadows } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  // Tour guide
+  const searchRef = useRef<View>(null);
+  const listRef = useRef<View>(null);
+  const { tourVisible, tourSteps, completeTour } = useTourGuide(
+    'traveler_agencies',
+    [searchRef, listRef],
+    [
+      { id: 'search', title: 'Find Agencies', description: 'Search for travel planners and agencies by name', icon: 'search' },
+      { id: 'browse', title: 'Browse Agencies', description: 'Tap any agency to see their trips, reviews, and contact info', icon: 'business' },
+    ],
+  );
 
   const [agencies, setAgencies] = useState<Agency[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -186,7 +199,7 @@ export function AgenciesListScreen({ navigation }: any) {
         <Text style={styles.headerTitle}>Agencies</Text>
       </View>
 
-      <View style={styles.searchContainer}>
+      <View ref={searchRef} collapsable={false} style={styles.searchContainer}>
         <Ionicons name="search-outline" size={18} color={colors.outline} />
         <TextInput
           style={styles.searchInput}
@@ -197,6 +210,7 @@ export function AgenciesListScreen({ navigation }: any) {
         />
       </View>
 
+      <View ref={listRef} collapsable={false} style={{ flex: 1 }}>
       <FlatList
         data={agencies}
         keyExtractor={(item) => item.id}
@@ -226,6 +240,8 @@ export function AgenciesListScreen({ navigation }: any) {
           )
         }
       />
+      </View>
+      <TourOverlay steps={tourSteps} visible={tourVisible} onComplete={completeTour} />
     </View>
   );
 }

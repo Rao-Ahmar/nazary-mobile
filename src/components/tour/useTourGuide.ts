@@ -10,13 +10,20 @@ interface StepDef {
   icon: TourStep['icon'];
 }
 
+/**
+ * Per-screen tour guide hook.
+ *
+ * @param screenKey  Unique key for this screen, e.g. 'traveler_home'
+ * @param refs       One ref per step (null = no spotlight / welcome card)
+ * @param stepDefs   Step definitions (id, title, description, icon)
+ */
 export function useTourGuide(
-  role: 'traveler' | 'planner',
+  screenKey: string,
   refs: (RefObject<View | null> | null)[],
   stepDefs: StepDef[],
 ) {
-  const done = useTourStore((s) => (role === 'traveler' ? s.travelerDone : s.plannerDone));
-  const completeTourAction = useTourStore((s) => s.completeTour);
+  const done = useTourStore((s) => s.isScreenDone(screenKey));
+  const completeScreenAction = useTourStore((s) => s.completeScreen);
   const [tourVisible, setTourVisible] = useState(false);
 
   useEffect(() => {
@@ -34,8 +41,8 @@ export function useTourGuide(
 
   const completeTour = useCallback(() => {
     setTourVisible(false);
-    completeTourAction(role);
-  }, [role, completeTourAction]);
+    completeScreenAction(screenKey);
+  }, [screenKey, completeScreenAction]);
 
   return { tourVisible, tourSteps, completeTour };
 }

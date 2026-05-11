@@ -20,6 +20,7 @@ import { type Colors } from '../../theme';
 import { tripsApi } from '../../api/trips';
 import { DatePickerModal } from '../../components/DatePickerModal';
 import { useAlert } from '../../components/ThemedAlert';
+import { TourOverlay, useTourGuide } from '../../components/tour';
 
 type TripItem = {
   id: string;
@@ -52,6 +53,18 @@ export function ManageTripsScreen({ navigation }: any) {
   const { colors, shadows } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const alert = useAlert();
+
+  // Tour guide
+  const createBtnRef = useRef<View>(null);
+  const searchRowRef = useRef<View>(null);
+  const { tourVisible, tourSteps, completeTour } = useTourGuide(
+    'planner_managetrips',
+    [createBtnRef, searchRowRef],
+    [
+      { id: 'create', title: 'Create Trips', description: 'Tap + to create a new trip listing for your travelers', icon: 'add-circle' },
+      { id: 'search', title: 'Search & Filter', description: 'Search your trips by name, filter by status, price, and dates', icon: 'search' },
+    ],
+  );
 
   const statusColors: Record<string, { bg: string; text: string }> = {
     active: { bg: colors.successLight, text: colors.success },
@@ -326,6 +339,8 @@ export function ManageTripsScreen({ navigation }: any) {
         <View style={styles.header}>
           <Text style={styles.title}>Manage Trips</Text>
           <Pressable
+            ref={createBtnRef}
+            collapsable={false}
             style={styles.createButton}
             onPress={() => navigation.navigate('CreateTrip', {})}
           >
@@ -334,7 +349,7 @@ export function ManageTripsScreen({ navigation }: any) {
         </View>
 
         {/* Search Bar */}
-        <View style={styles.searchRow}>
+        <View ref={searchRowRef} collapsable={false} style={styles.searchRow}>
           <View style={styles.searchBar}>
             <Ionicons name="search" size={16} color={colors.onSurfaceVariant} />
             <TextInput
@@ -538,7 +553,7 @@ export function ManageTripsScreen({ navigation }: any) {
         }}
         onClose={() => setShowDateToPicker(false)}
       />
-
+      <TourOverlay steps={tourSteps} visible={tourVisible} onComplete={completeTour} />
     </View>
   );
 }

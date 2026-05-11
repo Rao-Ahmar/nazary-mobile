@@ -96,7 +96,7 @@ export function HomeScreen({ navigation }: any) {
   const featuredRef = useRef<View>(null);
 
   const { tourVisible, tourSteps, completeTour } = useTourGuide(
-    'traveler',
+    'traveler_home',
     [null, searchRef, actionCardsRef, featuredRef],
     [
       { id: 'welcome', title: 'Welcome to Nazary!', description: 'Your gateway to curated trips across Pakistan. Let\'s show you around!', icon: 'compass' },
@@ -309,6 +309,22 @@ export function HomeScreen({ navigation }: any) {
           </Pressable>
         </Animated.View>
 
+        {/* Corporate Trips Card */}
+        <Animated.View style={[{ paddingHorizontal: spacing.xl, marginBottom: spacing.xl }, fadeInDownStyle(actionCardsAnim)]}>
+          <Pressable onPress={() => navigation.navigate('CorporateTripRequest')} style={[styles.corporateCard, shadows.card]}>
+            <View style={styles.corporateContent}>
+              <View style={[styles.corporateIcon, { backgroundColor: colors.primaryTint }]}>
+                <Ionicons name="briefcase" size={24} color={colors.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.corporateTitle}>Corporate Trips</Text>
+                <Text style={styles.corporateSub}>Plan a corporate group trip</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.onSurfaceVariant} />
+            </View>
+          </Pressable>
+        </Animated.View>
+
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipContainer} style={styles.chipScroll}>
           {categories.map((cat, i) => renderCategoryChip(cat, i))}
         </ScrollView>
@@ -397,6 +413,11 @@ const makeStyles = (colors: Colors, width: number) => StyleSheet.create({
   collectionGradient: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: spacing.lg, paddingTop: spacing['3xl'], borderBottomLeftRadius: radii.lg, borderBottomRightRadius: radii.lg },
   collectionTitle: { fontFamily: 'Manrope_400Regular', fontSize: 16, color: colors.onImage, marginBottom: 2 },
   collectionSubtitle: { fontFamily: 'Inter_300Light', fontSize: 11, color: colors.onImageMuted },
+  corporateCard: { backgroundColor: colors.surfaceContainerLowest, borderRadius: radii.xl, padding: spacing.lg },
+  corporateContent: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  corporateIcon: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
+  corporateTitle: { fontFamily: 'Manrope_400Regular', fontSize: 16, color: colors.onSurface },
+  corporateSub: { fontFamily: 'Inter_300Light', fontSize: 12, color: colors.onSurfaceVariant, marginTop: 2 },
   arrangeCard: { borderRadius: radii.xl, overflow: 'hidden' },
   arrangeGradient: { borderRadius: radii.xl, padding: spacing.xl },
   arrangeContent: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg },
