@@ -84,15 +84,21 @@ export const lightColors = {
   scrimLight: 'rgba(0,0,0,0.3)',
   scrimHeavy: 'rgba(0,0,0,0.6)',
 
-  // Category trip-type colors
-  casualColor: '#3B82F6',
-  casualBg: 'rgba(59,130,246,0.1)',
-  familyColor: '#22C55E',
-  familyBg: 'rgba(34,197,94,0.1)',
-  bikeColor: '#F97316',
-  bikeBg: 'rgba(249,115,22,0.1)',
-  coupleColor: '#EC4899',
-  coupleBg: 'rgba(236,72,153,0.1)',
+  // Category colors
+  luxuryColor: '#9333EA',
+  luxuryBg: 'rgba(147,51,234,0.1)',
+  partyColor: '#F43F5E',
+  partyBg: 'rgba(244,63,94,0.1)',
+  adventuresColor: '#F97316',
+  adventuresBg: 'rgba(249,115,22,0.1)',
+  budgetFriendlyColor: '#22C55E',
+  budgetFriendlyBg: 'rgba(34,197,94,0.1)',
+  coupleTripsColor: '#EC4899',
+  coupleTripsBg: 'rgba(236,72,153,0.1)',
+  familyTripsColor: '#3B82F6',
+  familyTripsBg: 'rgba(59,130,246,0.1)',
+  friendsTripsColor: '#EAB308',
+  friendsTripsBg: 'rgba(234,179,8,0.1)',
 
   // Accent — couple / heart
   heart: '#E91E63',
@@ -208,15 +214,21 @@ export const darkColors: Colors = {
   scrimLight: 'rgba(0,0,0,0.5)',
   scrimHeavy: 'rgba(0,0,0,0.8)',
 
-  // Category trip-type colors
-  casualColor: '#60A5FA',
-  casualBg: 'rgba(96,165,250,0.12)',
-  familyColor: '#4ADE80',
-  familyBg: 'rgba(74,222,128,0.12)',
-  bikeColor: '#FB923C',
-  bikeBg: 'rgba(251,146,60,0.12)',
-  coupleColor: '#F472B6',
-  coupleBg: 'rgba(244,114,182,0.12)',
+  // Category colors
+  luxuryColor: '#A855F7',
+  luxuryBg: 'rgba(168,85,247,0.12)',
+  partyColor: '#FB7185',
+  partyBg: 'rgba(251,113,133,0.12)',
+  adventuresColor: '#FB923C',
+  adventuresBg: 'rgba(251,146,60,0.12)',
+  budgetFriendlyColor: '#4ADE80',
+  budgetFriendlyBg: 'rgba(74,222,128,0.12)',
+  coupleTripsColor: '#F472B6',
+  coupleTripsBg: 'rgba(244,114,182,0.12)',
+  familyTripsColor: '#60A5FA',
+  familyTripsBg: 'rgba(96,165,250,0.12)',
+  friendsTripsColor: '#FACC15',
+  friendsTripsBg: 'rgba(250,204,21,0.12)',
 
   // Accent — couple / heart
   heart: '#F472B6',

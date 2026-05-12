@@ -23,16 +23,9 @@ import { itineraryPresetsApi } from '../../api/itineraryPresets';
 import { ItineraryPreset } from '../../types/models';
 import { useAlert } from '../../components/ThemedAlert';
 import { KeyboardAwareScroll } from '../../components/KeyboardAwareScroll';
+import { CATEGORY_TAGS } from '../../constants/categories';
 
-const TAG_OPTIONS = ['Adventure', 'Cultural', 'Wellness', 'Photography', 'Bike', 'Family', 'Luxury', 'Budget'];
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-const TRIP_TYPE_OPTIONS: { label: string; value: string; premium: boolean }[] = [
-  { label: 'Casual', value: 'casual', premium: false },
-  { label: 'Family', value: 'family', premium: false },
-  { label: 'Bike Trip', value: 'bike_trip', premium: true },
-  { label: 'Couple Trip', value: 'couple_trip', premium: true },
-];
 
 interface ItineraryDay {
   day: string;
@@ -60,7 +53,6 @@ export function CreateTripScreen({ navigation, route }: any) {
   const [showEndPicker, setShowEndPicker] = useState(false);
   const [totalSeats, setTotalSeats] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [selectedTripType, setSelectedTripType] = useState('casual');
   const [highlights, setHighlights] = useState('');
 
   // Images
@@ -121,8 +113,6 @@ export function CreateTripScreen({ navigation, route }: any) {
         setDuration(t.duration || '');
         setTotalSeats(t.totalSeats ?? t.total_seats ? String(t.totalSeats ?? t.total_seats) : '');
         setSelectedTags(t.tags || []);
-        const tt = t.tripType || t.trip_type;
-        if (tt) setSelectedTripType(tt);
         setHighlights((t.highlights || []).join('\n'));
 
         // Dates
@@ -291,7 +281,6 @@ export function CreateTripScreen({ navigation, route }: any) {
         start_date: startDate,
         end_date: endDate,
         total_seats: parseInt(totalSeats, 10),
-        trip_type: selectedTripType,
         tags: selectedTags.length > 0 ? selectedTags : undefined,
         highlights: highlights.trim() ? highlights.split('\n').filter(Boolean) : undefined,
         itinerary_days: validDays.map((d) => ({
@@ -485,31 +474,10 @@ export function CreateTripScreen({ navigation, route }: any) {
             <Text style={styles.label}>Duration</Text>
             <TextInput style={styles.input} placeholder="e.g. 5 days (auto-calculated if empty)" placeholderTextColor={colors.outline} value={duration} onChangeText={setDuration} />
 
-            {/* Trip Type */}
-            <Text style={styles.label}>Trip Type</Text>
-            <View style={styles.tagGrid}>
-              {TRIP_TYPE_OPTIONS.map((opt) => (
-                <Pressable
-                  key={opt.value}
-                  onPress={() => setSelectedTripType(opt.value)}
-                  style={[styles.tripTypeChip, selectedTripType === opt.value && styles.tripTypeChipSelected]}
-                >
-                  <Text style={[styles.tripTypeText, selectedTripType === opt.value && styles.tripTypeTextSelected]}>
-                    {opt.label}
-                  </Text>
-                  {opt.premium && (
-                    <View style={styles.premiumTag}>
-                      <Text style={styles.premiumTagText}>Premium</Text>
-                    </View>
-                  )}
-                </Pressable>
-              ))}
-            </View>
-
             {/* Tags */}
             <Text style={styles.label}>Tags</Text>
             <View style={styles.tagGrid}>
-              {TAG_OPTIONS.map((tag) => (
+              {CATEGORY_TAGS.map((tag) => (
                 <Pressable
                   key={tag}
                   onPress={() => toggleTag(tag)}
@@ -1007,37 +975,4 @@ const makeStyles = (colors: Colors) => StyleSheet.create({
     marginTop: spacing['2xl'],
   },
   submitText: { fontFamily: 'Inter_400Regular', fontSize: 16, color: colors.onPrimary, letterSpacing: 0.3 },
-  // Trip Type
-  tripTypeChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: radii.full,
-    backgroundColor: colors.surfaceContainerLow,
-    gap: 6,
-  },
-  tripTypeChipSelected: {
-    backgroundColor: colors.primary,
-  },
-  tripTypeText: {
-    fontFamily: 'Inter_400Regular',
-    fontSize: 12,
-    color: colors.onSurfaceVariant,
-  },
-  tripTypeTextSelected: {
-    color: colors.onPrimary,
-  },
-  premiumTag: {
-    backgroundColor: colors.bikeBg,
-    paddingHorizontal: 5,
-    paddingVertical: 1,
-    borderRadius: radii.full,
-  },
-  premiumTagText: {
-    fontFamily: 'Inter_400Regular',
-    fontSize: 9,
-    color: colors.bikeColor,
-    letterSpacing: 0.3,
-  },
 });

@@ -22,6 +22,7 @@ import { type Colors } from '../../theme';
 import { tripsApi } from '../../api/trips';
 import { apiClient } from '../../api/client';
 import { featuredTrips } from '../../data/mockData';
+import { CATEGORIES_WITH_ALL, getCategoryBadgeConfig } from '../../constants/categories';
 import { KeyboardAwareScroll } from '../../components/KeyboardAwareScroll';
 import { DatePickerModal } from '../../components/DatePickerModal';
 import { useDebounce } from '../../hooks/useDebounce';
@@ -57,23 +58,6 @@ type TripItem = {
   host?: { name: string; avatar: string };
 };
 
-const TRIP_TYPE_OPTIONS = [
-  { label: 'All Types', value: '' },
-  { label: 'Casual', value: 'casual' },
-  { label: 'Family', value: 'family' },
-  { label: 'Bike Trip', value: 'bike_trip' },
-  { label: 'Couple Trip', value: 'couple_trip' },
-];
-
-function getTripTypeBadgeConfig(colors: Colors): Record<string, { label: string; bg: string; text: string }> {
-  return {
-    casual: { label: 'Casual', bg: colors.casualBg, text: colors.casualColor },
-    family: { label: 'Family', bg: colors.familyBg, text: colors.familyColor },
-    bike_trip: { label: 'Bike', bg: colors.bikeBg, text: colors.bikeColor },
-    couple_trip: { label: 'Couple', bg: colors.coupleBg, text: colors.coupleColor },
-  };
-}
-
 type Planner = {
   id: string;
   name: string;
@@ -81,7 +65,6 @@ type Planner = {
   avatar: string | null;
 };
 
-const CATEGORIES = ['All', 'Adventure', 'Cultural', 'Wellness', 'Bike', 'Photography', 'Family'];
 const SORT_OPTIONS = [
   { label: 'Upcoming', value: 'start_date_asc' },
   { label: 'Newest', value: 'newest' },
@@ -100,7 +83,7 @@ function formatDisplayDate(date: Date): string {
 // Which sub-picker to open after filter modal closes
 type PendingPicker = 'dateFrom' | 'dateTo' | 'planner' | null;
 
-export function SearchScreen({ navigation }: any) {
+export function SearchScreen({ navigation, route }: any) {
   const insets = useSafeAreaInsets();
   const { colors, shadows } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
@@ -112,14 +95,14 @@ export function SearchScreen({ navigation }: any) {
     [searchBarRef, filterBtnRef],
     [
       { id: 'search', title: 'Quick Search', description: 'Search trips by destination, planner name, or experience type', icon: 'search' },
-      { id: 'filters', title: 'Refine Results', description: 'Filter by price, dates, trip type, and planner to find the perfect trip', icon: 'options' },
+      { id: 'filters', title: 'Refine Results', description: 'Filter by price, dates, and planner to find the perfect trip', icon: 'options' },
     ],
   );
 
   const [query, setQuery] = useState('');
   const debouncedQuery = useDebounce(query, 300);
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [selectedTripType, setSelectedTripType] = useState('');
+  const initialCategory = route?.params?.category || 'all';
+  const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [selectedSort, setSelectedSort] = useState('start_date_asc');
   const [trips, setTrips] = useState<TripItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -154,6 +137,14 @@ export function SearchScreen({ navigation }: any) {
   // Track which picker to open after filter modal closes
   const pendingPickerRef = useRef<PendingPicker>(null);
 
+  // Sync category from route params (e.g. navigating from HomeScreen chips)
+  useEffect(() => {
+    const cat = route?.params?.category;
+    if (cat && cat !== selectedCategory) {
+      setSelectedCategory(cat);
+    }
+  }, [route?.params?.category]);
+
   const titleAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -168,13 +159,15 @@ export function SearchScreen({ navigation }: any) {
     try {
       const params: Record<string, unknown> = { page: p, sort: selectedSort };
       if (debouncedQuery.trim()) params.q = debouncedQuery.trim();
-      if (selectedCategory !== 'All') params.tag = selectedCategory;
+      if (selectedCategory !== 'all') {
+        const cat = CATEGORIES_WITH_ALL.find((c) => c.key === selectedCategory);
+        if (cat && cat.tag) params.tag = cat.tag;
+      }
       if (minPrice) params.min_price = Number(minPrice);
       if (maxPrice) params.max_price = Number(maxPrice);
       if (dateFrom) params.start_date_from = formatDate(dateFrom);
       if (dateTo) params.start_date_to = formatDate(dateTo);
       if (selectedPlanner) params.host_id = selectedPlanner.id;
-      if (selectedTripType) params.trip_type = selectedTripType;
       const response = await tripsApi.getAll(params as any);
       const data = Array.isArray(response.data) ? response.data : (response.data as any)?.data ?? [];
       if (reset) {
@@ -204,7 +197,8 @@ export function SearchScreen({ navigation }: any) {
       }));
       const filtered = mock.filter((t) => {
         const matchQ = !debouncedQuery.trim() || t.title.toLowerCase().includes(debouncedQuery.toLowerCase()) || t.location.toLowerCase().includes(debouncedQuery.toLowerCase());
-        const matchCat = selectedCategory === 'All' || t.tags.some((tag) => tag.toLowerCase().includes(selectedCategory.toLowerCase()));
+        const cat = CATEGORIES_WITH_ALL.find((c) => c.key === selectedCategory);
+        const matchCat = selectedCategory === 'all' || t.tags.some((tag) => cat?.tag ? tag.toLowerCase().includes(cat.tag.toLowerCase()) : false);
         const matchMin = !minPrice || t.price >= Number(minPrice);
         const matchMax = !maxPrice || t.price <= Number(maxPrice);
         return matchQ && matchCat && matchMin && matchMax;
@@ -214,11 +208,11 @@ export function SearchScreen({ navigation }: any) {
     } finally {
       setIsLoading(false);
     }
-  }, [debouncedQuery, selectedCategory, selectedTripType, selectedSort, page, minPrice, maxPrice, dateFrom, dateTo, selectedPlanner]);
+  }, [debouncedQuery, selectedCategory, selectedSort, page, minPrice, maxPrice, dateFrom, dateTo, selectedPlanner]);
 
   useEffect(() => {
     fetchTrips(true);
-  }, [debouncedQuery, selectedCategory, selectedTripType, selectedSort, minPrice, maxPrice, dateFrom, dateTo, selectedPlanner]);
+  }, [debouncedQuery, selectedCategory, selectedSort, minPrice, maxPrice, dateFrom, dateTo, selectedPlanner]);
 
   const handleSearch = () => Keyboard.dismiss();
 
@@ -344,9 +338,9 @@ export function SearchScreen({ navigation }: any) {
     const isLowSeats = total > 0 && seats > 0 && seats <= Math.ceil(total * 0.2);
     const isFullyBooked = seats <= 0;
     const reviews = item.reviewCount ?? item.review_count ?? 0;
-    const tripType = item.tripType || item.trip_type;
-    const tripTypeBadgeConfig = getTripTypeBadgeConfig(colors);
-    const typeBadge = tripType ? tripTypeBadgeConfig[tripType] : null;
+    const badgeConfig = getCategoryBadgeConfig(colors);
+    const firstTag = item.tags?.length > 0 ? item.tags[0] : null;
+    const tagBadge = firstTag ? badgeConfig[firstTag] : null;
 
     return (
       <Pressable
@@ -369,9 +363,9 @@ export function SearchScreen({ navigation }: any) {
               </View>
             )}
           </View>
-          {typeBadge && (
-            <View style={[styles.tripTypeBadge, { backgroundColor: typeBadge.bg }]}>
-              <Text style={[styles.tripTypeBadgeText, { color: typeBadge.text }]}>{typeBadge.label}</Text>
+          {tagBadge && (
+            <View style={[styles.tripTypeBadge, { backgroundColor: tagBadge.bg }]}>
+              <Text style={[styles.tripTypeBadgeText, { color: tagBadge.text }]}>{firstTag}</Text>
             </View>
           )}
           <View style={styles.tripLocation}>
@@ -414,48 +408,17 @@ export function SearchScreen({ navigation }: any) {
         horizontal
         scrollEnabled
         showsHorizontalScrollIndicator={false}
-        data={CATEGORIES}
-        keyExtractor={(item) => item}
+        data={CATEGORIES_WITH_ALL}
+        keyExtractor={(item) => item.key}
         contentContainerStyle={styles.chipList}
         renderItem={({ item }) => (
           <Pressable
-            onPress={() => setSelectedCategory(item)}
-            style={[styles.chip, selectedCategory === item && styles.chipSelected]}
+            onPress={() => setSelectedCategory(item.key)}
+            style={[styles.chip, selectedCategory === item.key && styles.chipSelected]}
           >
-            <Text style={[styles.chipText, selectedCategory === item && styles.chipTextSelected]}>{item}</Text>
+            <Text style={[styles.chipText, selectedCategory === item.key && styles.chipTextSelected]}>{item.label}</Text>
           </Pressable>
         )}
-      />
-      <FlatList
-        horizontal
-        scrollEnabled
-        showsHorizontalScrollIndicator={false}
-        data={TRIP_TYPE_OPTIONS}
-        keyExtractor={(item) => item.value || 'all'}
-        contentContainerStyle={styles.chipList}
-        renderItem={({ item }) => {
-          const isSelected = selectedTripType === item.value;
-          const typeBadgeConfig = getTripTypeBadgeConfig(colors);
-          const typeConfig = item.value ? typeBadgeConfig[item.value] : null;
-          return (
-            <Pressable
-              onPress={() => setSelectedTripType(item.value)}
-              style={[
-                styles.tripTypeChip,
-                isSelected && typeConfig
-                  ? { backgroundColor: typeConfig.bg, borderColor: typeConfig.text }
-                  : isSelected && styles.tripTypeChipSelected,
-              ]}
-            >
-              <Text style={[
-                styles.tripTypeChipText,
-                isSelected && typeConfig
-                  ? { color: typeConfig.text }
-                  : isSelected && styles.tripTypeChipTextSelected,
-              ]}>{item.label}</Text>
-            </Pressable>
-          );
-        }}
       />
       <FlatList
         horizontal
@@ -995,29 +958,7 @@ const makeStyles = (colors: Colors) => StyleSheet.create({
     marginTop: 2,
   },
 
-  // Trip Type chips
-  tripTypeChip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: 10,
-    borderRadius: radii.full,
-    backgroundColor: colors.surfaceContainerLow,
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  tripTypeChipSelected: {
-    backgroundColor: colors.casualBg,
-    borderColor: colors.casualColor,
-  },
-  tripTypeChipText: {
-    fontFamily: 'Inter_400Regular',
-    fontSize: 12,
-    color: colors.onSurfaceVariant,
-  },
-  tripTypeChipTextSelected: {
-    color: colors.casualColor,
-  },
-
-  // Trip Type badge on cards
+  // Tag badge on cards
   tripTypeBadge: {
     alignSelf: 'flex-start',
     paddingHorizontal: 6,

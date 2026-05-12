@@ -191,8 +191,7 @@ export function OtpVerificationScreen() {
         {/* Title */}
         <Text style={styles.title}>Verify Phone Number</Text>
         <Text style={styles.subtitle}>
-          Enter the 6-digit code sent to{'\n'}
-          <Text style={styles.phoneText}>{phoneNumber}</Text>
+          Enter the 6-digit code sent to your email{'\n'}for number <Text style={styles.phoneText}>{phoneNumber}</Text>
         </Text>
 
         {/* OTP Input */}
@@ -265,7 +264,7 @@ export function OtpVerificationScreen() {
         <View style={styles.infoCard}>
           <Ionicons name="information-circle-outline" size={20} color={colors.primary} />
           <Text style={styles.infoText}>
-            Check your phone for the verification code. The code expires in 5 minutes.
+            Check your email for the verification code. The code expires in 5 minutes.
           </Text>
         </View>
       </View>

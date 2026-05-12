@@ -18,7 +18,8 @@ import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, typography, spacing, radii, type Colors } from '../theme';
-import { featuredTrips, categories, curatedCollections } from '../data/mockData';
+import { featuredTrips, curatedCollections } from '../data/mockData';
+import { CATEGORIES_WITH_ALL } from '../constants/categories';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 48;
@@ -108,26 +109,26 @@ export function DiscoveryScreen({ navigation }: any) {
   const { colors, shadows } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
-  const [selectedCategory, setSelectedCategory] = React.useState('1');
+  const [selectedCategory, setSelectedCategory] = React.useState('all');
 
   // Single-element fade-in-down animations
   const headerAnim = useFadeIn(100, 600);
   const searchAnim = useFadeIn(200, 600);
 
   // Staggered animations
-  const categoryAnims = useStaggeredFadeIn(categories.length, 100, 60);
+  const categoryAnims = useStaggeredFadeIn(CATEGORIES_WITH_ALL.length, 100, 60);
   const featuredAnims = useStaggeredFadeIn(featuredTrips.length, 300, 150);
   const collectionAnims = useStaggeredFadeIn(curatedCollections.length, 200, 100);
 
-  const renderCategoryChip = (category: typeof categories[0], index: number) => {
-    const isSelected = selectedCategory === category.id;
+  const renderCategoryChip = (category: typeof CATEGORIES_WITH_ALL[0], index: number) => {
+    const isSelected = selectedCategory === category.key;
     return (
       <Animated.View
-        key={category.id}
+        key={category.key}
         style={fadeInRightStyle(categoryAnims[index])}
       >
         <Pressable
-          onPress={() => setSelectedCategory(category.id)}
+          onPress={() => setSelectedCategory(category.key)}
           style={[
             styles.chip,
             isSelected && styles.chipSelected,
@@ -277,7 +278,7 @@ export function DiscoveryScreen({ navigation }: any) {
           contentContainerStyle={styles.chipContainer}
           style={styles.chipScroll}
         >
-          {categories.map((cat, i) => renderCategoryChip(cat, i))}
+          {CATEGORIES_WITH_ALL.map((cat, i) => renderCategoryChip(cat, i))}
         </ScrollView>
 
         {/* Featured Trips */}

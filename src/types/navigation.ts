@@ -14,7 +14,7 @@ export type ProfileSetupStackParamList = {
 
 export type TravelerTabParamList = {
   Home: undefined;
-  Search: undefined;
+  Search: { category?: string } | undefined;
   MyTrips: undefined;
   // REMOVED: messaging feature — Nazary v1
   // Messages: undefined;
@@ -51,17 +51,20 @@ export type RootStackParamList = {
   WriteReview: { type: 'planner' | 'place'; targetId: string; targetName: string };
   Places: undefined;
   PlaceDetail: { placeId: string };
-  BikeTrips: undefined;
-  BikeTripDetail: { tripId: string };
-  BikeRiders: undefined;
-  BikeProfileSetup: undefined;
-  PremiumPaywall: undefined;
+  // REMOVED: bike trips feature — Nazary v1
+  // BikeTrips: undefined;
+  // BikeTripDetail: { tripId: string };
+  // BikeRiders: undefined;
+  // BikeProfileSetup: undefined;
+  // PremiumPaywall: undefined;
   ArrangeATrip: undefined;
   MyArrangements: undefined;
   CreateTrip: { tripId?: string };
   BookingRequests: undefined;
   EditPlannerProfile: undefined;
   CoupleRequest: undefined;
+  CorporateTripRequest: undefined;
+  MyCorporateRequests: undefined;
   Rewards: undefined;
   Settings: undefined;
   AboutUs: undefined;

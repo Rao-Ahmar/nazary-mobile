@@ -18,7 +18,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, typography, spacing, radii } from '../../theme';
 import { type Colors } from '../../theme';
-import { featuredTrips as mockFeaturedTrips, categories, curatedCollections } from '../../data/mockData';
+import { featuredTrips as mockFeaturedTrips, curatedCollections } from '../../data/mockData';
+import { CATEGORIES_WITH_ALL } from '../../constants/categories';
 import { useAuthStore } from '../../store';
 import { NotificationBell } from '../../components/NotificationBell';
 import { tripsApi } from '../../api/trips';
@@ -85,7 +86,7 @@ export function HomeScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const COLLECTION_WIDTH = width * 0.42;
-  const [selectedCategory, setSelectedCategory] = React.useState('1');
+  const [selectedCategory, setSelectedCategory] = React.useState('all');
   const user = useAuthStore((s) => s.user);
   const { colors, shadows } = useTheme();
   const styles = useMemo(() => makeStyles(colors, width), [colors, width]);
@@ -101,7 +102,7 @@ export function HomeScreen({ navigation }: any) {
     [
       { id: 'welcome', title: 'Welcome to Nazary!', description: 'Your gateway to curated trips across Pakistan. Let\'s show you around!', icon: 'compass' },
       { id: 'search', title: 'Find Your Trip', description: 'Search by destination, experience, or planner name', icon: 'search' },
-      { id: 'actions', title: 'Quick Actions', description: 'Request a custom trip, explore destinations, or browse bike rides', icon: 'apps' },
+      { id: 'actions', title: 'Quick Actions', description: 'Request a custom trip or explore destinations', icon: 'apps' },
       { id: 'featured', title: 'Curated For You', description: 'Handpicked trips from verified planners. Tap any to book!', icon: 'star' },
     ],
   );
@@ -151,16 +152,24 @@ export function HomeScreen({ navigation }: any) {
 
   const headerAnim = useFadeIn(100, 600);
   const searchAnim = useFadeIn(200, 600);
-  const categoryAnims = useStaggeredFadeIn(categories.length, 100, 60);
+  const categoryAnims = useStaggeredFadeIn(CATEGORIES_WITH_ALL.length, 100, 60);
   const featuredAnims = useStaggeredFadeIn(featuredTripsData.length, 300, 150);
   const collectionAnims = useStaggeredFadeIn(curatedCollections.length, 200, 100);
   const actionCardsAnim = useFadeIn(250, 600);
 
-  const renderCategoryChip = (category: typeof categories[0], index: number) => {
-    const isSelected = selectedCategory === category.id;
+  const renderCategoryChip = (category: typeof CATEGORIES_WITH_ALL[0], index: number) => {
+    const isSelected = selectedCategory === category.key;
     return (
-      <Animated.View key={category.id} style={fadeInRightStyle(categoryAnims[index])}>
-        <Pressable onPress={() => setSelectedCategory(category.id)} style={[styles.chip, isSelected && styles.chipSelected]}>
+      <Animated.View key={category.key} style={fadeInRightStyle(categoryAnims[index])}>
+        <Pressable
+          onPress={() => {
+            setSelectedCategory(category.key);
+            if (category.key !== 'all') {
+              navigation.navigate('Search', { category: category.key });
+            }
+          }}
+          style={[styles.chip, isSelected && styles.chipSelected]}
+        >
           <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>{category.label}</Text>
         </Pressable>
       </Animated.View>
@@ -265,7 +274,7 @@ export function HomeScreen({ navigation }: any) {
           </Pressable>
         </Animated.View>
 
-        {/* Action Cards: Custom Trip + Places + Bike Trips */}
+        {/* Action Cards: Custom Trip + Places */}
         <Animated.View ref={actionCardsRef} collapsable={false} style={[styles.actionCardsRow, fadeInDownStyle(actionCardsAnim)]}>
           <Pressable onPress={() => navigation.navigate('CreateTripRequest', {})} style={[styles.actionCard, shadows.soft]}>
             <View style={[styles.actionIcon, { backgroundColor: colors.primaryTint }]}>
@@ -281,13 +290,14 @@ export function HomeScreen({ navigation }: any) {
             <Text style={styles.actionCardTitle}>Explore Places</Text>
             <Text style={styles.actionCardSub}>Discover Pakistan</Text>
           </Pressable>
-          <Pressable onPress={() => navigation.navigate('BikeTrips')} style={[styles.actionCard, shadows.soft]}>
+          {/* REMOVED: bike trips feature — Nazary v1 */}
+          {/* <Pressable onPress={() => navigation.navigate('BikeTrips')} style={[styles.actionCard, shadows.soft]}>
             <View style={[styles.actionIcon, { backgroundColor: colors.warningLight }]}>
               <Ionicons name="bicycle-outline" size={20} color={colors.warning} />
             </View>
             <Text style={styles.actionCardTitle}>Bike Trips</Text>
             <Text style={styles.actionCardSub}>Premium rides</Text>
-          </Pressable>
+          </Pressable> */}
         </Animated.View>
 
         {/* Arrange a Trip for Me -- Premium Feature */}
@@ -326,7 +336,7 @@ export function HomeScreen({ navigation }: any) {
         </Animated.View>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipContainer} style={styles.chipScroll}>
-          {categories.map((cat, i) => renderCategoryChip(cat, i))}
+          {CATEGORIES_WITH_ALL.map((cat, i) => renderCategoryChip(cat, i))}
         </ScrollView>
 
         <View ref={featuredRef} collapsable={false} style={styles.sectionContainer}>

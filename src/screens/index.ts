@@ -49,12 +49,12 @@ export { AgencyDetailScreen } from './agencies/AgencyDetailScreen';
 export { PlacesScreen } from './places/PlacesScreen';
 export { PlaceDetailScreen } from './places/PlaceDetailScreen';
 
-// Bike
-export { BikeTripsScreen } from './bike/BikeTripsScreen';
-export { BikeTripDetailScreen } from './bike/BikeTripDetailScreen';
-export { BikeRidersScreen } from './bike/BikeRidersScreen';
-export { BikeProfileSetupScreen } from './bike/BikeProfileSetupScreen';
-export { PremiumPaywallScreen } from './bike/PremiumPaywallScreen';
+// REMOVED: bike trips feature — Nazary v1
+// export { BikeTripsScreen } from './bike/BikeTripsScreen';
+// export { BikeTripDetailScreen } from './bike/BikeTripDetailScreen';
+// export { BikeRidersScreen } from './bike/BikeRidersScreen';
+// export { BikeProfileSetupScreen } from './bike/BikeProfileSetupScreen';
+// export { PremiumPaywallScreen } from './bike/PremiumPaywallScreen';
 
 // Arrangements
 export { ArrangeATripScreen } from './arrangements/ArrangeATripScreen';

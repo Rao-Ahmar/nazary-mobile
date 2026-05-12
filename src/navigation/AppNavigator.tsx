@@ -21,17 +21,20 @@ import { AgencyDetailScreen } from '../screens/agencies/AgencyDetailScreen';
 import { WriteReviewScreen } from '../screens/reviews/WriteReviewScreen';
 import { PlacesScreen } from '../screens/places/PlacesScreen';
 import { PlaceDetailScreen } from '../screens/places/PlaceDetailScreen';
-import { BikeTripsScreen } from '../screens/bike/BikeTripsScreen';
-import { BikeTripDetailScreen } from '../screens/bike/BikeTripDetailScreen';
-import { BikeRidersScreen } from '../screens/bike/BikeRidersScreen';
-import { BikeProfileSetupScreen } from '../screens/bike/BikeProfileSetupScreen';
-import { PremiumPaywallScreen } from '../screens/bike/PremiumPaywallScreen';
+// REMOVED: bike trips feature — Nazary v1
+// import { BikeTripsScreen } from '../screens/bike/BikeTripsScreen';
+// import { BikeTripDetailScreen } from '../screens/bike/BikeTripDetailScreen';
+// import { BikeRidersScreen } from '../screens/bike/BikeRidersScreen';
+// import { BikeProfileSetupScreen } from '../screens/bike/BikeProfileSetupScreen';
+// import { PremiumPaywallScreen } from '../screens/bike/PremiumPaywallScreen';
 import { ArrangeATripScreen } from '../screens/arrangements/ArrangeATripScreen';
 import { MyArrangementsScreen } from '../screens/arrangements/MyArrangementsScreen';
 import { CreateTripScreen } from '../screens/planner/CreateTripScreen';
 import { BookingRequestsScreen } from '../screens/planner/BookingRequestsScreen';
 import { EditPlannerProfileScreen } from '../screens/planner/EditPlannerProfileScreen';
 import { CoupleRequestScreen } from '../screens/couples/CoupleRequestScreen';
+import { CorporateTripRequestScreen } from '../screens/corporate/CorporateTripRequestScreen';
+import { MyCorporateRequestsScreen } from '../screens/corporate/MyCorporateRequestsScreen';
 import { RewardsScreen } from '../screens/rewards/RewardsScreen';
 import { SettingsScreen } from '../screens/traveler/SettingsScreen';
 import { AboutScreen } from '../screens/info/AboutScreen';
@@ -65,17 +68,20 @@ export function AppNavigator() {
       <Stack.Screen name="WriteReview" component={WriteReviewScreen} options={slideOptions} />
       <Stack.Screen name="Places" component={PlacesScreen} options={slideOptions} />
       <Stack.Screen name="PlaceDetail" component={PlaceDetailScreen} options={slideOptions} />
-      <Stack.Screen name="BikeTrips" component={BikeTripsScreen} options={slideOptions} />
-      <Stack.Screen name="BikeTripDetail" component={BikeTripDetailScreen} options={slideOptions} />
-      <Stack.Screen name="BikeRiders" component={BikeRidersScreen} options={slideOptions} />
-      <Stack.Screen name="BikeProfileSetup" component={BikeProfileSetupScreen} options={slideOptions} />
-      <Stack.Screen name="PremiumPaywall" component={PremiumPaywallScreen} options={{ animation: 'fade_from_bottom', gestureEnabled: true }} />
+      {/* REMOVED: bike trips feature — Nazary v1 */}
+      {/* <Stack.Screen name="BikeTrips" component={BikeTripsScreen} options={slideOptions} /> */}
+      {/* <Stack.Screen name="BikeTripDetail" component={BikeTripDetailScreen} options={slideOptions} /> */}
+      {/* <Stack.Screen name="BikeRiders" component={BikeRidersScreen} options={slideOptions} /> */}
+      {/* <Stack.Screen name="BikeProfileSetup" component={BikeProfileSetupScreen} options={slideOptions} /> */}
+      {/* <Stack.Screen name="PremiumPaywall" component={PremiumPaywallScreen} options={{ animation: 'fade_from_bottom', gestureEnabled: true }} /> */}
       <Stack.Screen name="ArrangeATrip" component={ArrangeATripScreen} options={slideOptions} />
       <Stack.Screen name="MyArrangements" component={MyArrangementsScreen} options={slideOptions} />
       <Stack.Screen name="CreateTrip" component={CreateTripScreen} options={slideOptions} />
       <Stack.Screen name="BookingRequests" component={BookingRequestsScreen} options={slideOptions} />
       <Stack.Screen name="EditPlannerProfile" component={EditPlannerProfileScreen} options={slideOptions} />
       <Stack.Screen name="CoupleRequest" component={CoupleRequestScreen} options={slideOptions} />
+      <Stack.Screen name="CorporateTripRequest" component={CorporateTripRequestScreen} options={slideOptions} />
+      <Stack.Screen name="MyCorporateRequests" component={MyCorporateRequestsScreen} options={slideOptions} />
       <Stack.Screen name="Rewards" component={RewardsScreen} options={slideOptions} />
       <Stack.Screen name="Settings" component={SettingsScreen} options={slideOptions} />
       <Stack.Screen name="AboutUs" component={AboutScreen} options={slideOptions} />

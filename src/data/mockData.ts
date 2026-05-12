@@ -82,15 +82,6 @@ export const featuredTrips = [
   },
 ];
 
-export const categories = [
-  { id: '1', label: 'All', icon: 'compass' },
-  { id: '2', label: 'Adventure', icon: 'mountain-snow' },
-  { id: '3', label: 'Cultural', icon: 'landmark' },
-  { id: '4', label: 'Wellness', icon: 'heart-pulse' },
-  { id: '5', label: 'Culinary', icon: 'wine' },
-  { id: '6', label: 'Safari', icon: 'binoculars' },
-  { id: '7', label: 'Bike', icon: 'bike' },
-];
 
 export const curatedCollections = [
   {
