@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "817362160503",
+    "project_id": "nazary-1b511",
+    "storage_bucket": "nazary-1b511.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:817362160503:android:e2d9ba775e15e3fa536f72",
+        "android_client_info": {
+          "package_name": "com.nazary.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyACLA9K65_JsFDpvNkjt-_ssu9BuygPzq4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

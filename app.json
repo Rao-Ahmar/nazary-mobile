@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "nazary-mobile",
-    "slug": "nazary-mobile",
+    "slug": "nazary",
     "scheme": "nazary-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -19,12 +19,16 @@
     },
     "android": {
       "package": "com.nazary.mobile",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -48,7 +52,11 @@
       ]
     ],
     "extra": {
-      "googleWebClientId": "YOUR_CLIENT_ID_HERE"
-    }
+      "googleWebClientId": "YOUR_CLIENT_ID_HERE",
+      "eas": {
+        "projectId": "14881784-7fc1-47d5-b482-416566c4f479"
+      }
+    },
+    "owner": "dev-ahmar"
   }
 }
