@@ -15,8 +15,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, typography, spacing, radii, type Colors } from '../../theme';
 import { bookingsApi } from '../../api/bookings';
 
-const WHATSAPP_NUMBER = '923001234567'; // Change to your actual WhatsApp number
-const CONTACT_EMAIL = 'payments@nazary.pk'; // Change to your actual email
+const WHATSAPP_NUMBER = '923014620087';
+const CONTACT_EMAIL = 'nazarysupport@gmail.com';
 
 const METHOD_ICONS: Record<string, string> = {
   jazzcash: 'phone-portrait-outline',

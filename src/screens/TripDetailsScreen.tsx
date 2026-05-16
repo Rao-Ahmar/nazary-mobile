@@ -26,6 +26,8 @@ import { useAlert } from '../components/ThemedAlert';
 
 const { width, height } = Dimensions.get('window');
 const HERO_HEIGHT = height * 0.45;
+const NAZARY_WHATSAPP = '923014620087';
+const NAZARY_FEE_PERCENT = 0.01;
 
 /* ------------------------------------------------------------------ */
 /*  Staggered fade-in helper                                          */
@@ -197,18 +199,11 @@ export function TripDetailsScreen({ navigation, route }: any) {
   /* Request to Join handler ----------------------------------------- */
   const handleRequestToJoin = async () => {
     if (!trip) return;
-
-    const hostNazaryUrl = host?.nazaryUrl ?? host?.nazary_url;
-    const hostInstaUrl = host?.instagramUrl ?? host?.instagram_url;
-    const hostTiktokUrl = host?.tiktokUrl ?? host?.tiktok_url;
-    const disclaimerParts = [];
-    if (hostNazaryUrl && (hostInstaUrl || hostTiktokUrl)) {
-      disclaimerParts.push(`\n\nPlease verify this agency is legitimate by checking that their ${hostInstaUrl ? 'Instagram' : ''}${hostInstaUrl && hostTiktokUrl ? ' or ' : ''}${hostTiktokUrl ? 'TikTok' : ''} bio contains their Nazary link (${hostNazaryUrl}). This helps avoid fraud.`);
-    }
+    const fee = Math.ceil(trip.price * NAZARY_FEE_PERCENT);
 
     alert.show({
       title: 'Request to Join',
-      message: `Submit a join request for "${trip.title}"? The agency will review your request. You can also contact them by phone to confirm your booking.${disclaimerParts.join('')}`,
+      message: `Submit a join request for "${trip.title}"? A nazary booking fee of PKR ${fee.toLocaleString()} (1% of trip price) applies.`,
       type: 'info',
       buttons: [
         { text: 'Cancel', style: 'cancel' },
@@ -219,20 +214,21 @@ export function TripDetailsScreen({ navigation, route }: any) {
             try {
               await bookingsApi.requestToJoin(tripId);
               setHasRequested(true);
-              const hostPhone = host?.phone;
-              if (hostPhone) {
-                alert.show({
-                  title: 'Request Sent!',
-                  message: `Your join request has been sent to ${host.name}. Contact them at ${hostPhone} to confirm your booking.`,
-                  type: 'success',
-                  buttons: [
-                    { text: 'OK' },
-                    { text: 'Call Now', onPress: () => Linking.openURL(`tel:${hostPhone}`) },
-                  ],
-                });
-              } else {
-                alert.show({ title: 'Request Sent!', message: `Your join request has been sent to ${host.name}. They will review it shortly.`, type: 'success' });
-              }
+              alert.show({
+                title: 'Request Sent!',
+                message: `Your join request has been sent.\n\nPlease pay the booking fee of PKR ${fee.toLocaleString()} via EasyPaisa to:\n03014620087\n\nThen share the payment screenshot on WhatsApp.`,
+                type: 'success',
+                buttons: [
+                  {
+                    text: 'Open WhatsApp',
+                    onPress: () => {
+                      const msg = encodeURIComponent(`Hi, I just paid PKR ${fee.toLocaleString()} booking fee for the trip "${trip.title}".`);
+                      Linking.openURL(`https://wa.me/${NAZARY_WHATSAPP}?text=${msg}`);
+                    },
+                  },
+                  { text: 'Done', style: 'cancel' },
+                ],
+              });
             } catch (err: any) {
               const msg = err?.response?.data?.error || 'Could not send join request';
               alert.show({ title: 'Error', message: msg, type: 'error' });
@@ -245,13 +241,6 @@ export function TripDetailsScreen({ navigation, route }: any) {
     });
   };
 
-  /* Call planner handler --------------------------------------------- */
-  const handleCallPlanner = () => {
-    const hostPhone = host?.phone;
-    if (hostPhone) {
-      Linking.openURL(`tel:${hostPhone}`);
-    }
-  };
 
   /* Update seats left handler (planner only) --------------------------- */
   const handleUpdateSeats = async (delta: number) => {
@@ -309,8 +298,12 @@ export function TripDetailsScreen({ navigation, route }: any) {
   const noSeats = seatsLeft <= 0;
   const myBookingStatus = trip.myBookingStatus ?? trip.my_booking_status ?? null;
   const isBookingConfirmed = myBookingStatus === 'confirmed';
-  const alreadyRequested = hasRequested || myBookingStatus === 'pending' || myBookingStatus === 'confirmed';
-  const canRequest = !isOwnTrip && !noSeats && !alreadyRequested && user?.role === 'traveler';
+  const isBookingApproved = myBookingStatus === 'approved';
+  const isBookingPending = myBookingStatus === 'pending';
+  const isPaymentSubmitted = myBookingStatus === 'payment_submitted';
+  const isBookingRejected = myBookingStatus === 'rejected';
+  const alreadyRequested = hasRequested || ['confirmed', 'approved', 'pending', 'payment_submitted'].includes(myBookingStatus);
+  const canRequest = !isOwnTrip && !noSeats && !alreadyRequested && !isBookingRejected && user?.role === 'traveler';
 
   return (
     <View style={styles.container}>
@@ -484,12 +477,6 @@ export function TripDetailsScreen({ navigation, route }: any) {
                     <Text style={styles.hostStatLabel}>Reviews</Text>
                   </View>
                 </View>
-                {host.phone && !isOwnTrip && isBookingConfirmed ? (
-                  <Pressable onPress={handleCallPlanner} style={styles.callButton}>
-                    <Ionicons name="call-outline" size={16} color={colors.primary} />
-                    <Text style={styles.callButtonText}>Call to Confirm Booking</Text>
-                  </Pressable>
-                ) : null}
               </Animated.View>
             </Pressable>
           ) : null}
@@ -557,7 +544,6 @@ export function TripDetailsScreen({ navigation, route }: any) {
                 tripBookings.map((booking) => {
                   const avatar = booking.travelerAvatar ?? booking.traveler_avatar;
                   const name = booking.travelerName ?? booking.traveler_name ?? 'Traveler';
-                  const phone = booking.travelerPhone ?? booking.traveler_phone;
                   return (
                   <View key={booking.id} style={[styles.bookingRequestCard, shadows.soft]}>
                     <View style={styles.bookingRequestTop}>
@@ -570,12 +556,6 @@ export function TripDetailsScreen({ navigation, route }: any) {
                       )}
                       <View style={{ flex: 1 }}>
                         <Text style={styles.bookingRequestName}>{name}</Text>
-                        {phone ? (
-                          <Pressable onPress={() => Linking.openURL(`tel:${phone}`)} style={styles.bookingRequestPhoneRow}>
-                            <Ionicons name="call-outline" size={12} color={colors.primary} />
-                            <Text style={styles.bookingRequestPhone}>{phone}</Text>
-                          </Pressable>
-                        ) : null}
                       </View>
                       <StatusBadge status={booking.status} />
                     </View>
@@ -705,7 +685,7 @@ export function TripDetailsScreen({ navigation, route }: any) {
             <Text style={styles.bottomPricePer}>per person</Text>
           </View>
           {isOwnTrip && !startDatePassed ? (
-            <Pressable onPress={() => navigation.navigate('CreateTrip', { tripId })}>
+            <Pressable onPress={() => navigation.navigate('CreateTrip', { tripId })} android_ripple={null}>
               <LinearGradient
                 colors={[colors.primary, colors.primaryContainer]}
                 start={{ x: 0, y: 0 }}
@@ -717,10 +697,20 @@ export function TripDetailsScreen({ navigation, route }: any) {
               </LinearGradient>
             </Pressable>
           ) : isBookingConfirmed ? (
-            <Pressable onPress={handleCallPlanner} style={styles.confirmedBadge}>
+            <View style={styles.confirmedBadge}>
               <Ionicons name="checkmark-circle" size={18} color={colors.success} />
               <Text style={styles.confirmedText}>Confirmed</Text>
-            </Pressable>
+            </View>
+          ) : isBookingApproved || isBookingPending || isPaymentSubmitted ? (
+            <View style={styles.requestedBadge}>
+              <Ionicons name="time-outline" size={18} color={colors.warning} />
+              <Text style={styles.requestedText}>Pending</Text>
+            </View>
+          ) : isBookingRejected ? (
+            <View style={styles.fullBadge}>
+              <Ionicons name="close-circle" size={18} color={colors.error} />
+              <Text style={styles.fullText}>Rejected</Text>
+            </View>
           ) : alreadyRequested ? (
             <View style={styles.requestedBadge}>
               <Ionicons name="time-outline" size={18} color={colors.warning} />
@@ -732,7 +722,7 @@ export function TripDetailsScreen({ navigation, route }: any) {
               <Text style={styles.fullText}>Fully Booked</Text>
             </View>
           ) : (
-            <Pressable onPress={handleRequestToJoin} disabled={!canRequest || isRequesting}>
+            <Pressable onPress={handleRequestToJoin} disabled={!canRequest || isRequesting} android_ripple={null}>
               <LinearGradient
                 colors={canRequest ? [colors.primary, colors.primaryContainer] : [colors.outlineVariant, colors.outlineVariant]}
                 start={{ x: 0, y: 0 }}
@@ -1325,13 +1315,15 @@ const makeStyles = (colors: Colors) => StyleSheet.create({
     overflow: 'hidden',
     borderTopWidth: 0.5,
     borderTopColor: colors.borderSubtle,
+    backgroundColor: colors.surface,
   },
   bottomContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xs,
   },
   bottomPrice: {
     fontFamily: 'Manrope_400Regular',
@@ -1370,6 +1362,20 @@ const makeStyles = (colors: Colors) => StyleSheet.create({
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
     color: colors.success,
+  },
+  approvedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: radii.xl,
+    backgroundColor: colors.primaryTint,
+  },
+  approvedText: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 14,
+    color: colors.primary,
   },
   requestedBadge: {
     flexDirection: 'row',
