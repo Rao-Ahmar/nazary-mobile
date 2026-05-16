@@ -681,7 +681,7 @@ export function TripDetailsScreen({ navigation, route }: any) {
         <BlurView intensity={60} tint="light" style={StyleSheet.absoluteFill} />
         <View style={styles.bottomContent}>
           <View>
-            <Text style={styles.bottomPrice}>PKR {(trip.price ?? 0).toLocaleString()}</Text>
+            <Text style={styles.bottomPrice}>PKR {Math.round(trip.price ?? 0).toLocaleString()}</Text>
             <Text style={styles.bottomPricePer}>per person</Text>
           </View>
           {isOwnTrip && !startDatePassed ? (
@@ -761,6 +761,7 @@ const makeStyles = (colors: Colors) => StyleSheet.create({
     justifyContent: 'flex-end',
     paddingBottom: 14,
     overflow: 'hidden',
+    backgroundColor: colors.surface,
   },
   headerBarTitle: {
     fontFamily: 'Manrope_400Regular',
@@ -1322,8 +1323,7 @@ const makeStyles = (colors: Colors) => StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.xs,
+    paddingVertical: spacing.md,
   },
   bottomPrice: {
     fontFamily: 'Manrope_400Regular',

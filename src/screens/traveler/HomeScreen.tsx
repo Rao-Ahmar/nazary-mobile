@@ -168,6 +168,7 @@ export function HomeScreen({ navigation }: any) {
               navigation.navigate('Search', { category: category.key });
             }
           }}
+          android_ripple={null}
           style={[styles.chip, isSelected && styles.chipSelected]}
         >
           <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>{category.label}</Text>
@@ -267,7 +268,7 @@ export function HomeScreen({ navigation }: any) {
         <Animated.View ref={searchRef} collapsable={false} style={[styles.searchContainer, fadeInDownStyle(searchAnim)]}>
           <Pressable style={styles.searchPressable} onPress={() => navigation.navigate('Search')}>
             <Ionicons name="search-outline" size={18} color={colors.outline} />
-            <Text style={styles.searchPlaceholder}>Search destinations, experiences...</Text>
+            <Text style={styles.searchPlaceholder}>Search destinations...</Text>
           </Pressable>
           <Pressable style={styles.filterButton} onPress={() => navigation.navigate('Search')}>
             <Ionicons name="options-outline" size={18} color={colors.onSurface} />

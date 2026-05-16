@@ -99,7 +99,7 @@ export function ProfileScreen({ navigation }: any) {
 }
 
 const makeStyles = (colors: Colors) => StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.surface, paddingHorizontal: spacing.xl },
+  container: { flex: 1, backgroundColor: colors.surface, paddingHorizontal: spacing.xl, paddingBottom: 100 },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: spacing.lg, marginBottom: spacing['2xl'] },
   title: { fontFamily: 'Manrope_300Light', fontSize: 32, color: colors.onSurface, letterSpacing: -0.5 },
   profileCard: { alignItems: 'center', marginBottom: spacing['3xl'] },
