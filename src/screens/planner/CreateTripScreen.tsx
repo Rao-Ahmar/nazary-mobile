@@ -176,6 +176,11 @@ export function CreateTripScreen({ navigation, route }: any) {
 
   // Image pickers
   const pickHeroImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      alert.show({ title: 'Permission Required', message: 'Please allow photo access to upload images.', type: 'error' });
+      return;
+    }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: true,
@@ -188,6 +193,11 @@ export function CreateTripScreen({ navigation, route }: any) {
   };
 
   const pickGalleryImages = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      alert.show({ title: 'Permission Required', message: 'Please allow photo access to upload images.', type: 'error' });
+      return;
+    }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsMultipleSelection: true,
@@ -389,7 +399,7 @@ export function CreateTripScreen({ navigation, route }: any) {
 
             {/* Hero Image */}
             <Text style={styles.label}>Hero Image</Text>
-            <Pressable style={styles.heroImagePicker} onPress={pickHeroImage}>
+            <Pressable style={styles.heroImagePicker} onPress={pickHeroImage} android_ripple={null}>
               {heroImage ? (
                 <Image source={{ uri: heroImage.uri }} style={styles.heroImagePreview} />
               ) : existingHeroImage ? (
@@ -405,7 +415,7 @@ export function CreateTripScreen({ navigation, route }: any) {
             {/* Gallery */}
             <Text style={styles.label}>Gallery</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.galleryPicker}>
-              <Pressable style={styles.galleryAddButton} onPress={pickGalleryImages}>
+              <Pressable style={styles.galleryAddButton} onPress={pickGalleryImages} android_ripple={null}>
                 <Ionicons name="add" size={24} color={colors.primary} />
                 <Text style={styles.galleryAddText}>Add</Text>
               </Pressable>
@@ -417,8 +427,8 @@ export function CreateTripScreen({ navigation, route }: any) {
               {galleryImages.map((img, index) => (
                 <View key={`new-${index}`} style={styles.galleryThumbWrap}>
                   <Image source={{ uri: img.uri }} style={styles.galleryThumb} />
-                  <Pressable style={styles.galleryRemove} onPress={() => removeGalleryImage(index)}>
-                    <Ionicons name="close" size={12} color={colors.onPrimary} />
+                  <Pressable style={styles.galleryRemove} onPress={() => removeGalleryImage(index)} hitSlop={10} android_ripple={null}>
+                    <Ionicons name="close" size={14} color={colors.onPrimary} />
                   </Pressable>
                 </View>
               ))}
@@ -481,6 +491,7 @@ export function CreateTripScreen({ navigation, route }: any) {
                 <Pressable
                   key={tag}
                   onPress={() => toggleTag(tag)}
+                  android_ripple={null}
                   style={[styles.tagChip, selectedTags.includes(tag) && styles.tagChipSelected]}
                 >
                   <Text style={[styles.tagText, selectedTags.includes(tag) && styles.tagTextSelected]}>{tag}</Text>
@@ -571,17 +582,19 @@ export function CreateTripScreen({ navigation, route }: any) {
                 </View>
                 <TextInput
                   style={styles.itineraryInput}
-                  placeholder="Title (e.g. Arrival in Hunza)"
+                  placeholder={`Day ${day.day} activity (e.g. Drive to Hunza Valley)`}
                   placeholderTextColor={colors.outline}
                   value={day.title}
                   onChangeText={(v) => updateItineraryDay(index, 'title', v)}
                 />
                 <TextInput
-                  style={[styles.itineraryInput, { marginTop: spacing.sm }]}
-                  placeholder="Description (e.g. Welcome dinner & briefing)"
+                  style={[styles.itineraryInput, { marginTop: spacing.sm, minHeight: 60 }]}
+                  placeholder="What will travelers do? (e.g. Sightseeing, hotel check-in, evening bonfire)"
                   placeholderTextColor={colors.outline}
                   value={day.desc}
                   onChangeText={(v) => updateItineraryDay(index, 'desc', v)}
+                  multiline
+                  textAlignVertical="top"
                 />
               </View>
             ))}
@@ -633,6 +646,7 @@ export function CreateTripScreen({ navigation, route }: any) {
                       key={i}
                       style={[styles.dayChip, recurringDay === i && styles.dayChipActive]}
                       onPress={() => setRecurringDay(i)}
+                      android_ripple={null}
                     >
                       <Text style={[styles.dayChipText, recurringDay === i && styles.dayChipTextActive]}>{name}</Text>
                     </Pressable>
@@ -645,6 +659,7 @@ export function CreateTripScreen({ navigation, route }: any) {
                       key={h}
                       style={[styles.dayChip, recurringHour === h && styles.dayChipActive]}
                       onPress={() => setRecurringHour(h)}
+                      android_ripple={null}
                     >
                       <Text style={[styles.dayChipText, recurringHour === h && styles.dayChipTextActive]}>
                         {h > 12 ? `${h - 12}pm` : h === 12 ? '12pm' : `${h}am`}
@@ -814,11 +829,11 @@ const makeStyles = (colors: Colors) => StyleSheet.create({
   },
   galleryRemove: {
     position: 'absolute',
-    top: 4,
-    right: 4,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    top: 2,
+    right: 2,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: colors.scrimHeavy,
     alignItems: 'center',
     justifyContent: 'center',

@@ -12,8 +12,11 @@ export const authApi = {
     return apiClient.post<AuthResponse>('/auth/login', { email, password });
   },
 
-  signup(name: string, email: string, password: string, role: UserRole) {
-    return apiClient.post<AuthResponse>('/auth/signup', { name, email, password, role });
+  signup(name: string, email: string, password: string, role: UserRole, referralCode?: string) {
+    return apiClient.post<AuthResponse>('/auth/signup', {
+      name, email, password, role,
+      ...(referralCode ? { referral_code: referralCode } : {}),
+    });
   },
 
   logout() {

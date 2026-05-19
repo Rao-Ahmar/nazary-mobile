@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useMemo } from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable, Image, Animated, Easing, Linking } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Pressable, Image, Animated, Easing } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, typography, spacing, radii } from '../../theme';
@@ -86,18 +86,6 @@ export function TripRequestDetailScreen({ navigation, route }: any) {
               <Text style={styles.personLabel}>{isMyRequest ? 'Planner' : 'Traveler'}</Text>
               <Text style={styles.personName}>{isMyRequest ? request.plannerName : request.travelerName}</Text>
             </View>
-            {request.status === 'accepted' && (
-              <Pressable
-                onPress={() => {
-                  const phone = isMyRequest ? request.plannerPhone : request.travelerPhone;
-                  if (phone) Linking.openURL(`tel:${phone}`);
-                }}
-                style={styles.phoneContainer}
-              >
-                <Ionicons name="call-outline" size={16} color={colors.primary} />
-                <Text style={styles.phoneText}>{isMyRequest ? request.plannerPhone : request.travelerPhone}</Text>
-              </Pressable>
-            )}
           </View>
 
           {request.note && (
@@ -107,12 +95,6 @@ export function TripRequestDetailScreen({ navigation, route }: any) {
             </View>
           )}
 
-          {request.status === 'accepted' && (
-            <View style={styles.contactInfo}>
-              <Ionicons name="information-circle-outline" size={18} color={colors.primary} />
-              <Text style={styles.contactText}>Contact information is now visible since the request was accepted.</Text>
-            </View>
-          )}
         </Animated.View>
       </ScrollView>
 

@@ -414,6 +414,7 @@ export function SearchScreen({ navigation, route }: any) {
         renderItem={({ item }) => (
           <Pressable
             onPress={() => setSelectedCategory(item.key)}
+            android_ripple={null}
             style={[styles.chip, selectedCategory === item.key && styles.chipSelected]}
           >
             <Text style={[styles.chipText, selectedCategory === item.key && styles.chipTextSelected]}>{item.label}</Text>
@@ -430,6 +431,7 @@ export function SearchScreen({ navigation, route }: any) {
         renderItem={({ item }) => (
           <Pressable
             onPress={() => setSelectedSort(item.value)}
+            android_ripple={null}
             style={[styles.sortChip, selectedSort === item.value && styles.sortChipSelected]}
           >
             <Text style={[styles.sortText, selectedSort === item.value && styles.sortTextSelected]}>{item.label}</Text>

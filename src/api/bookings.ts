@@ -10,10 +10,26 @@ interface Booking {
   traveler_name?: string;
   travelerAvatar?: string;
   traveler_avatar?: string;
-  status: 'pending' | 'confirmed' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'cancelled' | 'approved' | 'payment_submitted' | 'rejected';
   amount: number;
+  adminNote?: string;
+  admin_note?: string;
   createdAt?: string;
   created_at?: string;
+}
+
+interface PaymentAccount {
+  id: string;
+  method_type: string;
+  account_title: string;
+  account_number: string;
+  bank_name?: string;
+  is_active: boolean;
+}
+
+interface PaymentInfoResponse {
+  booking: Booking;
+  payment_accounts: PaymentAccount[];
 }
 
 export interface PlannerBooking extends Booking {
@@ -53,4 +69,13 @@ export const bookingsApi = {
 
   rejectBooking: (id: string) =>
     apiClient.patch<PlannerBooking>(`/planner/bookings/${id}/cancel`),
+
+  // Payment endpoints (traveler)
+  getPaymentInfo: (bookingId: string) =>
+    apiClient.get<PaymentInfoResponse>(`/bookings/${bookingId}/payment_info`),
+
+  submitPaymentProof: (bookingId: string, formData: FormData) =>
+    apiClient.post<Booking>(`/bookings/${bookingId}/payment_proof`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
 };

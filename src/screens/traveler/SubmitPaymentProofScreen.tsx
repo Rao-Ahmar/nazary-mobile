@@ -174,6 +174,7 @@ export function SubmitPaymentProofScreen({ navigation, route }: any) {
             <Pressable
               key={m}
               onPress={() => setMethodUsed(m)}
+              android_ripple={null}
               style={[
                 styles.methodChip,
                 methodUsed === m && { backgroundColor: colors.primaryTint, borderColor: colors.primary },

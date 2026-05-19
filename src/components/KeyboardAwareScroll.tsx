@@ -32,12 +32,13 @@ export function KeyboardAwareScroll({
   return (
     <KeyboardAvoidingView
       style={[{ flex: 1 }, style]}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={extraScrollHeight}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? extraScrollHeight : 0}
     >
       <ScrollView
         contentContainerStyle={contentContainerStyle}
         keyboardShouldPersistTaps={keyboardShouldPersistTaps}
+        keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={showsVerticalScrollIndicator}
         {...rest}
       >

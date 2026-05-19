@@ -25,7 +25,7 @@ export function PlannerProfileSetupScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
   const alert = useAlert();
-  const { setProfileCompleted, setUser } = useAuthStore();
+  const { setProfileCompleted, setUser, logout } = useAuthStore();
   const { colors, shadows } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const [step, setStep] = useState(0);
@@ -114,6 +114,11 @@ export function PlannerProfileSetupScreen() {
   };
 
   const pickAvatar = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      alert.show({ title: 'Permission Required', message: 'Please allow photo access to upload images.', type: 'error' });
+      return;
+    }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: true,
@@ -184,6 +189,17 @@ export function PlannerProfileSetupScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <KeyboardAwareScroll contentContainerStyle={styles.scrollContent}>
+        <View style={styles.headerRow}>
+          {step === 0 ? (
+            <Pressable onPress={logout} style={styles.headerBackBtn} hitSlop={8}>
+              <Ionicons name="arrow-back" size={22} color={colors.onSurface} />
+            </Pressable>
+          ) : step < 2 ? (
+            <Pressable onPress={() => setStep(step - 1)} style={styles.headerBackBtn} hitSlop={8}>
+              <Ionicons name="arrow-back" size={22} color={colors.onSurface} />
+            </Pressable>
+          ) : null}
+        </View>
         <Text style={styles.title}>Set Up Your Agency</Text>
         <Text style={styles.subtitle}>Let travelers know who you are</Text>
 
@@ -206,7 +222,7 @@ export function PlannerProfileSetupScreen() {
         <Animated.View style={fadeStyle}>
           {step === 0 && (
             <View>
-              <Pressable onPress={pickAvatar} style={styles.avatarPicker}>
+              <Pressable onPress={pickAvatar} style={styles.avatarPicker} android_ripple={null}>
                 {avatar ? (
                   <Image source={{ uri: avatar.uri }} style={styles.avatarImage} />
                 ) : (
@@ -316,11 +332,6 @@ export function PlannerProfileSetupScreen() {
       </KeyboardAwareScroll>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.lg }]}>
-        {step > 0 && step < 2 && (
-          <Pressable onPress={() => setStep(step - 1)} style={styles.backButton}>
-            <Text style={styles.backText}>Back</Text>
-          </Pressable>
-        )}
         <Pressable
           onPress={() => {
             if (step === 0) {
@@ -358,7 +369,9 @@ export function PlannerProfileSetupScreen() {
 
 const makeStyles = (colors: Colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
-  scrollContent: { paddingHorizontal: spacing.xl, paddingTop: spacing['2xl'] },
+  scrollContent: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg },
+  headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.md },
+  headerBackBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surfaceContainerHigh, alignItems: 'center', justifyContent: 'center' },
   title: { fontFamily: 'Manrope_300Light', fontSize: 32, color: colors.onSurface, letterSpacing: -0.5 },
   subtitle: { ...typography.bodyMd, color: colors.onSurfaceVariant, marginTop: spacing.xs, marginBottom: spacing['2xl'] },
   stepper: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing['2xl'] },

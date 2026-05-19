@@ -7,6 +7,8 @@ function getStatusConfig(colors: Colors): Record<string, { bg: string; text: str
     pending: { bg: colors.warningLight, text: colors.warning },
     accepted: { bg: colors.successLight, text: colors.success },
     confirmed: { bg: colors.successLight, text: colors.success },
+    approved: { bg: colors.primaryTint, text: colors.primary },
+    payment_submitted: { bg: colors.primaryTint, text: colors.primary },
     rejected: { bg: colors.errorContainer, text: colors.error },
     cancelled: { bg: colors.surfaceContainer, text: colors.onSurfaceVariant },
     active: { bg: colors.successLight, text: colors.success },
@@ -24,7 +26,11 @@ export function StatusBadge({ status, style }: StatusBadgeProps) {
   const { colors } = useTheme();
   const statusConfig = useMemo(() => getStatusConfig(colors), [colors]);
   const config = statusConfig[status] ?? statusConfig.pending;
-  const label = status.charAt(0).toUpperCase() + status.slice(1);
+  const statusLabels: Record<string, string> = {
+    payment_submitted: 'Payment Submitted',
+    approved: 'Awaiting Payment',
+  };
+  const label = statusLabels[status] ?? status.charAt(0).toUpperCase() + status.slice(1);
   return (
     <View style={[styles.badge, { backgroundColor: config.bg }, style]} accessibilityLabel={`Status: ${label}`} accessibilityRole="text">
       <Text style={[styles.text, { color: config.text }]}>

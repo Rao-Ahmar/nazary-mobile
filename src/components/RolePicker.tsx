@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { typography, spacing, radii, useTheme, type Colors } from '../theme';
 import type { UserRole } from '../types';
@@ -35,12 +35,14 @@ export function RolePicker({ selected, onSelect }: RolePickerProps) {
         return (
           <Pressable
             key={role.key}
-            style={[
+            style={({ pressed }) => [
               styles.card,
               shadows.soft,
               isSelected && styles.cardSelected,
+              pressed && !isSelected && { opacity: 0.7 },
             ]}
             onPress={() => onSelect(role.key)}
+            android_ripple={null}
           >
             <View
               style={[

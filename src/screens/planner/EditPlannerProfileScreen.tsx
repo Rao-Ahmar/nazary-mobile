@@ -98,6 +98,11 @@ export function EditPlannerProfileScreen({ navigation }: any) {
   };
 
   const pickCoverPhoto = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      alert.show({ title: 'Permission Required', message: 'Please allow photo access to upload images.', type: 'error' });
+      return;
+    }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: true,
@@ -111,6 +116,11 @@ export function EditPlannerProfileScreen({ navigation }: any) {
   };
 
   const pickAvatar = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      alert.show({ title: 'Permission Required', message: 'Please allow photo access to upload images.', type: 'error' });
+      return;
+    }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: true,
@@ -208,7 +218,7 @@ export function EditPlannerProfileScreen({ navigation }: any) {
 
           <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: fadeAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] }}>
             {/* Cover Photo */}
-            <Pressable onPress={pickCoverPhoto} style={styles.coverPhotoSection}>
+            <Pressable onPress={pickCoverPhoto} style={styles.coverPhotoSection} android_ripple={null}>
               {coverPhotoUri ? (
                 <Image source={{ uri: coverPhotoUri }} style={styles.coverPhotoImage} />
               ) : (
@@ -223,7 +233,7 @@ export function EditPlannerProfileScreen({ navigation }: any) {
             </Pressable>
 
             {/* Avatar */}
-            <Pressable onPress={pickAvatar} style={styles.avatarSection}>
+            <Pressable onPress={pickAvatar} style={styles.avatarSection} android_ripple={null}>
               {avatarUri ? (
                 <Image source={{ uri: avatarUri }} style={styles.avatarImage} />
               ) : (

@@ -19,7 +19,7 @@ type NavigationProp = NativeStackNavigationProp<ProfileSetupStackParamList, 'Tra
 export function TravelerProfileSetupScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
-  const { setProfileCompleted, setUser } = useAuthStore();
+  const { setProfileCompleted, setUser, logout } = useAuthStore();
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const [phone, setPhone] = useState('');
@@ -70,6 +70,9 @@ export function TravelerProfileSetupScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <KeyboardAwareScroll contentContainerStyle={styles.scrollContent}>
         <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: fadeAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] }}>
+          <Pressable onPress={logout} style={styles.headerBackBtn} hitSlop={8}>
+            <Ionicons name="arrow-back" size={22} color={colors.onSurface} />
+          </Pressable>
           <Text style={styles.title}>Complete Profile</Text>
           <Text style={styles.subtitle}>Add your phone number to get started</Text>
 
@@ -105,7 +108,8 @@ export function TravelerProfileSetupScreen() {
 
 const makeStyles = (colors: Colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
-  scrollContent: { paddingHorizontal: spacing.xl, paddingTop: spacing['2xl'] },
+  scrollContent: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg },
+  headerBackBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surfaceContainerHigh, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.md },
   title: { fontFamily: 'Manrope_300Light', fontSize: 32, color: colors.onSurface, letterSpacing: -0.5 },
   subtitle: { ...typography.bodyMd, color: colors.onSurfaceVariant, marginTop: spacing.xs, marginBottom: spacing['2xl'] },
   iconContainer: { alignItems: 'center', marginBottom: spacing['2xl'] },

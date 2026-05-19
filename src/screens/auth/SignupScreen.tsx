@@ -32,6 +32,7 @@ export function SignupScreen({ navigation }: Props) {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState<UserRole | null>(null);
+  const [referralCode, setReferralCode] = useState('');
   const { signup, isLoading } = useAuthStore();
 
   const contentOpacity = useRef(new Animated.Value(0)).current;
@@ -50,7 +51,7 @@ export function SignupScreen({ navigation }: Props) {
   const handleSignup = async () => {
     if (!name || !email || !password || !role) return;
     try {
-      await signup(name, email, password, role);
+      await signup(name, email, password, role, referralCode || undefined);
     } catch (error: any) {
       alert.show({ title: 'Signup Failed', message: error.message || 'Could not create account. Please try again.', type: 'error' });
     }
@@ -118,6 +119,19 @@ export function SignupScreen({ navigation }: Props) {
                 </Pressable>
               </View>
 
+              <View style={styles.inputContainer}>
+                <Ionicons name="gift-outline" size={18} color={colors.onSurfaceVariant} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Referral Code (optional)"
+                  placeholderTextColor={colors.outline}
+                  value={referralCode}
+                  onChangeText={(text) => setReferralCode(text.toUpperCase())}
+                  autoCapitalize="characters"
+                  maxLength={8}
+                />
+              </View>
+
               <Pressable onPress={handleSignup} disabled={isLoading || !isFormValid}>
                 <LinearGradient
                   colors={[colors.primary, colors.primaryContainer]}
@@ -135,7 +149,7 @@ export function SignupScreen({ navigation }: Props) {
             {/* Login Link */}
             <View style={styles.loginRow}>
               <Text style={styles.loginText}>Already have an account? </Text>
-              <Pressable onPress={() => navigation.navigate('Login')}>
+              <Pressable onPress={() => navigation.navigate('Login')} hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}>
                 <Text style={styles.loginLink}>Sign In</Text>
               </Pressable>
             </View>

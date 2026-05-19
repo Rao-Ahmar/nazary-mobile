@@ -128,6 +128,19 @@ export interface CoupleRequest {
   createdAt: string;
 }
 
+export interface CorporateTripRequest {
+  id: string;
+  companyName: string;
+  estimatedPeople: number;
+  contactEmail?: string;
+  contactPhone?: string;
+  preferredPlannerName?: string;
+  specialNotes?: string;
+  status: 'pending' | 'in_review' | 'arranged' | 'rejected';
+  linkedTripId?: string;
+  createdAt: string;
+}
+
 // Booking
 export interface Booking {
   id: string;
