@@ -12,10 +12,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-// TODO: Re-enable when Google OAuth credentials are configured
-// import * as Google from 'expo-auth-session/providers/google';
-// import { makeRedirectUri } from 'expo-auth-session';
-// import Constants from 'expo-constants';
+import * as Google from 'expo-auth-session/providers/google';
+import { makeRedirectUri } from 'expo-auth-session';
+import Constants from 'expo-constants';
 import { useTheme, typography, spacing, radii } from '../../theme';
 import type { Colors } from '../../theme';
 import { useAuthStore } from '../../store';
@@ -33,14 +32,33 @@ export function LoginScreen({ navigation }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const { login, isLoading } = useAuthStore();
+  const { login, googleLogin, isLoading } = useAuthStore();
 
-  // TODO: Re-enable when Google OAuth credentials are configured
-  // const [_googleRequest, googleResponse, promptGoogleAsync] = Google.useAuthRequest({
-  //   iosClientId: Constants.expoConfig?.extra?.googleIosClientId,
-  //   webClientId: Constants.expoConfig?.extra?.googleWebClientId,
-  //   redirectUri: makeRedirectUri({ scheme: 'nazary-mobile' }),
-  // });
+  const [_googleRequest, googleResponse, promptGoogleAsync] = Google.useAuthRequest({
+    iosClientId: Constants.expoConfig?.extra?.googleIosClientId,
+    androidClientId: Constants.expoConfig?.extra?.googleAndroidClientId,
+    webClientId: Constants.expoConfig?.extra?.googleWebClientId,
+    redirectUri: makeRedirectUri({ scheme: 'nazary-mobile' }),
+  });
+
+  useEffect(() => {
+    if (googleResponse?.type === 'success') {
+      const idToken = googleResponse.params.id_token;
+      if (idToken) {
+        googleLogin(idToken).catch((error: any) => {
+          alert.show({ title: 'Google Sign-In Failed', message: error.message || 'Something went wrong.', type: 'error' });
+        });
+      }
+    }
+  }, [googleResponse]);
+
+  const handleGoogleLogin = async () => {
+    try {
+      await promptGoogleAsync();
+    } catch (error: any) {
+      alert.show({ title: 'Google Sign-In', message: 'Could not open Google sign-in.', type: 'error' });
+    }
+  };
 
   const contentOpacity = useRef(new Animated.Value(0)).current;
   const contentTranslateY = useRef(new Animated.Value(30)).current;
@@ -140,10 +158,9 @@ export function LoginScreen({ navigation }: Props) {
                 <Text style={styles.socialText}>Apple</Text>
                 <Text style={styles.comingSoonLabel}>Soon</Text>
               </Pressable>
-              <Pressable style={[styles.socialButton, { opacity: 0.5 }]} disabled accessibilityLabel="Google sign-in coming soon" accessibilityRole="button">
+              <Pressable style={styles.socialButton} onPress={handleGoogleLogin} disabled={isLoading} accessibilityLabel="Sign in with Google" accessibilityRole="button">
                 <Ionicons name="logo-google" size={20} color={colors.onSurface} />
                 <Text style={styles.socialText}>Google</Text>
-                <Text style={styles.comingSoonLabel}>Soon</Text>
               </Pressable>
             </View>
 

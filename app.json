@@ -60,7 +60,9 @@
       ]
     ],
     "extra": {
-      "googleWebClientId": "YOUR_CLIENT_ID_HERE",
+      "googleWebClientId": "835566081939-ubuo3i0br65td2f06v1de0bo7hbkv8e3.apps.googleusercontent.com",
+      "googleIosClientId": "835566081939-2qscm9pbujnvdrlfndtt4eu1j2k8uhfl.apps.googleusercontent.com",
+      "googleAndroidClientId": "835566081939-7f2keghfuc09asriu2g2l5sdugk8rp1l.apps.googleusercontent.com",
       "eas": {
         "projectId": "14881784-7fc1-47d5-b482-416566c4f479"
       }
