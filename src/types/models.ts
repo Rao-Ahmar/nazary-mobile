@@ -145,13 +145,23 @@ export interface CorporateTripRequest {
 export interface Booking {
   id: string;
   tripId: string;
+  trip_id?: string;
   travelerId: string;
   travelerName: string;
   travelerAvatar?: string;
   status: 'pending' | 'confirmed' | 'cancelled' | 'approved' | 'payment_submitted' | 'rejected';
   amount: number;
+  seats?: number;
   adminNote?: string;
+  admin_note?: string;
+  tripTitle?: string;
+  trip_title?: string;
+  tripHeroImage?: string;
+  trip_hero_image?: string;
+  tripLocation?: string;
+  trip_location?: string;
   createdAt: string;
+  created_at?: string;
 }
 
 // Payment Account (admin-configured payment methods)
