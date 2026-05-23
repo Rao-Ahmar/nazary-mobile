@@ -37,9 +37,13 @@ export function AgenciesListScreen({ navigation }: any) {
 
   const [agencies, setAgencies] = useState<Agency[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
   const [search, setSearch] = useState('');
+
+  // Use refs for fetch state to keep fetchAgencies stable and avoid re-render loops
+  const pageRef = useRef(1);
+  const hasMoreRef = useRef(true);
+  const loadingRef = useRef(false);
+  const searchValueRef = useRef('');
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const animValues = useRef<Map<string, Animated.Value>>(new Map());
 
@@ -66,14 +70,15 @@ export function AgenciesListScreen({ navigation }: any) {
 
   const fetchAgencies = useCallback(
     async (reset = false) => {
-      if (isLoading) return;
-      const p = reset ? 1 : page;
-      if (!reset && !hasMore) return;
+      if (loadingRef.current) return;
+      const p = reset ? 1 : pageRef.current;
+      if (!reset && !hasMoreRef.current) return;
 
+      loadingRef.current = true;
       setIsLoading(true);
       try {
         const params: { page: number; q?: string } = { page: p };
-        if (search.trim()) params.q = search.trim();
+        if (searchValueRef.current.trim()) params.q = searchValueRef.current.trim();
 
         const response = await plannersApi.getAll(params);
         const raw = response.data;
@@ -82,38 +87,39 @@ export function AgenciesListScreen({ navigation }: any) {
         if (reset) {
           animValues.current.clear();
           setAgencies(data);
-          setPage(2);
+          pageRef.current = 2;
         } else {
           setAgencies((prev) => [...prev, ...data]);
-          setPage(p + 1);
+          pageRef.current = p + 1;
         }
 
         const meta = (raw as any)?.meta;
-        setHasMore(meta ? meta.currentPage < meta.totalPages : data.length >= 10);
+        hasMoreRef.current = meta ? meta.currentPage < meta.totalPages : data.length >= 10;
       } catch {
         // Network error — keep existing data
       } finally {
+        loadingRef.current = false;
         setIsLoading(false);
       }
     },
-    [page, hasMore, isLoading, search],
+    [],
   );
 
   useEffect(() => {
     fetchAgencies(true);
-  }, []);
+  }, [fetchAgencies]);
 
   const handleSearch = (text: string) => {
     setSearch(text);
+    searchValueRef.current = text;
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
     searchTimeout.current = setTimeout(() => {
-      setHasMore(true);
-      setPage(1);
+      hasMoreRef.current = true;
+      pageRef.current = 1;
       fetchAgencies(true);
     }, 400);
   };
 
-  // Re-fetch when search triggers reset
   useEffect(() => {
     return () => {
       if (searchTimeout.current) clearTimeout(searchTimeout.current);
@@ -219,9 +225,7 @@ export function AgenciesListScreen({ navigation }: any) {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
-        onEndReached={() => {
-          if (hasMore && !isLoading) fetchAgencies(false);
-        }}
+        onEndReached={() => fetchAgencies(false)}
         onEndReachedThreshold={0.3}
         ListEmptyComponent={
           !isLoading ? (

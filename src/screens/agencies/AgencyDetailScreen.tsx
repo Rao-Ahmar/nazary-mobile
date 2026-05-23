@@ -39,8 +39,12 @@ export function AgencyDetailScreen({ navigation, route }: any) {
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
+  const hasMounted = useRef(false);
+  const isFetching = useRef(false);
+
   const fetchData = useCallback(async () => {
-    if (!id) return;
+    if (!id || isFetching.current) return;
+    isFetching.current = true;
     setLoading(true);
     try {
       const [agencyRes, tripsRes, reviewsRes] = await Promise.all([
@@ -64,11 +68,10 @@ export function AgencyDetailScreen({ navigation, route }: any) {
     } catch {
       // Network error
     } finally {
+      isFetching.current = false;
       setLoading(false);
     }
   }, [id]);
-
-  const hasMounted = useRef(false);
 
   useEffect(() => {
     fetchData();
@@ -77,8 +80,9 @@ export function AgencyDetailScreen({ navigation, route }: any) {
   // Silently refetch when returning from WriteReview screen
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
-      if (hasMounted.current) {
+      if (hasMounted.current && !isFetching.current) {
         // Refetch without showing loading spinner
+        isFetching.current = true;
         Promise.all([
           plannersApi.getById(id),
           reviewsApi.getPlannerReviews(id, 1).catch(() => null),
@@ -89,7 +93,9 @@ export function AgencyDetailScreen({ navigation, route }: any) {
             const reviewsData = Array.isArray(reviewsRes.data) ? reviewsRes.data : (reviewsRes.data as any)?.data ?? [];
             setReviews(reviewsData);
           }
-        }).catch(() => {});
+        }).catch(() => {}).finally(() => {
+          isFetching.current = false;
+        });
       }
       hasMounted.current = true;
     });
@@ -98,6 +104,7 @@ export function AgencyDetailScreen({ navigation, route }: any) {
 
   useEffect(() => {
     if (!loading && agency) {
+      fadeAnim.setValue(0);
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 500,
@@ -105,7 +112,7 @@ export function AgencyDetailScreen({ navigation, route }: any) {
         useNativeDriver: true,
       }).start();
     }
-  }, [loading, agency]);
+  }, [loading, agency, fadeAnim]);
 
   if (loading) {
     return (
