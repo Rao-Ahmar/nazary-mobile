@@ -37,7 +37,7 @@ export function RolePicker({ selected, onSelect }: RolePickerProps) {
             key={role.key}
             style={({ pressed }) => [
               styles.card,
-              shadows.soft,
+              Platform.OS !== 'android' && shadows.soft,
               isSelected && styles.cardSelected,
               pressed && !isSelected && { opacity: 0.7 },
             ]}
@@ -86,6 +86,7 @@ const makeStyles = (colors: Colors) => StyleSheet.create({
     borderWidth: 2,
     borderColor: 'transparent',
     position: 'relative',
+    ...(Platform.OS === 'android' && { overflow: 'hidden' as const }),
   },
   cardSelected: {
     borderColor: colors.primary,

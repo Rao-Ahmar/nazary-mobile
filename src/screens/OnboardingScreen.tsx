@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
+  Image,
   StyleSheet,
   Dimensions,
   TextInput,
@@ -226,7 +227,7 @@ export function OnboardingScreen({ navigation }: any) {
             },
           ]}
         >
-          <Text style={styles.logo}>nazary</Text>
+          <Image source={require('../../assets/logo.png')} style={styles.logoImage} />
           <Text style={styles.tagline}>
             Curating experiences for{'\n'}the modern wanderer
           </Text>
@@ -337,11 +338,10 @@ const makeStyles = (colors: Colors) => StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing['2xl'],
   },
-  logo: {
-    fontFamily: 'Manrope_300Light',
-    fontSize: 42,
-    letterSpacing: -1.5,
-    color: colors.onSurface,
+  logoImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 20,
     marginBottom: spacing.md,
   },
   tagline: {

@@ -2,6 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   View,
   Text,
+  Image,
   TextInput,
   Pressable,
   StyleSheet,
@@ -94,9 +95,7 @@ export function AboutScreen({ navigation }: any) {
         >
           {/* Hero */}
           <View style={styles.heroSection}>
-            <View style={styles.logoContainer}>
-              <Ionicons name="compass" size={48} color={colors.primary} />
-            </View>
+            <Image source={require('../../../assets/logo.png')} style={styles.logoImage} />
             <Text style={styles.appName}>Nazary</Text>
             <Text style={styles.tagline}>Explore Pakistan with trusted trip planners</Text>
           </View>
@@ -205,13 +204,10 @@ const makeStyles = (colors: Colors) =>
 
     // Hero
     heroSection: { alignItems: 'center', marginBottom: spacing['2xl'] },
-    logoContainer: {
+    logoImage: {
       width: 88,
       height: 88,
-      borderRadius: 44,
-      backgroundColor: colors.primaryTint,
-      alignItems: 'center',
-      justifyContent: 'center',
+      borderRadius: 22,
       marginBottom: spacing.lg,
     },
     appName: {

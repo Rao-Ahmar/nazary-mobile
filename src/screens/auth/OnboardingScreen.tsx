@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect, useMemo, useCallback } from 'react'
 import {
   View,
   Text,
+  Image,
   StyleSheet,
   useWindowDimensions,
   Pressable,
@@ -162,7 +163,7 @@ export function OnboardingScreen({ navigation }: Props) {
             { opacity: logoOpacity, transform: [{ translateY: logoTranslateY }] },
           ]}
         >
-          <Text style={styles.logo}>nazary</Text>
+          <Image source={require('../../../assets/logo.png')} style={styles.logoImage} />
           <Text style={styles.tagline}>
             Curating experiences for{'\n'}the modern wanderer
           </Text>
@@ -210,7 +211,7 @@ const makeStyles = (colors: Colors, width: number, height: number) => StyleSheet
   dots: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: spacing['2xl'] },
   dot: { height: 6, borderRadius: 3, backgroundColor: colors.primary },
   logoContainer: { alignItems: 'center', marginBottom: spacing['3xl'] },
-  logo: { fontFamily: 'Manrope_300Light', fontSize: 42, letterSpacing: -1.5, color: colors.onSurface, marginBottom: spacing.md },
+  logoImage: { width: 80, height: 80, borderRadius: 20, marginBottom: spacing.md },
   tagline: { ...typography.bodyLg, color: colors.onSurfaceVariant, textAlign: 'center', lineHeight: 24 },
   buttonsContainer: { gap: spacing.md, marginBottom: spacing.xl },
   primaryButton: { height: 56, borderRadius: radii.xl, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },

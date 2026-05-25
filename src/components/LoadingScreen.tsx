@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
-import { typography, spacing, useTheme, type Colors } from '../theme';
+import { View, ActivityIndicator, Image, StyleSheet } from 'react-native';
+import { spacing, useTheme, type Colors } from '../theme';
 
 export function LoadingScreen() {
   const { colors } = useTheme();
@@ -8,7 +8,7 @@ export function LoadingScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.logo}>nazary</Text>
+      <Image source={require('../../assets/logo.png')} style={styles.logoImage} />
       <ActivityIndicator size="small" color={colors.primary} style={styles.spinner} />
     </View>
   );
@@ -21,11 +21,10 @@ const makeStyles = (colors: Colors) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  logo: {
-    fontFamily: 'Manrope_300Light',
-    fontSize: 42,
-    letterSpacing: -1.5,
-    color: colors.onSurface,
+  logoImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 20,
     marginBottom: spacing.xl,
   },
   spinner: {
