@@ -265,6 +265,7 @@ export function OtpVerificationScreen() {
           <Ionicons name="information-circle-outline" size={20} color={colors.primary} />
           <Text style={styles.infoText}>
             Check your email for the verification code. The code expires in 5 minutes.
+            {'\n\n'}Can't find it? Please check your spam or junk folder — the email may have landed there.
           </Text>
         </View>
       </View>
